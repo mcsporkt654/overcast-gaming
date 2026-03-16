@@ -1,0 +1,32 @@
+[
+  {
+    "id": "player-1",
+    "name": "Commander Vex",
+    "armies": ["Chaos Space Marines", "World Eaters"],
+    "photo": ""
+  },
+  {
+    "id": "player-2",
+    "name": "Lady Thornwood",
+    "armies": ["Necrons", "Aeldari"],
+    "photo": ""
+  },
+  {
+    "id": "player-3",
+    "name": "Brother Kael",
+    "armies": ["Space Marines", "Blood Angels"],
+    "photo": ""
+  },
+  {
+    "id": "player-4",
+    "name": "The Overlord",
+    "armies": ["Necrons"],
+    "photo": ""
+  },
+  {
+    "id": "player-5",
+    "name": "Wraithborn",
+    "armies": ["Aeldari", "Drukhari"],
+    "photo": ""
+  }
+]

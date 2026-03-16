@@ -1,0 +1,112 @@
+[
+  {
+    "id": "match-1",
+    "date": "2025-12-20",
+    "playerId": "player-1",
+    "playerName": "Commander Vex",
+    "armyUsed": "Chaos Space Marines",
+    "opponentName": "Garrick Hale",
+    "opponentArmy": "Grey Knights",
+    "result": "W",
+    "pointsDiff": 15
+  },
+  {
+    "id": "match-2",
+    "date": "2025-12-28",
+    "playerId": "player-2",
+    "playerName": "Lady Thornwood",
+    "armyUsed": "Necrons",
+    "opponentName": "Silas Dorn",
+    "opponentArmy": "Tyranids / Hive Fleet",
+    "result": "W",
+    "pointsDiff": 22
+  },
+  {
+    "id": "match-3",
+    "date": "2026-01-05",
+    "playerId": "player-3",
+    "playerName": "Brother Kael",
+    "armyUsed": "Blood Angels",
+    "opponentName": "Mira Volks",
+    "opponentArmy": "T'au Empire",
+    "result": "L",
+    "pointsDiff": -8
+  },
+  {
+    "id": "match-4",
+    "date": "2026-01-12",
+    "playerId": "player-4",
+    "playerName": "The Overlord",
+    "armyUsed": "Necrons",
+    "opponentName": "Fenris Rath",
+    "opponentArmy": "Space Wolves",
+    "result": "W",
+    "pointsDiff": 30
+  },
+  {
+    "id": "match-5",
+    "date": "2026-01-19",
+    "playerId": "player-5",
+    "playerName": "Wraithborn",
+    "armyUsed": "Aeldari",
+    "opponentName": "Cassius Drel",
+    "opponentArmy": "Imperial Guard / Astra Militarum",
+    "result": "D",
+    "pointsDiff": 0
+  },
+  {
+    "id": "match-6",
+    "date": "2026-02-01",
+    "playerId": "player-1",
+    "playerName": "Commander Vex",
+    "armyUsed": "World Eaters",
+    "opponentName": "Lorian Ash",
+    "opponentArmy": "Adeptus Custodes",
+    "result": "L",
+    "pointsDiff": -12
+  },
+  {
+    "id": "match-7",
+    "date": "2026-02-08",
+    "playerId": "player-2",
+    "playerName": "Lady Thornwood",
+    "armyUsed": "Aeldari",
+    "opponentName": "Brax Solenne",
+    "opponentArmy": "Orks",
+    "result": "W",
+    "pointsDiff": 18
+  },
+  {
+    "id": "match-8",
+    "date": "2026-02-15",
+    "playerId": "player-3",
+    "playerName": "Brother Kael",
+    "armyUsed": "Space Marines",
+    "opponentName": "Davan Crul",
+    "opponentArmy": "Chaos Daemons",
+    "result": "W",
+    "pointsDiff": 9
+  },
+  {
+    "id": "match-9",
+    "date": "2026-03-01",
+    "playerId": "player-5",
+    "playerName": "Wraithborn",
+    "armyUsed": "Drukhari",
+    "opponentName": "Fenris Rath",
+    "opponentArmy": "Death Guard",
+    "result": "W",
+    "pointsDiff": 14
+  },
+  {
+    "id": "match-10",
+    "date": "2026-03-10",
+    "playerId": "player-4",
+    "playerName": "The Overlord",
+    "armyUsed": "Necrons",
+    "opponentName": "Mira Volks",
+    "opponentArmy": "Thousand Sons",
+    "result": "L",
+    "pointsDiff": -5
+  }
+]
