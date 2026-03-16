@@ -182,17 +182,29 @@
     ];
 
     // ─── Auth ───────────────────────────────────────────────────────
-    const ADMIN_PASSWORD = 'overcast40k';
+    let adminToken = null; // set after server-side verification, never hardcoded
 
-    function doLogin() {
+    async function doLogin() {
       const pw = document.getElementById('password-input').value;
       const err = document.getElementById('login-error');
-      if (pw === ADMIN_PASSWORD) {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('admin-panel').classList.add('visible');
-        initAdmin();
-      } else {
-        err.textContent = 'Invalid access code. Try again.';
+      try {
+        const res = await fetch('/api/admin/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pw })
+        });
+        const data = await res.json();
+        if (data.success) {
+          adminToken = data.token;
+          document.getElementById('login-screen').style.display = 'none';
+          document.getElementById('admin-panel').classList.add('visible');
+          initAdmin();
+        } else {
+          err.textContent = 'Invalid access code. Try again.';
+          err.className = 'alert error';
+        }
+      } catch (e) {
+        err.textContent = 'Server error. Try again.';
         err.className = 'alert error';
       }
     }
@@ -292,7 +304,7 @@
       try {
         const res = await fetch('/api/matches', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
           body: JSON.stringify(payload)
         });
         const data = await res.json();
@@ -332,7 +344,7 @@
       try {
         const res = await fetch('/api/players', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
           body: JSON.stringify(payload)
         });
         const data = await res.json();
