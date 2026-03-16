@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Overcast Gaming</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <span class="skull">☠</span> Overcast Gaming
+      </a>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/roster">Roster</a></li>
+        <li><a href="/stats">Match Stats</a></li>
+        <li><a href="/admin" class="active">Admin</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Login Screen -->
+  <div class="login-screen" id="login-screen">
+    <div class="login-card">
+      <h2>☠ Command Access</h2>
+      <p>Enter your access code to manage the league.</p>
+      <div class="form-group">
+        <label for="password-input">Access Code</label>
+        <input type="password" id="password-input" placeholder="Enter password..." autocomplete="current-password" />
+      </div>
+      <div class="alert" id="login-error" style="display:none"></div>
+      <button class="btn btn-primary" style="width:100%; margin-top:0.5rem" onclick="doLogin()">Authenticate</button>
+      <p style="margin-top:1.5rem; font-size:0.72rem; color:var(--text-muted)">Authorized commanders only. All actions are logged.</p>
+    </div>
+  </div>
+
+  <!-- Admin Panel -->
+  <div class="admin-panel" id="admin-panel">
+
+    <div style="background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 2rem var(--gutter);">
+      <div style="max-width:1200px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <h1 style="font-size:1.8rem; text-transform:uppercase; letter-spacing:0.08em;">League <span style="color:var(--accent)">Admin</span></h1>
+          <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.3rem;">Manage players and record match results.</p>
+        </div>
+        <button class="btn btn-outline" onclick="doLogout()" style="font-size:0.72rem">⬅ Logout</button>
+      </div>
+    </div>
+
+    <section class="section">
+      <div class="admin-grid">
+
+        <!-- Add Match Form -->
+        <div class="admin-form-card">
+          <h3>⚔ Record a Match</h3>
+          <div class="alert" id="match-alert"></div>
+          <form id="match-form" onsubmit="submitMatch(event)">
+
+            <div class="form-group">
+              <label for="match-date">Date</label>
+              <input type="date" id="match-date" required />
+            </div>
+
+            <div class="form-group">
+              <label for="match-player">Player</label>
+              <select id="match-player" required>
+                <option value="">— Select Player —</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="match-army">Army Used</label>
+              <select id="match-army" required>
+                <option value="">— Select Army —</option>
+                <option value="__custom__">+ Custom Army...</option>
+              </select>
+            </div>
+            <div class="form-group" id="match-army-custom-group" style="display:none">
+              <label for="match-army-custom">Custom Army Name</label>
+              <input type="text" id="match-army-custom" placeholder="e.g. Harlequins" />
+            </div>
+
+            <div class="form-group">
+              <label for="match-opponent">Opponent Name</label>
+              <input type="text" id="match-opponent" placeholder="e.g. Silas Dorn" required />
+            </div>
+
+            <div class="form-group">
+              <label for="match-opp-army">Opponent's Army</label>
+              <select id="match-opp-army" required>
+                <option value="">— Select Army —</option>
+                <option value="__custom__">+ Custom Army...</option>
+              </select>
+            </div>
+            <div class="form-group" id="match-opp-army-custom-group" style="display:none">
+              <label for="match-opp-army-custom">Custom Opponent Army</label>
+              <input type="text" id="match-opp-army-custom" placeholder="e.g. Leagues of Votann" />
+            </div>
+
+            <div class="form-group">
+              <label for="match-result">Result</label>
+              <select id="match-result" required>
+                <option value="">— Select Result —</option>
+                <option value="W">Win</option>
+                <option value="L">Loss</option>
+                <option value="D">Draw</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="match-points">Points Differential <span style="color:var(--text-muted)">(optional)</span></label>
+              <input type="number" id="match-points" placeholder="e.g. 15 or -8" />
+              <p class="form-hint">Positive = you scored more. Negative = opponent scored more.</p>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem">⚔ Record Match</button>
+          </form>
+        </div>
+
+        <!-- Add Player Form -->
+        <div class="admin-form-card">
+          <h3>➕ Add a Player</h3>
+          <div class="alert" id="player-alert"></div>
+          <form id="player-form" onsubmit="submitPlayer(event)">
+
+            <div class="form-group">
+              <label for="player-name">Player Name</label>
+              <input type="text" id="player-name" placeholder="e.g. Inquisitor Mourne" required />
+            </div>
+
+            <div class="form-group">
+              <label for="player-armies">Armies (hold Ctrl/Cmd for multiple)</label>
+              <select id="player-armies" multiple required>
+                <!-- populated by JS -->
+              </select>
+              <p class="form-hint">Hold Ctrl (Windows) or Cmd (Mac) to select multiple factions.</p>
+            </div>
+
+            <div class="form-group">
+              <label for="player-armies-custom">Additional Armies <span style="color:var(--text-muted)">(comma-separated, optional)</span></label>
+              <input type="text" id="player-armies-custom" placeholder="e.g. Harlequins, Votann" />
+              <p class="form-hint">These will be merged with your selections above.</p>
+            </div>
+
+            <div class="form-group">
+              <label for="player-photo">Photo URL <span style="color:var(--text-muted)">(optional)</span></label>
+              <input type="url" id="player-photo" placeholder="https://example.com/avatar.jpg" />
+              <p class="form-hint">Leave blank to use the default placeholder.</p>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem">➕ Add Player</button>
+          </form>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>Overcast Gaming <span class="skull-divider">☠</span> Portland, Oregon <span class="skull-divider">☠</span> Warhammer 40,000 League</p>
+  </footer>
+
+  <script>
+    // ─── Army list ──────────────────────────────────────────────────
+    const ARMIES = [
+      'Adeptus Custodes', 'Adeptus Mechanicus', 'Aeldari', 'Agents of the Imperium',
+      'Blood Angels', 'Chaos Daemons', 'Chaos Knights', 'Chaos Space Marines',
+      'Dark Angels', 'Death Guard', 'Deathwatch', 'Drukhari',
+      'Genestealer Cults', 'Grey Knights', 'Imperial Fists',
+      'Imperial Guard / Astra Militarum', 'Imperial Knights',
+      'Leagues of Votann', 'Necrons', 'Orks',
+      'Salamanders', 'Sisters of Battle / Adepta Sororitas',
+      'Space Marines', 'Space Wolves', "T'au Empire",
+      'Thousand Sons', 'Tyranids / Hive Fleet', 'Ultramarines',
+      'World Eaters'
+    ];
+
+    // ─── Auth ───────────────────────────────────────────────────────
+    const ADMIN_PASSWORD = 'overcast40k';
+
+    function doLogin() {
+      const pw = document.getElementById('password-input').value;
+      const err = document.getElementById('login-error');
+      if (pw === ADMIN_PASSWORD) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('admin-panel').classList.add('visible');
+        initAdmin();
+      } else {
+        err.textContent = 'Invalid access code. Try again.';
+        err.className = 'alert error';
+      }
+    }
+
+    function doLogout() {
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('admin-panel').classList.remove('visible');
+      document.getElementById('password-input').value = '';
+      document.getElementById('login-error').className = 'alert';
+    }
+
+    document.getElementById('password-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+
+    // ─── Init Admin ─────────────────────────────────────────────────
+    function initAdmin() {
+      // Set today as default date
+      document.getElementById('match-date').value = new Date().toISOString().split('T')[0];
+
+      // Populate army dropdowns
+      const armySelects = ['match-army', 'match-opp-army'];
+      armySelects.forEach(id => {
+        const sel = document.getElementById(id);
+        // Clear existing options except first two (blank + custom)
+        while (sel.options.length > 2) sel.remove(2);
+        ARMIES.forEach(a => {
+          const opt = document.createElement('option');
+          opt.value = a; opt.textContent = a;
+          sel.appendChild(opt);
+        });
+      });
+
+      // Populate player armies multi-select
+      const paSelect = document.getElementById('player-armies');
+      paSelect.innerHTML = '';
+      ARMIES.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a; opt.textContent = a;
+        paSelect.appendChild(opt);
+      });
+
+      // Load players for match dropdown
+      fetch('/api/players')
+        .then(r => r.json())
+        .then(players => {
+          const sel = document.getElementById('match-player');
+          while (sel.options.length > 1) sel.remove(1);
+          players.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id; opt.textContent = p.name;
+            sel.appendChild(opt);
+          });
+        });
+
+      // Custom army toggle — match
+      document.getElementById('match-army').addEventListener('change', e => {
+        const cg = document.getElementById('match-army-custom-group');
+        const ci = document.getElementById('match-army-custom');
+        cg.style.display = e.target.value === '__custom__' ? 'block' : 'none';
+        ci.required = e.target.value === '__custom__';
+      });
+      document.getElementById('match-opp-army').addEventListener('change', e => {
+        const cg = document.getElementById('match-opp-army-custom-group');
+        const ci = document.getElementById('match-opp-army-custom');
+        cg.style.display = e.target.value === '__custom__' ? 'block' : 'none';
+        ci.required = e.target.value === '__custom__';
+      });
+    }
+
+    // ─── Submit Match ───────────────────────────────────────────────
+    async function submitMatch(e) {
+      e.preventDefault();
+      const alert = document.getElementById('match-alert');
+      alert.className = 'alert';
+
+      const armySel = document.getElementById('match-army').value;
+      const armyUsed = armySel === '__custom__'
+        ? document.getElementById('match-army-custom').value.trim()
+        : armySel;
+
+      const oppArmySel = document.getElementById('match-opp-army').value;
+      const opponentArmy = oppArmySel === '__custom__'
+        ? document.getElementById('match-opp-army-custom').value.trim()
+        : oppArmySel;
+
+      const payload = {
+        date: document.getElementById('match-date').value,
+        playerId: document.getElementById('match-player').value,
+        armyUsed,
+        opponentName: document.getElementById('match-opponent').value.trim(),
+        opponentArmy,
+        result: document.getElementById('match-result').value,
+        pointsDiff: document.getElementById('match-points').value
+      };
+
+      try {
+        const res = await fetch('/api/matches', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert.textContent = `✓ Match recorded: ${data.match.playerName} vs ${data.match.opponentName} — ${data.match.result}`;
+          alert.className = 'alert success';
+          document.getElementById('match-form').reset();
+          document.getElementById('match-date').value = new Date().toISOString().split('T')[0];
+          document.getElementById('match-army-custom-group').style.display = 'none';
+          document.getElementById('match-opp-army-custom-group').style.display = 'none';
+        } else {
+          throw new Error(data.error || 'Unknown error');
+        }
+      } catch (err) {
+        alert.textContent = '✗ Error: ' + err.message;
+        alert.className = 'alert error';
+      }
+    }
+
+    // ─── Submit Player ──────────────────────────────────────────────
+    async function submitPlayer(e) {
+      e.preventDefault();
+      const alert = document.getElementById('player-alert');
+      alert.className = 'alert';
+
+      const selectArmies = Array.from(document.getElementById('player-armies').selectedOptions).map(o => o.value);
+      const customArmies = document.getElementById('player-armies-custom').value
+        .split(',').map(s => s.trim()).filter(Boolean);
+      const armies = [...new Set([...selectArmies, ...customArmies])];
+
+      const payload = {
+        name: document.getElementById('player-name').value.trim(),
+        armies,
+        photo: document.getElementById('player-photo').value.trim()
+      };
+
+      try {
+        const res = await fetch('/api/players', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert.textContent = `✓ Player added: ${data.player.name} (${data.player.armies.join(', ')})`;
+          alert.className = 'alert success';
+          document.getElementById('player-form').reset();
+
+          // Refresh player dropdown in match form
+          fetch('/api/players').then(r => r.json()).then(players => {
+            const sel = document.getElementById('match-player');
+            while (sel.options.length > 1) sel.remove(1);
+            players.forEach(p => {
+              const opt = document.createElement('option');
+              opt.value = p.id; opt.textContent = p.name;
+              sel.appendChild(opt);
+            });
+          });
+        } else {
+          throw new Error(data.error || 'Unknown error');
+        }
+      } catch (err) {
+        alert.textContent = '✗ Error: ' + err.message;
+        alert.className = 'alert error';
+      }
+    }
+  </script>
+
+</body>
+</html>

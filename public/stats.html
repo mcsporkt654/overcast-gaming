@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Match Stats — Overcast Gaming</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <span class="skull">☠</span> Overcast Gaming
+      </a>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/roster">Roster</a></li>
+        <li><a href="/stats" class="active">Match Stats</a></li>
+        <li><a href="/admin">Admin</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <div style="background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 2.5rem var(--gutter) 2rem;">
+    <div style="max-width:1200px; margin:0 auto;">
+      <p style="font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.4rem;">The Annals of War</p>
+      <h1 style="font-size:2rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-primary);">
+        Match <span style="color:var(--accent)">Statistics</span>
+      </h1>
+      <p style="color:var(--text-muted); font-size:0.9rem; margin-top:0.4rem;">Complete battle records, faction performance, and league standings.</p>
+    </div>
+  </div>
+
+  <section class="section">
+
+    <!-- Summary: Leaderboard + Army Win Rates -->
+    <div class="summary-grid" id="summary-grid">
+      <div class="summary-card" id="leaderboard-card">
+        <h3>Leaderboard</h3>
+        <div id="leaderboard-list"><div class="loader">Loading...</div></div>
+      </div>
+      <div class="summary-card" id="army-card">
+        <h3>Faction Win Rates</h3>
+        <div id="army-list"><div class="loader">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <input type="text" id="filter-player" placeholder="🔍 Filter by player name..." />
+      <select id="filter-army">
+        <option value="">All Factions</option>
+      </select>
+      <select id="filter-result">
+        <option value="">All Results</option>
+        <option value="W">Wins</option>
+        <option value="L">Losses</option>
+        <option value="D">Draws</option>
+      </select>
+    </div>
+
+    <!-- Match Table -->
+    <div class="section-header" style="margin-bottom:1rem">
+      <h2>Battle Log</h2>
+      <span class="section-line"></span>
+      <span id="match-count" style="font-size:0.75rem; color:var(--text-muted); white-space:nowrap"></span>
+    </div>
+    <div class="table-wrapper">
+      <table id="match-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Player</th>
+            <th>Army Used</th>
+            <th>vs. Opponent</th>
+            <th>Opp. Army</th>
+            <th>Result</th>
+            <th>Pts Diff</th>
+          </tr>
+        </thead>
+        <tbody id="match-tbody">
+          <tr><td colspan="7" class="loader">Loading battle records...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>Overcast Gaming <span class="skull-divider">☠</span> Portland, Oregon <span class="skull-divider">☠</span> Warhammer 40,000 League</p>
+  </footer>
+
+  <script>
+    let allMatches = [];
+
+    // Load stats summary
+    fetch('/api/stats')
+      .then(r => r.json())
+      .then(data => {
+        // Leaderboard
+        const lb = document.getElementById('leaderboard-list');
+        if (!data.leaderboard.length) {
+          lb.innerHTML = '<p class="no-data" style="padding:1rem 0; font-size:0.8rem">No players with 3+ games yet.</p>';
+        } else {
+          const rankClasses = ['gold', 'silver', 'bronze'];
+          lb.innerHTML = data.leaderboard.map((p, i) => `
+            <div class="leaderboard-row">
+              <span class="lb-rank ${rankClasses[i] || ''}">${i + 1}</span>
+              <span class="lb-name">${p.name}</span>
+              <span class="lb-record" style="font-size:0.72rem">
+                <span style="color:var(--win)">W${p.wins}</span>
+                <span style="color:var(--text-muted)"> / </span>
+                <span style="color:var(--loss)">L${p.losses}</span>
+                <span style="color:var(--text-muted)"> / </span>
+                <span style="color:var(--draw)">D${p.draws}</span>
+              </span>
+              <span class="lb-winrate">${p.winRate}%</span>
+            </div>`).join('');
+        }
+
+        // Army win rates
+        const al = document.getElementById('army-list');
+        if (!data.armyWinRates.length) {
+          al.innerHTML = '<p class="no-data" style="padding:1rem 0; font-size:0.8rem">No army data yet.</p>';
+        } else {
+          al.innerHTML = data.armyWinRates.map(a => `
+            <div class="army-row">
+              <span class="army-name">${a.army}</span>
+              <span style="font-size:0.7rem; color:var(--text-muted)">${a.wins}/${a.total}</span>
+              <div class="army-bar-wrap"><div class="army-bar" style="width:${a.winRate}%"></div></div>
+              <span class="army-winrate">${a.winRate}%</span>
+            </div>`).join('');
+        }
+      })
+      .catch(() => {});
+
+    // Load matches
+    fetch('/api/matches')
+      .then(r => r.json())
+      .then(matches => {
+        allMatches = matches;
+
+        // Populate army filter
+        const armies = [...new Set(matches.map(m => m.armyUsed))].sort();
+        const sel = document.getElementById('filter-army');
+        armies.forEach(a => {
+          const opt = document.createElement('option');
+          opt.value = a; opt.textContent = a;
+          sel.appendChild(opt);
+        });
+
+        renderTable(matches);
+
+        // Filter listeners
+        document.getElementById('filter-player').addEventListener('input', applyFilters);
+        document.getElementById('filter-army').addEventListener('change', applyFilters);
+        document.getElementById('filter-result').addEventListener('change', applyFilters);
+      })
+      .catch(() => {
+        document.getElementById('match-tbody').innerHTML = '<tr><td colspan="7" class="no-data">Could not load match data.</td></tr>';
+      });
+
+    function applyFilters() {
+      const player = document.getElementById('filter-player').value.toLowerCase();
+      const army = document.getElementById('filter-army').value;
+      const result = document.getElementById('filter-result').value;
+      const filtered = allMatches.filter(m => {
+        if (player && !m.playerName.toLowerCase().includes(player) && !m.opponentName.toLowerCase().includes(player)) return false;
+        if (army && m.armyUsed !== army) return false;
+        if (result && m.result !== result) return false;
+        return true;
+      });
+      renderTable(filtered);
+    }
+
+    function renderTable(matches) {
+      const tbody = document.getElementById('match-tbody');
+      document.getElementById('match-count').textContent = `${matches.length} match${matches.length !== 1 ? 'es' : ''}`;
+
+      if (!matches.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="no-data">No matches found for the selected filters.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = matches.map(m => {
+        const pd = m.pointsDiff != null
+          ? (m.pointsDiff > 0
+              ? `<span class="points-pos">+${m.pointsDiff}</span>`
+              : m.pointsDiff < 0
+                ? `<span class="points-neg">${m.pointsDiff}</span>`
+                : '0')
+          : '—';
+        const date = new Date(m.date + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+        return `<tr>
+          <td style="color:var(--text-muted); white-space:nowrap">${date}</td>
+          <td style="font-weight:600; color:var(--text-primary)">${m.playerName}</td>
+          <td><span class="army-tag">${m.armyUsed}</span></td>
+          <td>${m.opponentName}</td>
+          <td><span class="army-tag" style="color:var(--text-muted); border-color:var(--border)">${m.opponentArmy}</span></td>
+          <td><span class="result-badge result-${m.result}">${m.result}</span></td>
+          <td>${pd}</td>
+        </tr>`;
+      }).join('');
+    }
+  </script>
+
+</body>
+</html>

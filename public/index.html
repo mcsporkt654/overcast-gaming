@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Overcast Gaming — Warhammer 40K League | Portland, OR</title>
+  <meta name="description" content="Overcast Gaming is a Warhammer 40K competitive gaming group based in Portland, Oregon. Track roster, match stats, and league standings." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <span class="skull">☠</span> Overcast Gaming
+      </a>
+      <ul class="nav-links">
+        <li><a href="/" class="active">Home</a></li>
+        <li><a href="/roster">Roster</a></li>
+        <li><a href="/stats">Match Stats</a></li>
+        <li><a href="/admin">Admin</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <p class="hero-eyebrow">Est. Portland, Oregon &mdash; In the Grimdark of the Far Future</p>
+    <h1><span>Overcast</span> Gaming</h1>
+    <p class="hero-tagline">For the Glory of the Battle. For the Honor of the Faction.</p>
+    <p class="hero-location">⚔ Portland, Oregon &bull; Warhammer 40,000 Competitive League</p>
+    <div class="hero-divider"></div>
+    <div class="hero-actions">
+      <a href="/roster" class="btn btn-primary">⚔ View Roster</a>
+      <a href="/stats" class="btn btn-outline">📊 Match Stats</a>
+    </div>
+  </section>
+
+  <!-- Stats Bar (dynamic) -->
+  <section class="stats-bar">
+    <div class="stats-bar-inner" id="stats-bar">
+      <div class="stat-item">
+        <span class="stat-value" id="stat-players">—</span>
+        <span class="stat-label">Active Players</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value" id="stat-games">—</span>
+        <span class="stat-label">Games Played</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value" id="stat-army" style="font-size:1.2rem; padding-top:0.3rem;">—</span>
+        <span class="stat-label">Top Army Played</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Recent Matches Preview -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Recent Battles</h2>
+      <span class="section-line"></span>
+      <a href="/stats" class="btn btn-outline" style="font-size:0.72rem; padding: 0.4rem 1rem;">All Stats →</a>
+    </div>
+    <div class="table-wrapper">
+      <table id="recent-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Player</th>
+            <th>Army</th>
+            <th>vs. Opponent</th>
+            <th>Opp. Army</th>
+            <th>Result</th>
+            <th>Pts Diff</th>
+          </tr>
+        </thead>
+        <tbody id="recent-tbody">
+          <tr><td colspan="7" class="loader">Loading battle records...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Merch Banner -->
+  <!-- UPDATE THIS: Replace href="#" with actual merch store URL before going live -->
+  <div class="merch-banner">
+    <h3>⚙ Gear Up, Commander</h3>
+    <p>Rep your faction. Overcast Gaming merch — shirts, dice bags, accessories.</p>
+    <a href="#" class="btn btn-primary" target="_blank" rel="noopener">
+      <!-- UPDATE THIS: Replace # with actual merch URL -->
+      🛒 Visit the Merch Store
+    </a>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>Overcast Gaming <span class="skull-divider">☠</span> Portland, Oregon <span class="skull-divider">☠</span> Warhammer 40,000 League</p>
+    <p style="margin-top:0.5rem; font-size:0.7rem; color: var(--text-muted);">Not affiliated with Games Workshop. Warhammer 40,000 © Games Workshop Ltd.</p>
+  </footer>
+
+  <script>
+    // Load stats bar
+    fetch('/api/stats')
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('stat-players').textContent = data.totalPlayers;
+        document.getElementById('stat-games').textContent = data.totalGames;
+        document.getElementById('stat-army').textContent = data.mostPlayedArmy || '—';
+      })
+      .catch(() => {});
+
+    // Load recent matches (last 5)
+    fetch('/api/matches')
+      .then(r => r.json())
+      .then(matches => {
+        const tbody = document.getElementById('recent-tbody');
+        const recent = matches.slice(0, 5);
+        if (recent.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="no-data">No battles recorded yet.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = recent.map(m => {
+          const pd = m.pointsDiff != null ? (m.pointsDiff > 0 ? `<span class="points-pos">+${m.pointsDiff}</span>` : m.pointsDiff < 0 ? `<span class="points-neg">${m.pointsDiff}</span>` : '0') : '—';
+          const date = new Date(m.date + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+          return `<tr>
+            <td>${date}</td>
+            <td style="font-weight:600; color:var(--text-primary)">${m.playerName}</td>
+            <td><span class="army-tag">${m.armyUsed}</span></td>
+            <td>${m.opponentName}</td>
+            <td><span class="army-tag" style="color:var(--text-muted); border-color:var(--border)">${m.opponentArmy}</span></td>
+            <td><span class="result-badge result-${m.result}">${m.result}</span></td>
+            <td>${pd}</td>
+          </tr>`;
+        }).join('');
+      })
+      .catch(() => {
+        document.getElementById('recent-tbody').innerHTML = '<tr><td colspan="7" class="no-data">Could not load match data.</td></tr>';
+      });
+
+    // Highlight active nav
+    document.querySelectorAll('.nav-links a').forEach(a => {
+      if (a.getAttribute('href') === '/') a.classList.add('active');
+      else a.classList.remove('active');
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roster — Overcast Gaming</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <span class="skull">☠</span> Overcast Gaming
+      </a>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/roster" class="active">Roster</a></li>
+        <li><a href="/stats">Match Stats</a></li>
+        <li><a href="/admin">Admin</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <div style="background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 2.5rem var(--gutter) 2rem;">
+    <div style="max-width:1200px; margin:0 auto;">
+      <p style="font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.4rem;">Portland, Oregon</p>
+      <h1 style="font-size:2rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-primary);">
+        The <span style="color:var(--accent)">Roster</span>
+      </h1>
+      <p style="color:var(--text-muted); font-size:0.9rem; margin-top:0.4rem;">The commanders of Overcast Gaming and the factions they command.</p>
+    </div>
+  </div>
+
+  <!-- Roster Grid -->
+  <section class="section">
+    <div id="roster-grid" class="roster-grid">
+      <div class="loader">Summoning warriors...</div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>Overcast Gaming <span class="skull-divider">☠</span> Portland, Oregon <span class="skull-divider">☠</span> Warhammer 40,000 League</p>
+  </footer>
+
+  <script>
+    fetch('/api/players')
+      .then(r => r.json())
+      .then(players => {
+        const grid = document.getElementById('roster-grid');
+        if (!players.length) {
+          grid.innerHTML = '<p class="no-data">No players found. Add one via the Admin panel.</p>';
+          return;
+        }
+
+        grid.innerHTML = players.map(p => {
+          const avatarHTML = p.photo
+            ? `<img src="${p.photo}" alt="${p.name}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--border-glow);margin:0 auto 1rem;display:block;" onerror="this.parentElement.innerHTML='<div class=\\'player-avatar-placeholder\\'>☠</div>'">`
+            : `<div class="player-avatar-placeholder">☠</div>`;
+
+          const armyTags = p.armies.map(a => `<span class="army-tag">${a}</span>`).join('');
+
+          let winRateHTML = '';
+          if (p.total > 0) {
+            winRateHTML = `
+              <div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--border)">
+                <span class="player-win-rate">${p.winRate}%</span>
+                <span class="player-win-label">Win Rate</span>
+                <p class="player-wld">
+                  <span class="w">W ${p.wins}</span> &bull;
+                  <span class="l">L ${p.losses}</span> &bull;
+                  <span class="d">D ${p.draws}</span>
+                  &nbsp;(${p.total} games)
+                </p>
+              </div>`;
+          } else {
+            winRateHTML = `
+              <div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--border)">
+                <span style="font-size:0.75rem; color:var(--text-muted)">No games recorded</span>
+              </div>`;
+          }
+
+          return `<div class="player-card">
+            ${avatarHTML}
+            <div class="player-name">${p.name}</div>
+            <div class="army-tags">${armyTags || '<span class="army-tag" style="color:var(--text-muted)">Unaligned</span>'}</div>
+            ${winRateHTML}
+          </div>`;
+        }).join('');
+      })
+      .catch(() => {
+        document.getElementById('roster-grid').innerHTML = '<p class="no-data">Could not load roster data.</p>';
+      });
+  </script>
+
+</body>
+</html>
