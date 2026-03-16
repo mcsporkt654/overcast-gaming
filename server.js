@@ -67,17 +67,28 @@ app.get('/api/players', (req, res) => {
 
 app.post('/api/players', requireAdmin, (req, res) => {
   const players = readJSON(PLAYERS_FILE);
-  const { name, armies, photo } = req.body;
+  const { name, armies, photo, socials } = req.body;
 
   if (!name || !armies || !Array.isArray(armies)) {
     return res.status(400).json({ error: 'Name and armies array are required.' });
+  }
+
+  const allowedSocials = ['instagram', 'twitter', 'youtube', 'twitch', 'tiktok', 'discord', 'reddit', 'facebook'];
+  const cleanSocials = {};
+  if (socials && typeof socials === 'object') {
+    allowedSocials.forEach(s => {
+      if (socials[s] && typeof socials[s] === 'string') {
+        cleanSocials[s] = socials[s].trim();
+      }
+    });
   }
 
   const newPlayer = {
     id: 'player-' + Date.now(),
     name: name.trim(),
     armies: armies.map(a => a.trim()).filter(Boolean),
-    photo: photo ? photo.trim() : ''
+    photo: photo ? photo.trim() : '',
+    socials: cleanSocials
   };
 
   players.push(newPlayer);

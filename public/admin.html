@@ -152,6 +152,44 @@
               <p class="form-hint">Leave blank to use the default placeholder.</p>
             </div>
 
+            <div class="form-group">
+              <label style="color:var(--accent); font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase;">Social Links <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.4rem;">
+                <div>
+                  <label for="social-instagram" style="font-size:0.72rem; color:var(--text-muted);">Instagram</label>
+                  <input type="text" id="social-instagram" placeholder="username or URL" />
+                </div>
+                <div>
+                  <label for="social-twitter" style="font-size:0.72rem; color:var(--text-muted);">X / Twitter</label>
+                  <input type="text" id="social-twitter" placeholder="username or URL" />
+                </div>
+                <div>
+                  <label for="social-youtube" style="font-size:0.72rem; color:var(--text-muted);">YouTube</label>
+                  <input type="url" id="social-youtube" placeholder="https://youtube.com/..." />
+                </div>
+                <div>
+                  <label for="social-twitch" style="font-size:0.72rem; color:var(--text-muted);">Twitch</label>
+                  <input type="text" id="social-twitch" placeholder="username or URL" />
+                </div>
+                <div>
+                  <label for="social-tiktok" style="font-size:0.72rem; color:var(--text-muted);">TikTok</label>
+                  <input type="text" id="social-tiktok" placeholder="username or URL" />
+                </div>
+                <div>
+                  <label for="social-discord" style="font-size:0.72rem; color:var(--text-muted);">Discord</label>
+                  <input type="text" id="social-discord" placeholder="username or server URL" />
+                </div>
+                <div>
+                  <label for="social-reddit" style="font-size:0.72rem; color:var(--text-muted);">Reddit</label>
+                  <input type="text" id="social-reddit" placeholder="u/username or URL" />
+                </div>
+                <div>
+                  <label for="social-facebook" style="font-size:0.72rem; color:var(--text-muted);">Facebook</label>
+                  <input type="url" id="social-facebook" placeholder="https://facebook.com/..." />
+                </div>
+              </div>
+            </div>
+
             <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem">➕ Add Player</button>
           </form>
         </div>
@@ -335,10 +373,18 @@
         .split(',').map(s => s.trim()).filter(Boolean);
       const armies = [...new Set([...selectArmies, ...customArmies])];
 
+      const socialKeys = ['instagram','twitter','youtube','twitch','tiktok','discord','reddit','facebook'];
+      const socials = {};
+      socialKeys.forEach(k => {
+        const val = document.getElementById('social-' + k)?.value.trim();
+        if (val) socials[k] = val;
+      });
+
       const payload = {
         name: document.getElementById('player-name').value.trim(),
         armies,
-        photo: document.getElementById('player-photo').value.trim()
+        photo: document.getElementById('player-photo').value.trim(),
+        socials
       };
 
       try {
