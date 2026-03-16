@@ -3,12 +3,27 @@
  * Node.js + Express server with JSON flat-file database
  */
 
+require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3459;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+if (!ADMIN_PASSWORD) {
+  console.error('❌  ADMIN_PASSWORD not set in .env — admin routes disabled for safety.');
+}
+
+// ─── Auth Middleware ──────────────────────────────────────────────────────────
+function requireAdmin(req, res, next) {
+  const token = req.headers['x-admin-token'];
+  if (!ADMIN_PASSWORD || token !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+}
 
 const DATA_DIR = path.join(__dirname, 'data');
 const PLAYERS_FILE = path.join(DATA_DIR, 'players.json');
@@ -50,7 +65,7 @@ app.get('/api/players', (req, res) => {
   res.json(enriched);
 });
 
-app.post('/api/players', (req, res) => {
+app.post('/api/players', requireAdmin, (req, res) => {
   const players = readJSON(PLAYERS_FILE);
   const { name, armies, photo } = req.body;
 
@@ -78,7 +93,7 @@ app.get('/api/matches', (req, res) => {
   res.json(matches);
 });
 
-app.post('/api/matches', (req, res) => {
+app.post('/api/matches', requireAdmin, (req, res) => {
   const matches = readJSON(MATCHES_FILE);
   const players = readJSON(PLAYERS_FILE);
 
@@ -150,6 +165,15 @@ app.get('/api/stats', (req, res) => {
     .sort((a, b) => b.winRate - a.winRate);
 
   res.json({ totalPlayers, totalGames, mostPlayedArmy, leaderboard, armyWinRates });
+});
+
+// ─── API: Admin verify (checks password server-side, never exposes it) ────────
+app.post('/api/admin/verify', (req, res) => {
+  const { password } = req.body;
+  if (!ADMIN_PASSWORD || password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ success: false });
+  }
+  res.json({ success: true, token: ADMIN_PASSWORD });
 });
 
 // ─── HTML Routes ──────────────────────────────────────────────────────────────
