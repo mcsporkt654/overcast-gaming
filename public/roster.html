@@ -119,6 +119,105 @@
       return link;
     }
 
+    function playerListSources() {
+      return window.location.protocol === 'file:'
+        ? ['../data/players.json', '/api/players']
+        : ['/api/players', '../data/players.json'];
+    }
+
+    function playerAnalyticsSources(playerId) {
+      return window.location.protocol === 'file:'
+        ? [null, '../data/players.json', '../data/matches.json']
+        : [`/api/players/${encodeURIComponent(playerId)}/analytics`, '/api/players', '../data/players.json', '../data/matches.json'];
+    }
+
+    async function fetchJsonFallback(urls) {
+      const list = Array.isArray(urls) ? urls : [urls];
+      let lastError = null;
+
+      for (const url of list) {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`Request failed: ${url}`);
+          return await res.json();
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError || new Error('Unable to load JSON data.');
+    }
+
+    async function loadPlayerAnalytics(playerId) {
+      const useLocalFiles = window.location.protocol === 'file:';
+
+      if (!useLocalFiles) {
+        try {
+          const res = await fetch(`/api/players/${encodeURIComponent(playerId)}/analytics`);
+          if (res.ok) return await res.json();
+        } catch (_) {
+          // Fall through to local-data computation.
+        }
+      }
+
+      const [players, matches] = await Promise.all([
+        fetchJsonFallback(playerListSources()),
+        fetchJsonFallback(window.location.protocol === 'file:' ? ['../data/matches.json', '/api/matches'] : ['/api/matches', '../data/matches.json'])
+      ]);
+
+      const player = players.find(p => p.id === playerId) || { id: playerId, name: 'Unknown Commander' };
+      const playerMatches = matches
+        .filter(match => match.playerId === playerId)
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      const factionMap = new Map();
+      const subfactionMap = new Map();
+      const monthlyMap = new Map();
+
+      playerMatches.forEach(match => {
+        const army = match.armyUsed || 'Unknown';
+        const subfaction = match.armySubfaction || 'Unspecified';
+        const result = ['W', 'L', 'D'].includes(match.result) ? match.result : 'D';
+
+        if (!factionMap.has(army)) factionMap.set(army, { army, wins: 0, losses: 0, draws: 0, total: 0, firstDate: match.date, lastDate: match.date });
+        const factionRow = factionMap.get(army);
+        factionRow.total += 1;
+        factionRow.firstDate = factionRow.firstDate < match.date ? factionRow.firstDate : match.date;
+        factionRow.lastDate = factionRow.lastDate > match.date ? factionRow.lastDate : match.date;
+        if (result === 'W') factionRow.wins += 1;
+        else if (result === 'L') factionRow.losses += 1;
+        else factionRow.draws += 1;
+
+        const subKey = `${army}__${subfaction}`;
+        if (!subfactionMap.has(subKey)) subfactionMap.set(subKey, { army, subfaction, wins: 0, losses: 0, draws: 0, total: 0, firstDate: match.date, lastDate: match.date });
+        const subRow = subfactionMap.get(subKey);
+        subRow.total += 1;
+        subRow.firstDate = subRow.firstDate < match.date ? subRow.firstDate : match.date;
+        subRow.lastDate = subRow.lastDate > match.date ? subRow.lastDate : match.date;
+        if (result === 'W') subRow.wins += 1;
+        else if (result === 'L') subRow.losses += 1;
+        else subRow.draws += 1;
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(match.date || '')) {
+          const month = match.date.slice(0, 7);
+          if (!monthlyMap.has(month)) monthlyMap.set(month, { month, wins: 0, losses: 0, draws: 0, total: 0 });
+          const monthRow = monthlyMap.get(month);
+          monthRow.total += 1;
+          if (result === 'W') monthRow.wins += 1;
+          else if (result === 'L') monthRow.losses += 1;
+          else monthRow.draws += 1;
+        }
+      });
+
+      return {
+        player,
+        matches: playerMatches,
+        factionStats: Array.from(factionMap.values()).map(row => ({ ...row, winRate: row.total ? Math.round((row.wins / row.total) * 100) : 0 })).sort((a, b) => b.total - a.total || b.winRate - a.winRate),
+        subfactionStats: Array.from(subfactionMap.values()).map(row => ({ ...row, winRate: row.total ? Math.round((row.wins / row.total) * 100) : 0 })).sort((a, b) => b.total - a.total || b.winRate - a.winRate),
+        monthlyStats: Array.from(monthlyMap.values()).map(row => ({ ...row, winRate: row.total ? Math.round((row.wins / row.total) * 100) : 0 })).sort((a, b) => a.month.localeCompare(b.month))
+      };
+    }
+
     function openPlayerModal() {
       const modal = document.getElementById('player-modal');
       modal.hidden = false;
@@ -304,8 +403,33 @@
       }
     });
 
-    fetch('/api/players')
-      .then(r => r.json())
+    fetchJsonFallback(playerListSources())
+      .then(async players => {
+        if (players.length && players.every(p => typeof p.total === 'number')) {
+          return players;
+        }
+
+        const matches = await fetchJsonFallback(window.location.protocol === 'file:' ? ['../data/matches.json', '/api/matches'] : ['/api/matches', '../data/matches.json']);
+        const byPlayer = new Map();
+        matches.forEach(match => {
+          if (!match.playerId) return;
+          if (!byPlayer.has(match.playerId)) byPlayer.set(match.playerId, { wins: 0, losses: 0, draws: 0, total: 0 });
+          const row = byPlayer.get(match.playerId);
+          row.total += 1;
+          if (match.result === 'W') row.wins += 1;
+          else if (match.result === 'L') row.losses += 1;
+          else row.draws += 1;
+        });
+
+        return players.map(player => {
+          const stats = byPlayer.get(player.id) || { wins: 0, losses: 0, draws: 0, total: 0 };
+          return {
+            ...player,
+            ...stats,
+            winRate: stats.total ? Math.round((stats.wins / stats.total) * 100) : null
+          };
+        });
+      })
       .then(players => {
         const grid = document.getElementById('roster-grid');
         grid.textContent = '';
@@ -334,15 +458,14 @@
             activePlayerSubfaction = '';
             openPlayerModal();
 
-            fetch(`/api/players/${encodeURIComponent(p.id)}/analytics`)
-              .then(r => r.json())
-              .then(data => {
-                activePlayerAnalytics = data;
-                renderPlayerModal(data);
-              })
-              .catch(() => {
-                modalBody.innerHTML = '<p class="no-data">Could not load player analytics.</p>';
-              });
+              loadPlayerAnalytics(p.id)
+                .then(data => {
+                  activePlayerAnalytics = data;
+                  renderPlayerModal(data);
+                })
+                .catch(() => {
+                  modalBody.innerHTML = '<p class="no-data">Could not load player analytics.</p>';
+                });
           };
 
           card.addEventListener('click', event => {
