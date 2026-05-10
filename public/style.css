@@ -935,6 +935,10 @@ td {
   justify-content: center;
 }
 
+.player-modal[hidden] {
+  display: none !important;
+}
+
 .player-modal-backdrop {
   position: absolute;
   inset: 0;
