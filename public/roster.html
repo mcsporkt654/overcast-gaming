@@ -46,12 +46,40 @@
     </div>
   </section>
 
+  <div id="player-modal" class="player-modal" hidden aria-hidden="true">
+    <div class="player-modal-backdrop" data-close-player-modal></div>
+    <div class="player-modal-panel" role="dialog" aria-modal="true" aria-labelledby="player-modal-title">
+      <button class="player-modal-close" type="button" data-close-player-modal aria-label="Close player details">×</button>
+      <div id="player-modal-body">
+        <div class="loader">Selecting commander...</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer>
     <p>Overcast Gaming <span class="skull-divider">☠</span> Portland, Oregon <span class="skull-divider">☠</span> Warhammer 40,000 League</p>
   </footer>
 
   <script>
+    let activePlayerAnalytics = null;
+    let activePlayerArmy = '';
+    let activePlayerSubfaction = '';
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function toDate(value) {
+      if (!value) return 'Unknown date';
+      return new Date(value + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
     function normalizeSocialUrl(rawValue) {
       const value = String(rawValue || '').trim();
       if (!value) return null;
@@ -91,6 +119,191 @@
       return link;
     }
 
+    function openPlayerModal() {
+      const modal = document.getElementById('player-modal');
+      modal.hidden = false;
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePlayerModal() {
+      const modal = document.getElementById('player-modal');
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    function renderPlayerModal(data) {
+      const modalBody = document.getElementById('player-modal-body');
+      const player = data.player || {};
+      const matches = Array.isArray(data.matches) ? data.matches : [];
+      const factions = Array.isArray(data.factionStats) ? data.factionStats : [];
+      const subfactions = Array.isArray(data.subfactionStats) ? data.subfactionStats : [];
+      const monthly = Array.isArray(data.monthlyStats) ? data.monthlyStats : [];
+
+      const visibleMatches = matches.filter(match => {
+        if (activePlayerArmy && match.armyUsed !== activePlayerArmy) return false;
+        if (activePlayerSubfaction && (match.armySubfaction || 'Unspecified') !== activePlayerSubfaction) return false;
+        return true;
+      });
+
+      const overallWins = visibleMatches.filter(m => m.result === 'W').length;
+      const overallLosses = visibleMatches.filter(m => m.result === 'L').length;
+      const overallDraws = visibleMatches.filter(m => m.result === 'D').length;
+      const overallTotal = visibleMatches.length;
+      const overallWinRate = overallTotal ? Math.round((overallWins / overallTotal) * 100) : 0;
+
+      const availableSubfactions = subfactions.filter(s => !activePlayerArmy || s.army === activePlayerArmy);
+      if (activePlayerSubfaction && !availableSubfactions.some(s => s.subfaction === activePlayerSubfaction)) {
+        activePlayerSubfaction = '';
+      }
+
+      const armyOptions = ['<option value="">All Factions</option>']
+        .concat(factions.map(f => `<option value="${escapeHtml(f.army)}" ${activePlayerArmy === f.army ? 'selected' : ''}>${escapeHtml(f.army)}</option>`))
+        .join('');
+      const subfactionOptions = ['<option value="">All Subfactions</option>']
+        .concat(availableSubfactions.map(s => `<option value="${escapeHtml(s.subfaction)}" ${activePlayerSubfaction === s.subfaction ? 'selected' : ''}>${escapeHtml(s.subfaction)}</option>`))
+        .join('');
+
+      const factionRows = factions.length ? factions.map(f => `
+        <div class="leaderboard-row">
+          <span class="lb-name">${escapeHtml(f.army)}</span>
+          <span class="lb-record">${f.wins}-${f.losses}-${f.draws}</span>
+          <span class="lb-winrate">${f.winRate}%</span>
+        </div>
+      `).join('') : '<p class="no-data">No faction data yet.</p>';
+
+      const subfactionRows = availableSubfactions.length ? availableSubfactions.map(s => `
+        <div class="leaderboard-row">
+          <span class="lb-name">${escapeHtml(s.subfaction)}</span>
+          <span class="lb-record">${s.wins}-${s.losses}-${s.draws}</span>
+          <span class="lb-winrate">${s.winRate}%</span>
+        </div>
+      `).join('') : '<p class="no-data">Pick a faction to see subfactions.</p>';
+
+      const monthlyRows = monthly.length ? monthly.map(m => `
+        <tr>
+          <td style="white-space:nowrap; color:var(--text-muted);">${escapeHtml(toDate(`${m.month}-01`))}</td>
+          <td>${m.wins}-${m.losses}-${m.draws}</td>
+          <td>${m.winRate}%</td>
+          <td>${m.total}</td>
+        </tr>
+      `).join('') : '<tr><td colspan="4" class="no-data">No monthly trend data.</td></tr>';
+
+      const matchRows = visibleMatches.length ? visibleMatches.map(match => `
+        <tr class="player-match-row" data-match-id="${escapeHtml(match.id)}" style="cursor:pointer;">
+          <td style="white-space:nowrap; color:var(--text-muted);">${escapeHtml(toDate(match.date))}</td>
+          <td>${escapeHtml(match.armyUsed || '—')}</td>
+          <td>${escapeHtml(match.armySubfaction || 'Unspecified')}</td>
+          <td>${escapeHtml(match.opponentName || '—')}</td>
+          <td><span class="result-badge result-${escapeHtml(match.result || 'D')}">${escapeHtml(match.result || 'D')}</span></td>
+          <td>${match.pointsDiff == null ? '—' : escapeHtml(String(match.pointsDiff))}</td>
+          <td>${escapeHtml(match.missionName || '—')}</td>
+        </tr>
+      `).join('') : '<tr><td colspan="7" class="no-data">No matches match the selected filters.</td></tr>';
+
+      modalBody.innerHTML = `
+        <div class="summary-grid">
+          <div class="summary-card">
+            <h3 id="player-modal-title">${escapeHtml(player.name || 'Unknown Commander')}</h3>
+            <p style="color:var(--text-secondary); margin-bottom:0.25rem;">Record: <span style="color:var(--text-primary)">${overallWins}-${overallLosses}-${overallDraws}</span></p>
+            <p style="color:var(--text-secondary); margin-bottom:0.25rem;">Win Rate: <span style="color:var(--text-primary)">${overallWinRate}%</span></p>
+            <p style="color:var(--text-secondary);">Games: <span style="color:var(--text-primary)">${overallTotal}</span></p>
+          </div>
+          <div class="summary-card">
+            <h3>Filter History</h3>
+            <div class="filter-bar" style="margin-bottom:0;">
+              <select id="player-modal-army-filter">${armyOptions}</select>
+              <select id="player-modal-subfaction-filter">${subfactionOptions}</select>
+            </div>
+            <p class="form-hint" style="margin-top:0.6rem;">Narrow the match list by faction or subfaction.</p>
+          </div>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-card">
+            <h3>Faction Split</h3>
+            ${factionRows}
+          </div>
+          <div class="summary-card">
+            <h3>Subfaction Split</h3>
+            ${subfactionRows}
+          </div>
+        </div>
+
+        <div class="summary-card" style="margin-bottom:1.25rem;">
+          <h3>Win Rate Over Time</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Record</th>
+                  <th>Win %</th>
+                  <th>Games</th>
+                </tr>
+              </thead>
+              <tbody>${monthlyRows}</tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <h3>Match List</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Army</th>
+                  <th>Subfaction</th>
+                  <th>Opponent</th>
+                  <th>Result</th>
+                  <th>Pts Diff</th>
+                  <th>Mission</th>
+                </tr>
+              </thead>
+              <tbody>${matchRows}</tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:0.65rem; flex-wrap:wrap; justify-content:flex-end; margin-top:1rem;">
+          <a class="btn btn-outline" href="/player?id=${encodeURIComponent(player.id || '')}" style="font-size:0.72rem;">Open Full Player Page</a>
+        </div>
+      `;
+
+      document.getElementById('player-modal-army-filter').value = activePlayerArmy;
+      document.getElementById('player-modal-subfaction-filter').value = activePlayerSubfaction;
+
+      document.getElementById('player-modal-army-filter').addEventListener('change', e => {
+        activePlayerArmy = e.target.value;
+        activePlayerSubfaction = '';
+        renderPlayerModal(data);
+      });
+
+      document.getElementById('player-modal-subfaction-filter').addEventListener('change', e => {
+        activePlayerSubfaction = e.target.value;
+        renderPlayerModal(data);
+      });
+
+      document.querySelectorAll('.player-match-row').forEach(row => {
+        row.addEventListener('click', () => {
+          window.location.href = `/match-detail?id=${encodeURIComponent(row.dataset.matchId)}`;
+        });
+      });
+    }
+
+    document.querySelectorAll('[data-close-player-modal]').forEach(el => {
+      el.addEventListener('click', closePlayerModal);
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !document.getElementById('player-modal').hidden) {
+        closePlayerModal();
+      }
+    });
+
     fetch('/api/players')
       .then(r => r.json())
       .then(players => {
@@ -108,6 +321,40 @@
         players.forEach(p => {
           const card = document.createElement('div');
           card.className = 'player-card';
+          card.style.cursor = 'pointer';
+          card.tabIndex = 0;
+          card.setAttribute('role', 'link');
+          card.setAttribute('aria-label', `Open player history for ${p.name || 'Unknown Commander'}`);
+
+          const openPlayer = () => {
+            const modalBody = document.getElementById('player-modal-body');
+            modalBody.innerHTML = '<div class="loader">Loading player analytics...</div>';
+            activePlayerAnalytics = null;
+            activePlayerArmy = '';
+            activePlayerSubfaction = '';
+            openPlayerModal();
+
+            fetch(`/api/players/${encodeURIComponent(p.id)}/analytics`)
+              .then(r => r.json())
+              .then(data => {
+                activePlayerAnalytics = data;
+                renderPlayerModal(data);
+              })
+              .catch(() => {
+                modalBody.innerHTML = '<p class="no-data">Could not load player analytics.</p>';
+              });
+          };
+
+          card.addEventListener('click', event => {
+            if (event.target.closest('a')) return;
+            openPlayer();
+          });
+          card.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              openPlayer();
+            }
+          });
 
           if (p.photo) {
             const img = document.createElement('img');
@@ -216,6 +463,14 @@
           if (socialCount > 0) {
             card.appendChild(socialWrap);
           }
+
+          const historyBtn = document.createElement('a');
+          historyBtn.href = `/player?id=${encodeURIComponent(p.id)}`;
+          historyBtn.className = 'btn btn-outline';
+          historyBtn.style.cssText = 'margin-top:0.9rem; font-size:0.68rem; width:100%; justify-content:center;';
+          historyBtn.textContent = 'Open Full Profile';
+          historyBtn.addEventListener('click', event => event.stopPropagation());
+          card.appendChild(historyBtn);
 
           grid.appendChild(card);
         });

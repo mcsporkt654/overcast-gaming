@@ -126,6 +126,7 @@
         const matchupHref = `/matchups${matchupParams.toString() ? `?${matchupParams.toString()}` : ''}`;
         const playerMetaHref = `/meta${playerMetaParams.toString() ? `?${playerMetaParams.toString()}` : ''}`;
         const opponentMetaHref = `/meta${opponentMetaParams.toString() ? `?${opponentMetaParams.toString()}` : ''}`;
+        const playerProfileHref = m.playerId ? `/player?id=${encodeURIComponent(m.playerId)}` : '/stats';
 
         const playerUnits = Array.isArray(m.playerUnits) && m.playerUnits.length
           ? m.playerUnits.map(u => `<li>${formatUnit(u)}</li>`).join('')
@@ -152,6 +153,7 @@
           <div class="summary-card" style="margin-bottom:1.5rem;">
             <h3>Focused Analytics</h3>
             <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+              <a class="btn btn-outline" href="${playerProfileHref}" style="font-size:0.72rem;">${playerName} Profile</a>
               <a class="btn btn-outline" href="${matchupHref}" style="font-size:0.72rem;">${armyUsed} vs ${opponentArmy}</a>
               <a class="btn btn-outline" href="${playerMetaHref}" style="font-size:0.72rem;">${armyUsed} Meta</a>
               <a class="btn btn-outline" href="${opponentMetaHref}" style="font-size:0.72rem;">${opponentArmy} Meta</a>

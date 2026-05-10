@@ -925,6 +925,73 @@ td {
 .army-bar { height: 100%; background: var(--accent); border-radius: 3px; }
 .army-winrate { font-size: 0.85rem; font-weight: 600; color: var(--accent); width: 36px; text-align: right; }
 
+/* ─── Player Modal ──────────────────────────────────────────────── */
+.player-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.player-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 10, 10, 0.78);
+  backdrop-filter: blur(6px);
+}
+
+.player-modal-panel {
+  position: relative;
+  z-index: 1;
+  margin: 3vh auto;
+  width: min(1180px, calc(100vw - 2rem));
+  max-height: 94vh;
+  overflow: auto;
+  background: linear-gradient(180deg, rgba(21,40,40,0.98), rgba(11,22,22,0.98));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+  padding: 1.25rem;
+}
+
+.player-modal-close {
+  position: sticky;
+  top: 0;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(10,26,26,0.94);
+  color: var(--accent);
+  font-size: 1.4rem;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.player-modal-close:hover {
+  border-color: var(--border-glow);
+  box-shadow: var(--glow);
+}
+
+.player-match-row:hover {
+  background: rgba(78,205,196,0.05);
+}
+
+@media (max-width: 900px) {
+  .player-modal-panel {
+    width: calc(100vw - 1rem);
+    margin: 0.5rem auto;
+    max-height: calc(100vh - 1rem);
+    padding: 1rem;
+  }
+}
+
 /* ─── Admin ──────────────────────────────────────────────────────── */
 .login-screen {
   min-height: calc(100vh - 60px);

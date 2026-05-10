@@ -129,6 +129,19 @@
           data.leaderboard.forEach((p, i) => {
             const row = document.createElement('div');
             row.className = 'leaderboard-row';
+            row.style.cursor = 'pointer';
+            row.tabIndex = 0;
+            row.setAttribute('role', 'link');
+            row.setAttribute('aria-label', `Open player history for ${p.name}`);
+            row.addEventListener('click', () => {
+              window.location.href = `/player?id=${encodeURIComponent(p.id || p.name)}`;
+            });
+            row.addEventListener('keydown', e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                window.location.href = `/player?id=${encodeURIComponent(p.id || p.name)}`;
+              }
+            });
 
             const rank = document.createElement('span');
             rank.className = `lb-rank ${rankClasses[i] || ''}`.trim();
@@ -137,6 +150,7 @@
             const name = document.createElement('span');
             name.className = 'lb-name';
             name.textContent = p.name;
+            name.style.textDecoration = 'underline dotted';
 
             const record = document.createElement('span');
             record.className = 'lb-record';

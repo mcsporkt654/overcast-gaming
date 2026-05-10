@@ -206,6 +206,121 @@ function buildSideRecords(matches) {
   return records;
 }
 
+function buildPlayerAnalytics(playerId) {
+  const players = readJSON(PLAYERS_FILE);
+  const matches = readJSON(MATCHES_FILE)
+    .filter(match => match.playerId === playerId)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const player = players.find(entry => entry.id === playerId);
+  if (!player) return null;
+
+  const summary = {
+    wins: 0,
+    losses: 0,
+    draws: 0,
+    total: matches.length
+  };
+
+  const factionMap = new Map();
+  const subfactionMap = new Map();
+  const monthlyMap = new Map();
+
+  matches.forEach(match => {
+    const result = ['W', 'L', 'D'].includes(match.result) ? match.result : 'D';
+    const army = normalizeString(match.armyUsed, 80) || 'Unknown';
+    const subfaction = normalizeString(match.armySubfaction, 80) || 'Unspecified';
+    const month = isIsoDate(match.date) ? match.date.slice(0, 7) : 'Unknown';
+
+    if (result === 'W') summary.wins += 1;
+    if (result === 'L') summary.losses += 1;
+    if (result === 'D') summary.draws += 1;
+
+    const factionKey = army;
+    if (!factionMap.has(factionKey)) {
+      factionMap.set(factionKey, {
+        army,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        total: 0,
+        firstDate: match.date,
+        lastDate: match.date
+      });
+    }
+    const factionRow = factionMap.get(factionKey);
+    factionRow.total += 1;
+    factionRow.firstDate = factionRow.firstDate < match.date ? factionRow.firstDate : match.date;
+    factionRow.lastDate = factionRow.lastDate > match.date ? factionRow.lastDate : match.date;
+    if (result === 'W') factionRow.wins += 1;
+    if (result === 'L') factionRow.losses += 1;
+    if (result === 'D') factionRow.draws += 1;
+
+    const subfactionKey = `${army}__${subfaction}`;
+    if (!subfactionMap.has(subfactionKey)) {
+      subfactionMap.set(subfactionKey, {
+        army,
+        subfaction,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        total: 0,
+        firstDate: match.date,
+        lastDate: match.date
+      });
+    }
+    const subfactionRow = subfactionMap.get(subfactionKey);
+    subfactionRow.total += 1;
+    subfactionRow.firstDate = subfactionRow.firstDate < match.date ? subfactionRow.firstDate : match.date;
+    subfactionRow.lastDate = subfactionRow.lastDate > match.date ? subfactionRow.lastDate : match.date;
+    if (result === 'W') subfactionRow.wins += 1;
+    if (result === 'L') subfactionRow.losses += 1;
+    if (result === 'D') subfactionRow.draws += 1;
+
+    if (!monthlyMap.has(month)) {
+      monthlyMap.set(month, { month, wins: 0, losses: 0, draws: 0, total: 0 });
+    }
+    const monthRow = monthlyMap.get(month);
+    monthRow.total += 1;
+    if (result === 'W') monthRow.wins += 1;
+    if (result === 'L') monthRow.losses += 1;
+    if (result === 'D') monthRow.draws += 1;
+  });
+
+  const factionStats = Array.from(factionMap.values())
+    .map(row => ({
+      ...row,
+      winRate: row.total ? Math.round((row.wins / row.total) * 100) : 0
+    }))
+    .sort((a, b) => b.total - a.total || b.winRate - a.winRate);
+
+  const subfactionStats = Array.from(subfactionMap.values())
+    .map(row => ({
+      ...row,
+      winRate: row.total ? Math.round((row.wins / row.total) * 100) : 0
+    }))
+    .sort((a, b) => b.total - a.total || b.winRate - a.winRate);
+
+  const monthlyStats = Array.from(monthlyMap.values())
+    .map(row => ({
+      ...row,
+      winRate: row.total ? Math.round((row.wins / row.total) * 100) : 0
+    }))
+    .sort((a, b) => a.month.localeCompare(b.month));
+
+  const total = summary.total;
+  const winRate = total ? Math.round((summary.wins / total) * 100) : 0;
+
+  return {
+    player,
+    summary: { ...summary, winRate },
+    factionStats,
+    subfactionStats,
+    monthlyStats,
+    matches
+  };
+}
+
 function normalizeHttpUrl(value) {
   const raw = normalizeString(value, 300);
   if (!raw) return '';
@@ -361,6 +476,15 @@ app.get('/api/matches/:id', (req, res) => {
   res.json(match);
 });
 
+app.get('/api/players/:id/analytics', (req, res) => {
+  const analytics = buildPlayerAnalytics(req.params.id);
+  if (!analytics) {
+    return res.status(404).json({ error: 'Player not found.' });
+  }
+
+  res.json(analytics);
+});
+
 app.post('/api/matches', requireAdmin, (req, res) => {
   const matches = readJSON(MATCHES_FILE);
   const players = readJSON(PLAYERS_FILE);
@@ -514,7 +638,7 @@ app.get('/api/stats', (req, res) => {
       const wins = playerMatches.filter(m => m.result === 'W').length;
       const total = playerMatches.length;
       const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
-      return { name: p.name, wins, losses: playerMatches.filter(m => m.result === 'L').length, draws: playerMatches.filter(m => m.result === 'D').length, total, winRate };
+      return { id: p.id, name: p.name, wins, losses: playerMatches.filter(m => m.result === 'L').length, draws: playerMatches.filter(m => m.result === 'D').length, total, winRate };
     })
     .filter(p => p.total >= 3)
     .sort((a, b) => b.winRate - a.winRate);
@@ -701,6 +825,7 @@ app.get('/api/posts', (req, res) => {
 // ─── HTML Routes ──────────────────────────────────────────────────────────────
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/roster', (req, res) => res.sendFile(path.join(__dirname, 'public', 'roster.html')));
+app.get('/player', (req, res) => res.sendFile(path.join(__dirname, 'public', 'player.html')));
 app.get('/stats', (req, res) => res.sendFile(path.join(__dirname, 'public', 'stats.html')));
 app.get('/match-detail', (req, res) => res.sendFile(path.join(__dirname, 'public', 'match-detail.html')));
 app.get('/matchups', (req, res) => res.sendFile(path.join(__dirname, 'public', 'matchups.html')));
