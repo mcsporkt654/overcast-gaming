@@ -363,13 +363,15 @@
       document.title = `${item.title} — Overcast Gaming`;
     }
 
-    const root = document.getElementById('news-root');
-    const items = Array.isArray(window.OVERCAST_NEWS_ITEMS) ? window.OVERCAST_NEWS_ITEMS : [];
-    const slug = getQuerySlug();
-    const item = items.find(entry => entry.slug === slug);
+    document.addEventListener('DOMContentLoaded', () => {
+      const root = document.getElementById('news-root');
+      const items = Array.isArray(window.OVERCAST_NEWS_ITEMS) ? window.OVERCAST_NEWS_ITEMS : [];
+      const slug = getQuerySlug();
+      const item = items.find(entry => entry.slug === slug);
 
-    if (!item) renderNotFound(root);
-    else renderArticle(root, item, items);
+      if (!item) renderNotFound(root);
+      else renderArticle(root, item, items);
+    });
   </script>
 
 </body>

@@ -620,17 +620,19 @@
       });
     }
 
-    const feedItems = Array.isArray(window.OVERCAST_NEWS_ITEMS) ? window.OVERCAST_NEWS_ITEMS : [];
-    if (!feedItems.length) {
-      const list = document.getElementById('post-list');
-      list.textContent = '';
-      list.appendChild(createEmptyState('No wireframe dispatches found.'));
-    } else {
-      setupViewControls();
-      renderFeedControls(feedItems);
-      renderFeedPosts(feedItems, 'All');
-      applyFeedView('card');
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+      const feedItems = Array.isArray(window.OVERCAST_NEWS_ITEMS) ? window.OVERCAST_NEWS_ITEMS : [];
+      if (!feedItems.length) {
+        const list = document.getElementById('post-list');
+        list.textContent = '';
+        list.appendChild(createEmptyState('No wireframe dispatches found.'));
+      } else {
+        setupViewControls();
+        renderFeedControls(feedItems);
+        renderFeedPosts(feedItems, 'All');
+        applyFeedView('card');
+      }
+    });
   </script>
 
 </body>

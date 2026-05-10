@@ -352,107 +352,109 @@
       return `/news?slug=${encodeURIComponent(slug)}`;
     }
 
-    const spotlightItems = Array.isArray(window.OVERCAST_NEWS_ITEMS)
-      ? [...window.OVERCAST_NEWS_ITEMS].sort((a, b) => new Date(b.date) - new Date(a.date))
-      : [];
+    document.addEventListener('DOMContentLoaded', () => {
+      const spotlightItems = Array.isArray(window.OVERCAST_NEWS_ITEMS)
+        ? [...window.OVERCAST_NEWS_ITEMS].sort((a, b) => new Date(b.date) - new Date(a.date))
+        : [];
 
-    let spotlightIndex = 0;
-    let spotlightTimer = null;
+      let spotlightIndex = 0;
+      let spotlightTimer = null;
 
-    function commitSpotlightItem(item) {
-      const image = document.getElementById('spotlight-image');
-      const category = document.getElementById('spotlight-category');
-      const date = document.getElementById('spotlight-date');
-      const title = document.getElementById('spotlight-title');
-      const excerpt = document.getElementById('spotlight-excerpt');
-      const link = document.getElementById('spotlight-link');
+      function commitSpotlightItem(item) {
+        const image = document.getElementById('spotlight-image');
+        const category = document.getElementById('spotlight-category');
+        const date = document.getElementById('spotlight-date');
+        const title = document.getElementById('spotlight-title');
+        const excerpt = document.getElementById('spotlight-excerpt');
+        const link = document.getElementById('spotlight-link');
 
-      image.src = item.image;
-      image.alt = `${item.title} spotlight image`;
-      category.textContent = item.category || 'Dispatch';
-      date.textContent = formatNewsDate(item.date);
-      date.dateTime = item.date;
-      title.textContent = item.title;
-      excerpt.textContent = item.excerpt;
-      link.href = newsHref(item.slug);
-    }
-
-    function renderSpotlight(withTransition = false) {
-      if (!spotlightItems.length) return;
-
-      const item = spotlightItems[spotlightIndex % spotlightItems.length];
-      const spotlightRoot = document.getElementById('home-spotlight');
-
-      if (!withTransition) {
-        commitSpotlightItem(item);
-        return;
+        image.src = item.image;
+        image.alt = `${item.title} spotlight image`;
+        category.textContent = item.category || 'Dispatch';
+        date.textContent = formatNewsDate(item.date);
+        date.dateTime = item.date;
+        title.textContent = item.title;
+        excerpt.textContent = item.excerpt;
+        link.href = newsHref(item.slug);
       }
 
-      spotlightRoot.classList.add('is-transitioning');
+      function renderSpotlight(withTransition = false) {
+        if (!spotlightItems.length) return;
 
-      const preload = new Image();
-      preload.onload = () => {
-        commitSpotlightItem(item);
-        requestAnimationFrame(() => {
-          spotlightRoot.classList.remove('is-transitioning');
-        });
-      };
-      preload.onerror = () => {
-        commitSpotlightItem(item);
-        requestAnimationFrame(() => {
-          spotlightRoot.classList.remove('is-transitioning');
-        });
-      };
-      preload.src = item.image;
-    }
+        const item = spotlightItems[spotlightIndex % spotlightItems.length];
+        const spotlightRoot = document.getElementById('home-spotlight');
 
-    function rotateSpotlight(delta) {
-      if (!spotlightItems.length) return;
-      spotlightIndex = (spotlightIndex + delta + spotlightItems.length) % spotlightItems.length;
-      renderSpotlight(true);
-    }
+        if (!withTransition) {
+          commitSpotlightItem(item);
+          return;
+        }
 
-    function startSpotlightRotation() {
-      if (!spotlightItems.length) return;
-      if (spotlightTimer) clearInterval(spotlightTimer);
-      spotlightTimer = setInterval(() => rotateSpotlight(1), 7000);
-    }
+        spotlightRoot.classList.add('is-transitioning');
 
-    if (spotlightItems.length) {
-      renderSpotlight();
-      startSpotlightRotation();
+        const preload = new Image();
+        preload.onload = () => {
+          commitSpotlightItem(item);
+          requestAnimationFrame(() => {
+            spotlightRoot.classList.remove('is-transitioning');
+          });
+        };
+        preload.onerror = () => {
+          commitSpotlightItem(item);
+          requestAnimationFrame(() => {
+            spotlightRoot.classList.remove('is-transitioning');
+          });
+        };
+        preload.src = item.image;
+      }
 
-      const spotlightRoot = document.getElementById('home-spotlight');
-      const prevBtn = document.getElementById('spotlight-prev');
-      const nextBtn = document.getElementById('spotlight-next');
+      function rotateSpotlight(delta) {
+        if (!spotlightItems.length) return;
+        spotlightIndex = (spotlightIndex + delta + spotlightItems.length) % spotlightItems.length;
+        renderSpotlight(true);
+      }
 
-      prevBtn.addEventListener('click', () => { rotateSpotlight(-1); startSpotlightRotation(); });
-      nextBtn.addEventListener('click', () => { rotateSpotlight(1); startSpotlightRotation(); });
-
-      // Arrow-key navigation when either button is focused
-      [prevBtn, nextBtn].forEach(btn => {
-        btn.addEventListener('keydown', event => {
-          if (event.key === 'ArrowLeft') {
-            event.preventDefault();
-            rotateSpotlight(-1);
-            startSpotlightRotation();
-            prevBtn.focus();
-          } else if (event.key === 'ArrowRight') {
-            event.preventDefault();
-            rotateSpotlight(1);
-            startSpotlightRotation();
-            nextBtn.focus();
-          }
-        });
-      });
-
-      spotlightRoot.addEventListener('mouseenter', () => {
+      function startSpotlightRotation() {
+        if (!spotlightItems.length) return;
         if (spotlightTimer) clearInterval(spotlightTimer);
-      });
-      spotlightRoot.addEventListener('mouseleave', () => {
+        spotlightTimer = setInterval(() => rotateSpotlight(1), 7000);
+      }
+
+      if (spotlightItems.length) {
+        renderSpotlight();
         startSpotlightRotation();
-      });
-    }
+
+        const spotlightRoot = document.getElementById('home-spotlight');
+        const prevBtn = document.getElementById('spotlight-prev');
+        const nextBtn = document.getElementById('spotlight-next');
+
+        prevBtn.addEventListener('click', () => { rotateSpotlight(-1); startSpotlightRotation(); });
+        nextBtn.addEventListener('click', () => { rotateSpotlight(1); startSpotlightRotation(); });
+
+        // Arrow-key navigation when either button is focused
+        [prevBtn, nextBtn].forEach(btn => {
+          btn.addEventListener('keydown', event => {
+            if (event.key === 'ArrowLeft') {
+              event.preventDefault();
+              rotateSpotlight(-1);
+              startSpotlightRotation();
+              prevBtn.focus();
+            } else if (event.key === 'ArrowRight') {
+              event.preventDefault();
+              rotateSpotlight(1);
+              startSpotlightRotation();
+              nextBtn.focus();
+            }
+          });
+        });
+
+        spotlightRoot.addEventListener('mouseenter', () => {
+          if (spotlightTimer) clearInterval(spotlightTimer);
+        });
+        spotlightRoot.addEventListener('mouseleave', () => {
+          startSpotlightRotation();
+        });
+      }
+    });
   </script>
 
 </body>
