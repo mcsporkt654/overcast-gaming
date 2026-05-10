@@ -374,6 +374,123 @@ nav {
   background: linear-gradient(to right, var(--border), transparent);
 }
 
+/* ─── Home News Feed ─────────────────────────────────────────────── */
+.home-news-banner {
+  background: linear-gradient(120deg, rgba(21,40,40,0.95), rgba(12,26,26,0.95));
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 1rem 1.15rem;
+  margin-bottom: 1.25rem;
+}
+
+.home-news-banner-kicker {
+  font-family: var(--font-gothic);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+}
+
+.home-news-banner p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.home-news-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.home-news-card {
+  background: linear-gradient(180deg, var(--bg-card), #102323);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.home-news-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-glow);
+  box-shadow: var(--glow);
+}
+
+.home-news-card-featured {
+  grid-column: span 2;
+  min-height: 260px;
+  background:
+    linear-gradient(180deg, rgba(18,34,34,0.96), rgba(9,22,22,0.98)),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 18px,
+      rgba(78,205,196,0.03) 18px,
+      rgba(78,205,196,0.03) 19px
+    );
+}
+
+.home-news-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.8rem;
+}
+
+.home-news-meta time {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+
+.home-news-tag {
+  font-family: var(--font-gothic);
+  font-size: 0.66rem;
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid rgba(78,205,196,0.35);
+  border-radius: 4px;
+  background: rgba(78,205,196,0.1);
+}
+
+.home-news-card h3 {
+  font-family: var(--font-gothic);
+  font-size: 1rem;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin-bottom: 0.6rem;
+}
+
+.home-news-card p {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  margin-bottom: 0.9rem;
+}
+
+.home-news-read {
+  margin-top: auto;
+  font-family: var(--font-gothic);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.home-news-read:hover {
+  color: var(--accent-bright);
+}
+
 /* ─── Player Cards ───────────────────────────────────────────────── */
 .roster-grid {
   display: grid;
@@ -878,6 +995,14 @@ footer .skull-divider {
 
 /* ─── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 768px) {
+  .home-news-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+  .home-news-card-featured {
+    grid-column: span 1;
+    min-height: 240px;
+  }
   .nav-inner {
     min-height: 60px;
     height: auto;

@@ -110,15 +110,59 @@
     </div>
   </section>
 
-  <!-- Community Feed Preview -->
-  <section class="section" style="padding-top:0;">
+  <!-- Community News Feed -->
+  <section class="section home-news" style="padding-top:0;" id="community-news">
     <div class="section-header">
-      <h2>Latest from the Front</h2>
+      <h2>Community News Feed</h2>
       <span class="section-line"></span>
       <a href="/feed" class="btn btn-outline" style="font-size:0.72rem; padding: 0.4rem 1rem;">All Posts →</a>
     </div>
-    <div id="feed-preview" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:1.25rem;">
-      <div style="padding:2rem; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); color:var(--text-muted); font-size:0.85rem; text-align:center;">Loading dispatches...</div>
+
+    <div class="home-news-banner">
+      <div class="home-news-banner-kicker">High Command Bulletin</div>
+      <p>Dispatches from league command, battlefields, and local events in the Portland sector.</p>
+    </div>
+
+    <div class="home-news-grid">
+      <article class="home-news-card home-news-card-featured">
+        <div class="home-news-meta">
+          <span class="home-news-tag">League Update</span>
+          <time datetime="2026-05-08">May 8, 2026</time>
+        </div>
+        <h3>OWL Season 3 Campaign Begins With 18 Commanders</h3>
+        <p>The Overcast Warhammer League has officially deployed for Season 3. Pairings are now live, and all round-one battles must be reported by Friday at 10:00 PM. Terrain packs and mission docs are available in Discord under league operations.</p>
+        <a href="/feed" class="home-news-read">Read Full Dispatch →</a>
+      </article>
+
+      <article class="home-news-card">
+        <div class="home-news-meta">
+          <span class="home-news-tag">Match Result</span>
+          <time datetime="2026-05-06">May 6, 2026</time>
+        </div>
+        <h3>Raven Guard Edge Out Necrons in 88-84 Nail-Biter</h3>
+        <p>Captain Vale secured a late objective swing in turn five to steal the win. This result pushes Raven Guard to 3-1 and into second place overall.</p>
+        <a href="/feed" class="home-news-read">View Battle Summary →</a>
+      </article>
+
+      <article class="home-news-card">
+        <div class="home-news-meta">
+          <span class="home-news-tag">Upcoming Event</span>
+          <time datetime="2026-05-18">May 18, 2026</time>
+        </div>
+        <h3>Saturday Open Tables: Boarding Actions Night</h3>
+        <p>Join us at 6:30 PM for casual boarding action games, hobby swap, and painting showcase. New players are welcome and loaner lists will be available on site.</p>
+        <a href="/feed" class="home-news-read">Event Details →</a>
+      </article>
+
+      <article class="home-news-card">
+        <div class="home-news-meta">
+          <span class="home-news-tag">Community Intel</span>
+          <time datetime="2026-05-04">May 4, 2026</time>
+        </div>
+        <h3>Faction Spotlight Poll: Aeldari Surge in Weekly Vote</h3>
+        <p>The community voted Aeldari as this week’s spotlight faction. Share your painted units and tactical notes in the Discord showcase channel before Sunday midnight.</p>
+        <a href="/feed" class="home-news-read">Join the Discussion →</a>
+      </article>
     </div>
   </section>
 
@@ -212,31 +256,6 @@
       .catch(() => {
         document.getElementById('recent-tbody').innerHTML = '<tr><td colspan="7" class="no-data">Could not load match data.</td></tr>';
       });
-
-    // Load community feed preview (2 latest posts)
-    fetch('/api/posts')
-      .then(r => r.json())
-      .then(posts => {
-        const preview = document.getElementById('feed-preview');
-        const latest = posts.slice(0, 2);
-        if (!latest.length) {
-          preview.innerHTML = '<div style="padding:2rem; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); color:var(--text-muted); text-align:center; font-size:0.85rem;">No posts yet. Check back soon.</div>';
-          return;
-        }
-        preview.innerHTML = latest.map(post => {
-          const d = new Date(post.date + 'T12:00:00');
-          const dateStr = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-          return `<a href="/feed" style="text-decoration:none; display:block; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1.75rem; transition:border-color .2s, box-shadow .2s, transform .2s; position:relative; overflow:hidden;"
-            onmouseover="this.style.borderColor='var(--border-glow)';this.style.boxShadow='var(--glow)';this.style.transform='translateY(-2px)'"
-            onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='';this.style.transform=''">
-            <div style="font-size:0.7rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--text-muted); font-family:var(--font-gothic); margin-bottom:0.6rem;">${dateStr}</div>
-            <h3 style="font-size:1.05rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-primary); margin-bottom:0.6rem; line-height:1.3;">${post.title}</h3>
-            <p style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6; margin-bottom:0.9rem;">${post.excerpt}</p>
-            <span style="font-family:var(--font-gothic); font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent);">Read More →</span>
-          </a>`;
-        }).join('');
-      })
-      .catch(() => {});
 
     // Highlight active nav
     document.querySelectorAll('.nav-links a').forEach(a => {
