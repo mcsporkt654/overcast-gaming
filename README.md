@@ -1,118 +1,106 @@
-# ☠ Overcast Gaming — Warhammer 40K League Site
+# Overcast Gaming Wireframe
 
-> Portland, Oregon's premier Warhammer 40,000 competitive gaming league.
+Frontend-first Warhammer 40K league prototype for layout, interaction, and content direction.
 
----
+## Wireframe Intent
 
-## 🚀 Quick Start
+This repository is intentionally a fancy wireframe, not a production system.
+
+- All roster, match, and post content is placeholder/test data.
+- Community dispatches are static demo entries in [public/news-data.js](public/news-data.js).
+- Current API/data writes exist only to support demo interactions.
+- The backend should be treated as replaceable scaffolding for a future real implementation.
+
+## Quick Start
 
 ```bash
 npm install
+cp .env.example .env
 node server.js
 ```
 
-Server runs at **http://localhost:3459** by default.
+Local URL: http://localhost:3459
 
----
+## Current Pages
 
-## 🔐 Admin Panel
+| Route | Purpose |
+| --- | --- |
+| `/` | Home + recent matches + featured cards + rotating dispatch spotlight |
+| `/feed` | Community listing with category filters, card/timeline view, and read-more links |
+| `/news?slug=...` | Dedicated community article detail view with related dispatch suggestions |
+| `/roster` | Player roster wireframe |
+| `/stats` | Leaderboards and match stat views |
+| `/gallery` | Community media gallery layout |
+| `/owl` | Overcast Warhammer League standings layout |
+| `/admin` | Admin demo controls for placeholder data editing |
 
-- URL: `/admin`
-- **Password: `REDACTED-ROTATED-PASSWORD`**
+## Community Content Model (Wireframe)
 
-> ⚠️ Change this in `server.js` and `public/admin.html` before going public.
+Community/news UX is now driven by a shared static dataset.
 
----
+- Source: [public/news-data.js](public/news-data.js)
+- Listing renderer: [public/feed.html](public/feed.html)
+- Detail renderer: [public/news.html](public/news.html)
+- Home featured cards: [public/index.html](public/index.html)
 
-## 📄 Pages
+Each article entry includes:
 
-| Route | Description |
-|-------|-------------|
-| `/` | Home — hero, live stats bar, recent matches, merch banner |
-| `/roster` | Player cards with win rates and army tags |
-| `/stats` | Full match log with leaderboard and faction win rates |
-| `/admin` | Password-protected admin panel to add players and record matches |
+- `slug`
+- `title`
+- `category`
+- `date`
+- `author`
+- `readTime`
+- `image`
+- `excerpt`
+- `body` (array of paragraphs)
+- `highlights` (array)
+- `gallery` (array)
 
----
+## Recently Added UI Features
 
-## 🗂️ File Structure
+- Feed view mode toggle in [public/feed.html](public/feed.html): card mode and timeline mode.
+- Related dispatch recommendations in [public/news.html](public/news.html).
+- Rotating homepage dispatch spotlight in [public/index.html](public/index.html).
 
+## Commands
+
+```bash
+npm test
 ```
-overcast-gaming/
-├── server.js          # Express server + REST API
-├── package.json
-├── data/
-│   ├── players.json   # Player roster (flat-file DB)
-│   └── matches.json   # Match history (flat-file DB)
-├── public/
-│   ├── index.html     # Home page
-│   ├── roster.html    # Roster grid
-│   ├── stats.html     # Match stats + leaderboard
-│   ├── admin.html     # Admin panel
-│   └── style.css      # All styles (dark 40K theme)
-└── README.md
-```
 
----
+Test coverage includes:
 
-## 🛠️ API Endpoints
+- Smoke validation for expected files/scripts
+- API integration checks for auth, validation, and error paths
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| GET | `/api/players` | All players with computed win rates |
-| POST | `/api/players` | Add a new player |
-| GET | `/api/matches` | All matches (newest first) |
-| POST | `/api/matches` | Record a new match |
-| GET | `/api/stats` | Summary stats (leaderboard, army win rates) |
+## Backend Handoff Notes (For Next Agent)
 
----
+If the next agent is building a real backend, keep this UI contract stable while replacing internals.
 
-## ⚙️ Configuration
+1. Keep route compatibility for existing pages (`/`, `/feed`, `/news`, `/roster`, `/stats`, `/owl`, `/gallery`, `/admin`).
+2. Replace static community source ([public/news-data.js](public/news-data.js)) with API-backed content while preserving:
+	- `slug` based detail routing from `/news?slug=...`
+	- category labels used by feed filters
+	- image/gallery fields expected by the article template
+3. Replace JSON flat-file persistence in [data/players.json](data/players.json), [data/matches.json](data/matches.json), and [data/posts.json](data/posts.json) with a database.
+4. Keep admin auth behavior equivalent while migrating away from in-memory sessions.
+5. Preserve response shapes currently consumed by UI scripts in:
+	- [public/index.html](public/index.html)
+	- [public/roster.html](public/roster.html)
+	- [public/stats.html](public/stats.html)
+	- [public/feed.html](public/feed.html)
 
-- **Port:** Set via `PORT` env variable, defaults to `3459`
-- **Data:** JSON files in `data/` — edit directly or use the admin panel
-- **Password:** Hardcoded in `public/admin.html` as `ADMIN_PASSWORD = 'REDACTED-ROTATED-PASSWORD'`
+## Suggested Next Frontend Features
 
----
+1. Add subtle entrance transitions for timeline nodes in [public/feed.html](public/feed.html).
+2. Add article breadcrumb chips (category/date) for quick navigation in [public/news.html](public/news.html).
+3. Add optional manual spotlight pinning for key dispatches in [public/index.html](public/index.html).
 
-## 🎨 Branding
+## Notes
 
-- **Colors:** Dark blue-green `#1a3a3a`, Mint accent `#4ecdc4`, Deep background `#0a1a1a`
-- **Fonts:** Cinzel (gothic headers), Rajdhani (body) — loaded from Google Fonts
-- **Theme:** Warhammer 40K gothic aesthetic — gritty but sleek
+- Do not treat current content as real league data.
+- Do not ship this as-is without backend/data replacement.
+- Keep this README updated whenever routes, UI contracts, or data model assumptions change.
 
----
-
-## 🛒 Merch Link
-
-> **UPDATE THIS:** Open `public/index.html` and search for `UPDATE THIS` comments.
-> Replace the `href="#"` in the merch banner with the actual store URL.
-
----
-
-## 📌 TODOs / Before Going Live
-
-- [ ] Change admin password from `REDACTED-ROTATED-PASSWORD`
-- [ ] Add actual merch store URL (search `UPDATE THIS` in `index.html`)
-- [ ] Add real player photos (update `photo` field in `data/players.json` or via admin)
-- [ ] Set up a real domain / reverse proxy (nginx/Caddy)
-- [ ] Consider adding authentication middleware to API routes (currently only frontend-protected)
-- [ ] Back up `data/` folder regularly (no database — it's just JSON)
-
----
-
-## 🏆 Sample Players Seeded
-
-| Name | Armies |
-|------|--------|
-| Commander Vex | Chaos Space Marines, World Eaters |
-| Lady Thornwood | Necrons, Aeldari |
-| Brother Kael | Space Marines, Blood Angels |
-| The Overlord | Necrons |
-| Wraithborn | Aeldari, Drukhari |
-
-10 sample matches are included covering Dec 2025 – Mar 2026.
-
----
-
-*Not affiliated with Games Workshop. Warhammer 40,000 © Games Workshop Ltd.*
+Not affiliated with Games Workshop. Warhammer 40,000 copyright Games Workshop Ltd.

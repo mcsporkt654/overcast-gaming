@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Match Stats — Overcast Gaming</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="nav.js" defer></script>
 </head>
 <body>
 
@@ -100,43 +101,111 @@
   <script>
     let allMatches = [];
 
+    function createNoData(message, size = '0.8rem') {
+      const el = document.createElement('p');
+      el.className = 'no-data';
+      el.style.padding = '1rem 0';
+      el.style.fontSize = size;
+      el.textContent = message;
+      return el;
+    }
+
     // Load stats summary
     fetch('/api/stats')
       .then(r => r.json())
       .then(data => {
         // Leaderboard
         const lb = document.getElementById('leaderboard-list');
+        lb.textContent = '';
         if (!data.leaderboard.length) {
-          lb.innerHTML = '<p class="no-data" style="padding:1rem 0; font-size:0.8rem">No players with 3+ games yet.</p>';
+          lb.appendChild(createNoData('No players with 3+ games yet.'));
         } else {
           const rankClasses = ['gold', 'silver', 'bronze'];
-          lb.innerHTML = data.leaderboard.map((p, i) => `
-            <div class="leaderboard-row">
-              <span class="lb-rank ${rankClasses[i] || ''}">${i + 1}</span>
-              <span class="lb-name">${p.name}</span>
-              <span class="lb-record" style="font-size:0.72rem">
-                <span style="color:var(--win)">W${p.wins}</span>
-                <span style="color:var(--text-muted)"> / </span>
-                <span style="color:var(--loss)">L${p.losses}</span>
-                <span style="color:var(--text-muted)"> / </span>
-                <span style="color:var(--draw)">D${p.draws}</span>
-              </span>
-              <span class="lb-winrate">${p.winRate}%</span>
-            </div>`).join('');
+          data.leaderboard.forEach((p, i) => {
+            const row = document.createElement('div');
+            row.className = 'leaderboard-row';
+
+            const rank = document.createElement('span');
+            rank.className = `lb-rank ${rankClasses[i] || ''}`.trim();
+            rank.textContent = String(i + 1);
+
+            const name = document.createElement('span');
+            name.className = 'lb-name';
+            name.textContent = p.name;
+
+            const record = document.createElement('span');
+            record.className = 'lb-record';
+            record.style.fontSize = '0.72rem';
+
+            const wins = document.createElement('span');
+            wins.style.color = 'var(--win)';
+            wins.textContent = `W${p.wins}`;
+            const losses = document.createElement('span');
+            losses.style.color = 'var(--loss)';
+            losses.textContent = `L${p.losses}`;
+            const draws = document.createElement('span');
+            draws.style.color = 'var(--draw)';
+            draws.textContent = `D${p.draws}`;
+            const sep1 = document.createElement('span');
+            sep1.style.color = 'var(--text-muted)';
+            sep1.textContent = ' / ';
+            const sep2 = document.createElement('span');
+            sep2.style.color = 'var(--text-muted)';
+            sep2.textContent = ' / ';
+
+            record.appendChild(wins);
+            record.appendChild(sep1);
+            record.appendChild(losses);
+            record.appendChild(sep2);
+            record.appendChild(draws);
+
+            const winrate = document.createElement('span');
+            winrate.className = 'lb-winrate';
+            winrate.textContent = `${p.winRate}%`;
+
+            row.appendChild(rank);
+            row.appendChild(name);
+            row.appendChild(record);
+            row.appendChild(winrate);
+            lb.appendChild(row);
+          });
         }
 
         // Army win rates
         const al = document.getElementById('army-list');
+        al.textContent = '';
         if (!data.armyWinRates.length) {
-          al.innerHTML = '<p class="no-data" style="padding:1rem 0; font-size:0.8rem">No army data yet.</p>';
+          al.appendChild(createNoData('No army data yet.'));
         } else {
-          al.innerHTML = data.armyWinRates.map(a => `
-            <div class="army-row">
-              <span class="army-name">${a.army}</span>
-              <span style="font-size:0.7rem; color:var(--text-muted)">${a.wins}/${a.total}</span>
-              <div class="army-bar-wrap"><div class="army-bar" style="width:${a.winRate}%"></div></div>
-              <span class="army-winrate">${a.winRate}%</span>
-            </div>`).join('');
+          data.armyWinRates.forEach(a => {
+            const row = document.createElement('div');
+            row.className = 'army-row';
+
+            const armyName = document.createElement('span');
+            armyName.className = 'army-name';
+            armyName.textContent = a.army;
+
+            const ratio = document.createElement('span');
+            ratio.style.cssText = 'font-size:0.7rem; color:var(--text-muted)';
+            ratio.textContent = `${a.wins}/${a.total}`;
+
+            const barWrap = document.createElement('div');
+            barWrap.className = 'army-bar-wrap';
+            const bar = document.createElement('div');
+            bar.className = 'army-bar';
+            bar.style.width = `${a.winRate}%`;
+            barWrap.appendChild(bar);
+
+            const winrate = document.createElement('span');
+            winrate.className = 'army-winrate';
+            winrate.textContent = `${a.winRate}%`;
+
+            row.appendChild(armyName);
+            row.appendChild(ratio);
+            row.appendChild(barWrap);
+            row.appendChild(winrate);
+            al.appendChild(row);
+          });
         }
       })
       .catch(() => {});
@@ -164,7 +233,15 @@
         document.getElementById('filter-result').addEventListener('change', applyFilters);
       })
       .catch(() => {
-        document.getElementById('match-tbody').innerHTML = '<tr><td colspan="7" class="no-data">Could not load match data.</td></tr>';
+        const tbody = document.getElementById('match-tbody');
+        tbody.textContent = '';
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 7;
+        cell.className = 'no-data';
+        cell.textContent = 'Could not load match data.';
+        row.appendChild(cell);
+        tbody.appendChild(row);
       });
 
     function applyFilters() {
@@ -185,29 +262,79 @@
       document.getElementById('match-count').textContent = `${matches.length} match${matches.length !== 1 ? 'es' : ''}`;
 
       if (!matches.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="no-data">No matches found for the selected filters.</td></tr>';
+        tbody.textContent = '';
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 7;
+        cell.className = 'no-data';
+        cell.textContent = 'No matches found for the selected filters.';
+        row.appendChild(cell);
+        tbody.appendChild(row);
         return;
       }
 
-      tbody.innerHTML = matches.map(m => {
-        const pd = m.pointsDiff != null
-          ? (m.pointsDiff > 0
-              ? `<span class="points-pos">+${m.pointsDiff}</span>`
-              : m.pointsDiff < 0
-                ? `<span class="points-neg">${m.pointsDiff}</span>`
-                : '0')
-          : '—';
+      tbody.textContent = '';
+      matches.forEach(m => {
+        const row = document.createElement('tr');
+        const safeResult = /^[WLD]$/.test(String(m.result || '').toUpperCase()) ? String(m.result).toUpperCase() : 'D';
         const date = new Date(m.date + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
-        return `<tr>
-          <td style="color:var(--text-muted); white-space:nowrap">${date}</td>
-          <td style="font-weight:600; color:var(--text-primary)">${m.playerName}</td>
-          <td><span class="army-tag">${m.armyUsed}</span></td>
-          <td>${m.opponentName}</td>
-          <td><span class="army-tag" style="color:var(--text-muted); border-color:var(--border)">${m.opponentArmy}</span></td>
-          <td><span class="result-badge result-${m.result}">${m.result}</span></td>
-          <td>${pd}</td>
-        </tr>`;
-      }).join('');
+
+        const dateCell = document.createElement('td');
+        dateCell.style.cssText = 'color:var(--text-muted); white-space:nowrap';
+        dateCell.textContent = date;
+
+        const playerCell = document.createElement('td');
+        playerCell.style.cssText = 'font-weight:600; color:var(--text-primary)';
+        playerCell.textContent = m.playerName;
+
+        const armyCell = document.createElement('td');
+        const armyTag = document.createElement('span');
+        armyTag.className = 'army-tag';
+        armyTag.textContent = m.armyUsed;
+        armyCell.appendChild(armyTag);
+
+        const oppNameCell = document.createElement('td');
+        oppNameCell.textContent = m.opponentName;
+
+        const oppArmyCell = document.createElement('td');
+        const oppArmyTag = document.createElement('span');
+        oppArmyTag.className = 'army-tag';
+        oppArmyTag.style.cssText = 'color:var(--text-muted); border-color:var(--border)';
+        oppArmyTag.textContent = m.opponentArmy;
+        oppArmyCell.appendChild(oppArmyTag);
+
+        const resultCell = document.createElement('td');
+        const resultBadge = document.createElement('span');
+        resultBadge.className = `result-badge result-${safeResult}`;
+        resultBadge.textContent = safeResult;
+        resultCell.appendChild(resultBadge);
+
+        const pointsCell = document.createElement('td');
+        if (m.pointsDiff == null) {
+          pointsCell.textContent = '—';
+        } else if (m.pointsDiff > 0) {
+          const pos = document.createElement('span');
+          pos.className = 'points-pos';
+          pos.textContent = `+${m.pointsDiff}`;
+          pointsCell.appendChild(pos);
+        } else if (m.pointsDiff < 0) {
+          const neg = document.createElement('span');
+          neg.className = 'points-neg';
+          neg.textContent = String(m.pointsDiff);
+          pointsCell.appendChild(neg);
+        } else {
+          pointsCell.textContent = '0';
+        }
+
+        row.appendChild(dateCell);
+        row.appendChild(playerCell);
+        row.appendChild(armyCell);
+        row.appendChild(oppNameCell);
+        row.appendChild(oppArmyCell);
+        row.appendChild(resultCell);
+        row.appendChild(pointsCell);
+        tbody.appendChild(row);
+      });
     }
   </script>
 

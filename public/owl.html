@@ -6,6 +6,7 @@
   <title>The OWL — Overcast Gaming League</title>
   <meta name="description" content="The Overcast Warhammer League — sign up, check standings, and fight for the OWL Cup." />
   <link rel="stylesheet" href="style.css" />
+  <script src="nav.js" defer></script>
   <style>
     /* OWL Hero */
     .owl-hero {
@@ -391,28 +392,78 @@
       .then(data => {
         const tbody = document.getElementById('standings-tbody');
         const lb = data.leaderboard || [];
+        tbody.textContent = '';
         if (!lb.length) {
-          tbody.innerHTML = '<tr><td colspan="7" class="standings-empty">No standings yet — battles are yet to be fought. Check back after the first rounds.</td></tr>';
+          const row = document.createElement('tr');
+          const cell = document.createElement('td');
+          cell.colSpan = 7;
+          cell.className = 'standings-empty';
+          cell.textContent = 'No standings yet — battles are yet to be fought. Check back after the first rounds.';
+          row.appendChild(cell);
+          tbody.appendChild(row);
           return;
         }
+
         const ranks = ['gold', 'silver', 'bronze'];
-        tbody.innerHTML = lb.map((p, i) => {
+        lb.forEach((p, i) => {
           const rankClass = ranks[i] || '';
           const rankLabel = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
-          return `<tr>
-            <td class="rank-cell ${rankClass}">${rankLabel}</td>
-            <td class="standings-name">${p.name}</td>
-            <td class="standings-w" style="font-weight:600">${p.wins}</td>
-            <td class="standings-l" style="font-weight:600">${p.losses}</td>
-            <td class="standings-d" style="font-weight:600">${p.draws}</td>
-            <td style="color:var(--text-muted)">${p.total}</td>
-            <td class="standings-winrate">${p.winRate}%</td>
-          </tr>`;
-        }).join('');
+
+          const row = document.createElement('tr');
+
+          const rankCell = document.createElement('td');
+          rankCell.className = `rank-cell ${rankClass}`.trim();
+          rankCell.textContent = rankLabel;
+
+          const nameCell = document.createElement('td');
+          nameCell.className = 'standings-name';
+          nameCell.textContent = p.name;
+
+          const winsCell = document.createElement('td');
+          winsCell.className = 'standings-w';
+          winsCell.style.fontWeight = '600';
+          winsCell.textContent = String(p.wins);
+
+          const lossesCell = document.createElement('td');
+          lossesCell.className = 'standings-l';
+          lossesCell.style.fontWeight = '600';
+          lossesCell.textContent = String(p.losses);
+
+          const drawsCell = document.createElement('td');
+          drawsCell.className = 'standings-d';
+          drawsCell.style.fontWeight = '600';
+          drawsCell.textContent = String(p.draws);
+
+          const totalCell = document.createElement('td');
+          totalCell.style.color = 'var(--text-muted)';
+          totalCell.textContent = String(p.total);
+
+          const winRateCell = document.createElement('td');
+          winRateCell.className = 'standings-winrate';
+          winRateCell.textContent = `${p.winRate}%`;
+
+          row.appendChild(rankCell);
+          row.appendChild(nameCell);
+          row.appendChild(winsCell);
+          row.appendChild(lossesCell);
+          row.appendChild(drawsCell);
+          row.appendChild(totalCell);
+          row.appendChild(winRateCell);
+          tbody.appendChild(row);
+        });
+
         document.getElementById('standings-note').style.display = 'block';
       })
       .catch(() => {
-        document.getElementById('standings-tbody').innerHTML = '<tr><td colspan="7" class="standings-empty">Could not load standings. The warp intervenes.</td></tr>';
+        const tbody = document.getElementById('standings-tbody');
+        tbody.textContent = '';
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 7;
+        cell.className = 'standings-empty';
+        cell.textContent = 'Could not load standings. The warp intervenes.';
+        row.appendChild(cell);
+        tbody.appendChild(row);
       });
   </script>
 

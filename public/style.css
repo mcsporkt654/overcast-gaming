@@ -260,6 +260,51 @@ nav {
   flex-wrap: wrap;
 }
 
+.social-strip {
+  margin-top: 2rem;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.social-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius);
+  font-family: var(--font-gothic);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: background 0.2s ease;
+}
+
+.social-chip-discord {
+  background: rgba(88,101,242,0.12);
+  border: 1px solid rgba(88,101,242,0.3);
+  color: #7289da;
+}
+
+.social-chip-discord:hover { background: rgba(88,101,242,0.22); color: #7289da; }
+
+.social-chip-instagram {
+  background: rgba(225,48,108,0.1);
+  border: 1px solid rgba(225,48,108,0.25);
+  color: #E1306C;
+}
+
+.social-chip-instagram:hover { background: rgba(225,48,108,0.2); color: #E1306C; }
+
+.social-chip-youtube {
+  background: rgba(255,0,0,0.08);
+  border: 1px solid rgba(255,0,0,0.2);
+  color: #FF4444;
+}
+
+.social-chip-youtube:hover { background: rgba(255,0,0,0.16); color: #FF4444; }
+
 /* ─── Buttons ────────────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
@@ -489,6 +534,84 @@ nav {
 
 .home-news-read:hover {
   color: var(--accent-bright);
+}
+.home-spotlight {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(120deg, rgba(20,38,38,0.96), rgba(10,25,25,0.96)),
+    radial-gradient(circle at 78% 14%, rgba(78,205,196,0.13), transparent 48%);
+  margin-bottom: 1.1rem;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 36%) minmax(0, 64%);
+}
+.home-spotlight-media-wrap {
+  min-height: 220px;
+}
+.home-spotlight-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-right: 1px solid var(--border);
+}
+.home-spotlight-content {
+  padding: 1rem 1.2rem 1rem;
+}
+.home-spotlight-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.7rem;
+}
+.home-spotlight-meta time {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+.home-spotlight h3 {
+  font-size: 1.05rem;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 0.55rem;
+}
+.home-spotlight p {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  margin-bottom: 0.8rem;
+}
+.home-spotlight-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.home-spotlight-controls {
+  display: inline-flex;
+  gap: 0.4rem;
+}
+.home-spotlight-btn {
+  border: 1px solid var(--border);
+  background: rgba(12,24,24,0.9);
+  color: var(--text-muted);
+  border-radius: 4px;
+  padding: 0.3rem 0.55rem;
+  font-family: var(--font-gothic);
+  font-size: 0.65rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.home-spotlight-btn:hover {
+  color: var(--accent);
+  border-color: var(--border-glow);
+  background: rgba(78,205,196,0.08);
 }
 
 /* ─── Player Cards ───────────────────────────────────────────────── */
@@ -974,6 +1097,26 @@ footer .skull-divider {
   color: var(--accent-dim);
 }
 
+.footer-social-wrap {
+  display: flex;
+  justify-content: center;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.footer-social-link {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: color 0.2s;
+}
+
+.footer-social-link:hover { color: var(--accent); }
+
 /* ─── Loading Spinner ─────────────────────────────────────────────── */
 .loader {
   display: flex;
@@ -1001,6 +1144,13 @@ footer .skull-divider {
   }
   .home-news-card-featured {
     grid-column: span 1;
+  }
+  .home-spotlight {
+    grid-template-columns: 1fr;
+  }
+  .home-spotlight-media {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
     min-height: 240px;
   }
   .nav-inner {

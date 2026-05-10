@@ -52,41 +52,141 @@
   </footer>
 
   <script>
+    function normalizeSocialUrl(rawValue) {
+      const value = String(rawValue || '').trim();
+      if (!value) return null;
+      const withScheme = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+      try {
+        const parsed = new URL(withScheme);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+        return parsed.toString();
+      } catch {
+        return null;
+      }
+    }
+
+    function createPlaceholderAvatar() {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'player-avatar-placeholder';
+      placeholder.textContent = '☠';
+      return placeholder;
+    }
+
+    function createSocialButton(def, url) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.title = def.label;
+      link.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:' + def.color + ';text-decoration:none;transition:background .15s,transform .15s;';
+      link.innerHTML = def.svg;
+      link.addEventListener('mouseenter', () => {
+        link.style.background = 'rgba(255,255,255,0.12)';
+        link.style.transform = 'translateY(-2px)';
+      });
+      link.addEventListener('mouseleave', () => {
+        link.style.background = 'rgba(255,255,255,0.06)';
+        link.style.transform = '';
+      });
+      return link;
+    }
+
     fetch('/api/players')
       .then(r => r.json())
       .then(players => {
         const grid = document.getElementById('roster-grid');
+        grid.textContent = '';
+
         if (!players.length) {
-          grid.innerHTML = '<p class="no-data">No players found. Add one via the Admin panel.</p>';
+          const empty = document.createElement('p');
+          empty.className = 'no-data';
+          empty.textContent = 'No players found. Add one via the Admin panel.';
+          grid.appendChild(empty);
           return;
         }
 
-        grid.innerHTML = players.map(p => {
-          const avatarHTML = p.photo
-            ? `<img src="${p.photo}" alt="${p.name}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--border-glow);margin:0 auto 1rem;display:block;" onerror="this.parentElement.innerHTML='<div class=\\'player-avatar-placeholder\\'>☠</div>'">`
-            : `<div class="player-avatar-placeholder">☠</div>`;
+        players.forEach(p => {
+          const card = document.createElement('div');
+          card.className = 'player-card';
 
-          const armyTags = p.armies.map(a => `<span class="army-tag">${a}</span>`).join('');
-
-          let winRateHTML = '';
-          if (p.total > 0) {
-            winRateHTML = `
-              <div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--border)">
-                <span class="player-win-rate">${p.winRate}%</span>
-                <span class="player-win-label">Win Rate</span>
-                <p class="player-wld">
-                  <span class="w">W ${p.wins}</span> &bull;
-                  <span class="l">L ${p.losses}</span> &bull;
-                  <span class="d">D ${p.draws}</span>
-                  &nbsp;(${p.total} games)
-                </p>
-              </div>`;
+          if (p.photo) {
+            const img = document.createElement('img');
+            img.src = p.photo;
+            img.alt = p.name || 'Player avatar';
+            img.style.cssText = 'width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--border-glow);margin:0 auto 1rem;display:block;';
+            img.addEventListener('error', () => {
+              img.replaceWith(createPlaceholderAvatar());
+            });
+            card.appendChild(img);
           } else {
-            winRateHTML = `
-              <div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--border)">
-                <span style="font-size:0.75rem; color:var(--text-muted)">No games recorded</span>
-              </div>`;
+            card.appendChild(createPlaceholderAvatar());
           }
+
+          const nameEl = document.createElement('div');
+          nameEl.className = 'player-name';
+          nameEl.textContent = p.name || 'Unknown Commander';
+          card.appendChild(nameEl);
+
+          const armiesWrap = document.createElement('div');
+          armiesWrap.className = 'army-tags';
+          const armies = Array.isArray(p.armies) ? p.armies : [];
+          if (armies.length) {
+            armies.forEach(army => {
+              const tag = document.createElement('span');
+              tag.className = 'army-tag';
+              tag.textContent = army;
+              armiesWrap.appendChild(tag);
+            });
+          } else {
+            const unaligned = document.createElement('span');
+            unaligned.className = 'army-tag';
+            unaligned.style.color = 'var(--text-muted)';
+            unaligned.textContent = 'Unaligned';
+            armiesWrap.appendChild(unaligned);
+          }
+          card.appendChild(armiesWrap);
+
+          const statsWrap = document.createElement('div');
+          statsWrap.style.cssText = 'margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--border)';
+          if ((p.total || 0) > 0) {
+            const winRate = document.createElement('span');
+            winRate.className = 'player-win-rate';
+            winRate.textContent = `${p.winRate}%`;
+
+            const label = document.createElement('span');
+            label.className = 'player-win-label';
+            label.textContent = 'Win Rate';
+
+            const wld = document.createElement('p');
+            wld.className = 'player-wld';
+
+            const wins = document.createElement('span');
+            wins.className = 'w';
+            wins.textContent = `W ${p.wins}`;
+            const losses = document.createElement('span');
+            losses.className = 'l';
+            losses.textContent = `L ${p.losses}`;
+            const draws = document.createElement('span');
+            draws.className = 'd';
+            draws.textContent = `D ${p.draws}`;
+
+            wld.appendChild(wins);
+            wld.appendChild(document.createTextNode(' • '));
+            wld.appendChild(losses);
+            wld.appendChild(document.createTextNode(' • '));
+            wld.appendChild(draws);
+            wld.appendChild(document.createTextNode(` (${p.total} games)`));
+
+            statsWrap.appendChild(winRate);
+            statsWrap.appendChild(label);
+            statsWrap.appendChild(wld);
+          } else {
+            const noGames = document.createElement('span');
+            noGames.style.cssText = 'font-size:0.75rem; color:var(--text-muted)';
+            noGames.textContent = 'No games recorded';
+            statsWrap.appendChild(noGames);
+          }
+          card.appendChild(statsWrap);
 
           // Social buttons
           const socialDefs = {
@@ -101,32 +201,32 @@
           };
 
           const socials = p.socials || {};
-          const socialButtons = Object.entries(socialDefs)
-            .filter(([key]) => socials[key])
-            .map(([key, def]) => {
-              const url = socials[key].startsWith('http') ? socials[key] : `https://${socials[key]}`;
-              return `<a href="${url}" target="_blank" rel="noopener" title="${def.label}"
-                style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:${def.color};text-decoration:none;transition:background .15s,transform .15s;"
-                onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.transform='translateY(-2px)'"
-                onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.transform=''"
-              >${def.svg}</a>`;
-            }).join('');
+          const socialWrap = document.createElement('div');
+          socialWrap.style.cssText = 'margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);display:flex;gap:6px;justify-content:center;flex-wrap:wrap;';
 
-          const socialsHTML = socialButtons
-            ? `<div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">${socialButtons}</div>`
-            : '';
+          let socialCount = 0;
+          Object.entries(socialDefs).forEach(([key, def]) => {
+            if (!socials[key]) return;
+            const url = normalizeSocialUrl(socials[key]);
+            if (!url) return;
+            socialWrap.appendChild(createSocialButton(def, url));
+            socialCount += 1;
+          });
 
-          return `<div class="player-card">
-            ${avatarHTML}
-            <div class="player-name">${p.name}</div>
-            <div class="army-tags">${armyTags || '<span class="army-tag" style="color:var(--text-muted)">Unaligned</span>'}</div>
-            ${winRateHTML}
-            ${socialsHTML}
-          </div>`;
-        }).join('');
+          if (socialCount > 0) {
+            card.appendChild(socialWrap);
+          }
+
+          grid.appendChild(card);
+        });
       })
       .catch(() => {
-        document.getElementById('roster-grid').innerHTML = '<p class="no-data">Could not load roster data.</p>';
+        const grid = document.getElementById('roster-grid');
+        grid.textContent = '';
+        const error = document.createElement('p');
+        error.className = 'no-data';
+        error.textContent = 'Could not load roster data.';
+        grid.appendChild(error);
       });
   </script>
 

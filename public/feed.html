@@ -6,6 +6,8 @@
   <title>Community Feed — Overcast Gaming</title>
   <meta name="description" content="Latest news, battle reports, and updates from the Overcast Gaming Warhammer 40K community." />
   <link rel="stylesheet" href="style.css" />
+  <script src="news-data.js" defer></script>
+  <script src="nav.js" defer></script>
   <style>
     .feed-hero {
       background: var(--bg-card);
@@ -46,6 +48,65 @@
       margin-top: 0.4rem;
     }
 
+    .feed-controls {
+      max-width: 860px;
+      margin: 1.4rem auto 0;
+      padding: 0 var(--gutter);
+      display: flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }
+
+    .feed-view-controls {
+      max-width: 860px;
+      margin: 0.8rem auto 0;
+      padding: 0 var(--gutter);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.45rem;
+    }
+
+    .feed-view-btn {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-family: var(--font-gothic);
+      font-size: 0.65rem;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      border-radius: 999px;
+      padding: 0.32rem 0.72rem;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+
+    .feed-view-btn:hover,
+    .feed-view-btn.active {
+      color: var(--accent);
+      border-color: rgba(78,205,196,0.38);
+      background: rgba(78,205,196,0.07);
+    }
+
+    .feed-chip {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-family: var(--font-gothic);
+      font-size: 0.68rem;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      border-radius: 999px;
+      padding: 0.35rem 0.8rem;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .feed-chip:hover,
+    .feed-chip.active {
+      color: var(--accent);
+      border-color: rgba(78,205,196,0.38);
+      background: rgba(78,205,196,0.07);
+    }
+
     /* Post Cards */
     .post-list {
       max-width: 860px;
@@ -56,6 +117,37 @@
       gap: 1.75rem;
     }
 
+    .post-list.view-timeline {
+      position: relative;
+      padding-left: calc(var(--gutter) + 1.2rem);
+    }
+
+    .post-list.view-timeline::before {
+      content: '';
+      position: absolute;
+      left: calc(var(--gutter) + 0.3rem);
+      top: 3rem;
+      bottom: 3rem;
+      width: 2px;
+      background: linear-gradient(to bottom, transparent, rgba(78,205,196,0.5), transparent);
+    }
+
+    .post-list.view-timeline .post-card {
+      margin-left: 1.2rem;
+    }
+
+    .post-list.view-timeline .post-card::after {
+      content: '';
+      position: absolute;
+      left: -1.95rem;
+      top: 2rem;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(78,205,196,0.16);
+    }
+
     .post-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -64,7 +156,6 @@
       position: relative;
       overflow: hidden;
       transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
-      cursor: pointer;
     }
     .post-card::before {
       content: '';
@@ -82,8 +173,14 @@
     }
     .post-card:hover::before { opacity: 1; }
 
-    .post-card.expanded .post-body { display: block; }
-    .post-card.expanded .post-read-more { display: none; }
+    .post-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
 
     .post-meta {
       display: flex;
@@ -138,6 +235,7 @@
     }
 
     .post-read-more {
+      text-decoration: none;
       font-family: var(--font-gothic);
       font-size: 0.75rem;
       letter-spacing: 0.12em;
@@ -149,21 +247,6 @@
       transition: color 0.2s;
     }
     .post-read-more:hover { color: var(--accent-bright); }
-
-    .post-collapse {
-      display: none;
-      font-family: var(--font-gothic);
-      font-size: 0.75rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0;
-      transition: color 0.2s;
-    }
-    .post-card.expanded .post-collapse { display: inline-flex; align-items: center; gap: 0.4rem; }
 
     .loader-posts {
       text-align: center;
@@ -251,6 +334,12 @@
     </div>
   </div>
 
+  <div class="feed-controls" id="feed-controls"></div>
+  <div class="feed-view-controls" id="feed-view-controls">
+    <button type="button" class="feed-view-btn active" data-view="card">Card View</button>
+    <button type="button" class="feed-view-btn" data-view="timeline">Timeline</button>
+  </div>
+
   <!-- Post List -->
   <div class="post-list" id="post-list">
     <div class="loader-posts">Loading dispatches...</div>
@@ -282,35 +371,143 @@
       return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     }
 
-    function togglePost(card) {
-      card.classList.toggle('expanded');
+    function slugToHref(slug) {
+      return `/news?slug=${encodeURIComponent(slug)}`;
     }
 
-    fetch('/api/posts')
-      .then(r => r.json())
-      .then(posts => {
-        const list = document.getElementById('post-list');
-        if (!posts.length) {
-          list.innerHTML = '<div class="feed-empty">No posts yet. Check back soon, commander.</div>';
-          return;
-        }
-        list.innerHTML = posts.map(post => `
-          <div class="post-card" onclick="togglePost(this)">
-            <div class="post-meta">
-              <span class="post-date">${formatDate(post.date)}</span>
-              <span class="post-tag">OWL Update</span>
-            </div>
-            <h2 class="post-title">${post.title}</h2>
-            <p class="post-excerpt">${post.excerpt}</p>
-            <div class="post-body">${post.body}</div>
-            <span class="post-read-more">Read More →</span>
-            <button class="post-collapse" onclick="event.stopPropagation(); this.closest('.post-card').classList.remove('expanded')">↑ Collapse</button>
-          </div>
-        `).join('');
-      })
-      .catch(() => {
-        document.getElementById('post-list').innerHTML = '<div class="feed-empty">Could not load posts. The warp interferes.</div>';
+    function createEmptyState(message) {
+      const empty = document.createElement('div');
+      empty.className = 'feed-empty';
+      empty.textContent = message;
+      return empty;
+    }
+
+    function createPostCard(post) {
+      const card = document.createElement('div');
+      card.className = 'post-card';
+
+      const image = document.createElement('img');
+      image.className = 'post-image';
+      image.src = post.image;
+      image.alt = `${post.title} preview image`;
+
+      const byline = document.createElement('span');
+      byline.className = 'post-date';
+      byline.textContent = `${formatDate(post.date)} • ${post.author} • ${post.readTime}`;
+
+      const meta = document.createElement('div');
+      meta.className = 'post-meta';
+
+      const tag = document.createElement('span');
+      tag.className = 'post-tag';
+      tag.textContent = post.category || 'Update';
+
+      if (post.pinned) {
+        const pin = document.createElement('span');
+        pin.className = 'post-tag';
+        pin.textContent = 'Pinned';
+        meta.appendChild(pin);
+      }
+
+      meta.appendChild(byline);
+      meta.appendChild(tag);
+
+      const title = document.createElement('h2');
+      title.className = 'post-title';
+      title.textContent = post.title || 'Untitled Dispatch';
+
+      const excerpt = document.createElement('p');
+      excerpt.className = 'post-excerpt';
+      excerpt.textContent = post.excerpt || '';
+
+      const readMore = document.createElement('a');
+      readMore.className = 'post-read-more';
+      readMore.href = slugToHref(post.slug);
+      readMore.textContent = 'Read More →';
+
+      card.appendChild(image);
+      card.appendChild(meta);
+      card.appendChild(title);
+      card.appendChild(excerpt);
+      card.appendChild(readMore);
+
+      return card;
+    }
+
+    function renderFeedPosts(items, category = 'All') {
+      const list = document.getElementById('post-list');
+      list.textContent = '';
+
+      const filtered = category === 'All'
+        ? items
+        : items.filter(item => item.category === category);
+
+      const sorted = [...filtered].sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return new Date(b.date) - new Date(a.date);
       });
+
+      if (!sorted.length) {
+        list.appendChild(createEmptyState('No dispatches match that filter yet.'));
+        return;
+      }
+
+      sorted.forEach(post => list.appendChild(createPostCard(post)));
+    }
+
+    function applyFeedView(view) {
+      const list = document.getElementById('post-list');
+      const controls = document.getElementById('feed-view-controls');
+      const isTimeline = view === 'timeline';
+      list.classList.toggle('view-timeline', isTimeline);
+      controls.querySelectorAll('.feed-view-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === view);
+      });
+    }
+
+    function setupViewControls() {
+      const controls = document.getElementById('feed-view-controls');
+      controls.querySelectorAll('.feed-view-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          applyFeedView(btn.dataset.view || 'card');
+        });
+      });
+    }
+
+    function renderFeedControls(items) {
+      const controls = document.getElementById('feed-controls');
+      controls.textContent = '';
+
+      const categories = ['All', ...new Set(items.map(item => item.category).filter(Boolean))];
+      let active = 'All';
+
+      categories.forEach(category => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `feed-chip${category === active ? ' active' : ''}`;
+        btn.textContent = category;
+        btn.addEventListener('click', () => {
+          active = category;
+          controls.querySelectorAll('.feed-chip').forEach(chip => chip.classList.remove('active'));
+          btn.classList.add('active');
+          renderFeedPosts(items, active);
+        });
+        controls.appendChild(btn);
+      });
+    }
+
+    const feedItems = Array.isArray(window.OVERCAST_NEWS_ITEMS) ? window.OVERCAST_NEWS_ITEMS : [];
+    if (!feedItems.length) {
+      const list = document.getElementById('post-list');
+      list.textContent = '';
+      list.appendChild(createEmptyState('No wireframe dispatches found.'));
+    } else {
+      setupViewControls();
+      renderFeedControls(feedItems);
+      renderFeedPosts(feedItems, 'All');
+      applyFeedView('card');
+    }
   </script>
 
 </body>

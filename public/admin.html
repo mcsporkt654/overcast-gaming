@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin — Overcast Gaming</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="nav.js" defer></script>
 </head>
 <body>
 
@@ -37,7 +38,7 @@
         <input type="password" id="password-input" placeholder="Enter password..." autocomplete="current-password" />
       </div>
       <div class="alert" id="login-error" style="display:none"></div>
-      <button class="btn btn-primary" style="width:100%; margin-top:0.5rem" onclick="doLogin()">Authenticate</button>
+      <button class="btn btn-primary" style="width:100%; margin-top:0.5rem" id="login-btn" type="button">Authenticate</button>
       <p style="margin-top:1.5rem; font-size:0.72rem; color:var(--text-muted)">Authorized commanders only. All actions are logged.</p>
     </div>
   </div>
@@ -51,7 +52,7 @@
           <h1 style="font-size:1.8rem; text-transform:uppercase; letter-spacing:0.08em;">League <span style="color:var(--accent)">Admin</span></h1>
           <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.3rem;">Manage players and record match results.</p>
         </div>
-        <button class="btn btn-outline" onclick="doLogout()" style="font-size:0.72rem">⬅ Logout</button>
+        <button class="btn btn-outline" id="logout-btn" type="button" style="font-size:0.72rem">⬅ Logout</button>
       </div>
     </div>
 
@@ -62,7 +63,7 @@
         <div class="admin-form-card">
           <h3>⚔ Record a Match</h3>
           <div class="alert" id="match-alert"></div>
-          <form id="match-form" onsubmit="submitMatch(event)">
+          <form id="match-form">
 
             <div class="form-group">
               <label for="match-date">Date</label>
@@ -129,7 +130,7 @@
         <div class="admin-form-card">
           <h3>➕ Add a Player</h3>
           <div class="alert" id="player-alert"></div>
-          <form id="player-form" onsubmit="submitPlayer(event)">
+          <form id="player-form">
 
             <div class="form-group">
               <label for="player-name">Player Name</label>
@@ -236,13 +237,18 @@
           body: JSON.stringify({ password: pw })
         });
         const data = await res.json();
-        if (data.success) {
+        if (res.ok && data.success) {
           adminToken = data.token;
           document.getElementById('login-screen').style.display = 'none';
           document.getElementById('admin-panel').classList.add('visible');
+          err.className = 'alert';
           initAdmin();
+        } else if (res.status === 429) {
+          const wait = data.retryAfterSeconds ? ` Wait ${data.retryAfterSeconds}s.` : '';
+          err.textContent = 'Too many attempts.' + wait;
+          err.className = 'alert error';
         } else {
-          err.textContent = 'Invalid access code. Try again.';
+          err.textContent = data.error || 'Invalid access code. Try again.';
           err.className = 'alert error';
         }
       } catch (e) {
@@ -251,16 +257,38 @@
       }
     }
 
-    function doLogout() {
+    async function doLogout() {
+      if (adminToken) {
+        try {
+          await fetch('/api/admin/logout', {
+            method: 'POST',
+            headers: { 'x-admin-token': adminToken }
+          });
+        } catch (_) {
+          // Ignore logout transport failures and continue local reset.
+        }
+      }
+      adminToken = null;
       document.getElementById('login-screen').style.display = 'flex';
       document.getElementById('admin-panel').classList.remove('visible');
       document.getElementById('password-input').value = '';
       document.getElementById('login-error').className = 'alert';
     }
 
+    function handleUnauthorized(alertElement, message) {
+      alertElement.textContent = message;
+      alertElement.className = 'alert error';
+      doLogout();
+    }
+
     document.getElementById('password-input').addEventListener('keydown', e => {
       if (e.key === 'Enter') doLogin();
     });
+
+    document.getElementById('login-btn').addEventListener('click', doLogin);
+    document.getElementById('logout-btn').addEventListener('click', doLogout);
+    document.getElementById('match-form').addEventListener('submit', submitMatch);
+    document.getElementById('player-form').addEventListener('submit', submitPlayer);
 
     // ─── Init Admin ─────────────────────────────────────────────────
     function initAdmin() {
@@ -349,6 +377,10 @@
           headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
           body: JSON.stringify(payload)
         });
+        if (res.status === 401) {
+          handleUnauthorized(alert, 'Session expired. Please log in again.');
+          return;
+        }
         const data = await res.json();
         if (data.success) {
           alert.textContent = `✓ Match recorded: ${data.match.playerName} vs ${data.match.opponentName} — ${data.match.result}`;
@@ -397,6 +429,10 @@
           headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
           body: JSON.stringify(payload)
         });
+        if (res.status === 401) {
+          handleUnauthorized(alert, 'Session expired. Please log in again.');
+          return;
+        }
         const data = await res.json();
         if (data.success) {
           alert.textContent = `✓ Player added: ${data.player.name} (${data.player.armies.join(', ')})`;
