@@ -157,6 +157,27 @@
       overflow: hidden;
       transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
     }
+
+    .post-card.reveal-pending {
+      opacity: 0;
+      transform: translateY(18px) scale(0.985);
+    }
+
+    .post-card.reveal-in {
+      animation: feedReveal 0.45s ease forwards;
+      animation-delay: var(--reveal-delay, 0ms);
+    }
+
+    @keyframes feedReveal {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
     .post-card::before {
       content: '';
       position: absolute;
@@ -366,6 +387,9 @@
   </footer>
 
   <script>
+    let currentFeedView = 'card';
+    let timelineObserver = null;
+
     function formatDate(dateStr) {
       const d = new Date(dateStr + 'T12:00:00');
       return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -434,6 +458,52 @@
       return card;
     }
 
+    function clearTimelineReveal() {
+      if (timelineObserver) {
+        timelineObserver.disconnect();
+        timelineObserver = null;
+      }
+
+      document.querySelectorAll('.post-card').forEach(card => {
+        card.classList.remove('reveal-pending', 'reveal-in');
+        card.style.removeProperty('--reveal-delay');
+      });
+    }
+
+    function applyTimelineReveal() {
+      const cards = Array.from(document.querySelectorAll('.post-list .post-card'));
+      if (!cards.length) return;
+
+      clearTimelineReveal();
+      cards.forEach((card, index) => {
+        card.classList.add('reveal-pending');
+        card.style.setProperty('--reveal-delay', `${Math.min(index * 70, 420)}ms`);
+      });
+
+      if (!('IntersectionObserver' in window)) {
+        cards.forEach(card => {
+          card.classList.remove('reveal-pending');
+          card.classList.add('reveal-in');
+        });
+        return;
+      }
+
+      timelineObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          const card = entry.target;
+          card.classList.remove('reveal-pending');
+          card.classList.add('reveal-in');
+          observer.unobserve(card);
+        });
+      }, {
+        threshold: 0.15,
+        rootMargin: '0px 0px -10% 0px'
+      });
+
+      cards.forEach(card => timelineObserver.observe(card));
+    }
+
     function renderFeedPosts(items, category = 'All') {
       const list = document.getElementById('post-list');
       list.textContent = '';
@@ -454,9 +524,14 @@
       }
 
       sorted.forEach(post => list.appendChild(createPostCard(post)));
+
+      if (currentFeedView === 'timeline') {
+        applyTimelineReveal();
+      }
     }
 
     function applyFeedView(view) {
+      currentFeedView = view;
       const list = document.getElementById('post-list');
       const controls = document.getElementById('feed-view-controls');
       const isTimeline = view === 'timeline';
@@ -464,6 +539,12 @@
       controls.querySelectorAll('.feed-view-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.view === view);
       });
+
+      if (isTimeline) {
+        applyTimelineReveal();
+      } else {
+        clearTimelineReveal();
+      }
     }
 
     function setupViewControls() {

@@ -555,9 +555,19 @@ nav {
   object-fit: cover;
   display: block;
   border-right: 1px solid var(--border);
+  transition: opacity 0.24s ease, filter 0.24s ease;
 }
 .home-spotlight-content {
   padding: 1rem 1.2rem 1rem;
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+.home-spotlight.is-transitioning .home-spotlight-media {
+  opacity: 0.35;
+  filter: saturate(0.85);
+}
+.home-spotlight.is-transitioning .home-spotlight-content {
+  opacity: 0.45;
+  transform: translateY(3px);
 }
 .home-spotlight-meta {
   display: flex;

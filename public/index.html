@@ -359,10 +359,7 @@
     let spotlightIndex = 0;
     let spotlightTimer = null;
 
-    function renderSpotlight() {
-      if (!spotlightItems.length) return;
-
-      const item = spotlightItems[spotlightIndex % spotlightItems.length];
+    function commitSpotlightItem(item) {
       const image = document.getElementById('spotlight-image');
       const category = document.getElementById('spotlight-category');
       const date = document.getElementById('spotlight-date');
@@ -380,10 +377,39 @@
       link.href = newsHref(item.slug);
     }
 
+    function renderSpotlight(withTransition = false) {
+      if (!spotlightItems.length) return;
+
+      const item = spotlightItems[spotlightIndex % spotlightItems.length];
+      const spotlightRoot = document.getElementById('home-spotlight');
+
+      if (!withTransition) {
+        commitSpotlightItem(item);
+        return;
+      }
+
+      spotlightRoot.classList.add('is-transitioning');
+
+      const preload = new Image();
+      preload.onload = () => {
+        commitSpotlightItem(item);
+        requestAnimationFrame(() => {
+          spotlightRoot.classList.remove('is-transitioning');
+        });
+      };
+      preload.onerror = () => {
+        commitSpotlightItem(item);
+        requestAnimationFrame(() => {
+          spotlightRoot.classList.remove('is-transitioning');
+        });
+      };
+      preload.src = item.image;
+    }
+
     function rotateSpotlight(delta) {
       if (!spotlightItems.length) return;
       spotlightIndex = (spotlightIndex + delta + spotlightItems.length) % spotlightItems.length;
-      renderSpotlight();
+      renderSpotlight(true);
     }
 
     function startSpotlightRotation() {

@@ -60,8 +60,10 @@ Each article entry includes:
 ## Recently Added UI Features
 
 - Feed view mode toggle in [public/feed.html](public/feed.html): card mode and timeline mode.
+- Timeline-mode reveal animations (staggered entry while scrolling) in [public/feed.html](public/feed.html).
 - Related dispatch recommendations in [public/news.html](public/news.html).
 - Rotating homepage dispatch spotlight in [public/index.html](public/index.html).
+- Spotlight transitions now use crossfade + image preloading for smoother rotation in [public/index.html](public/index.html).
 
 ## Commands
 
