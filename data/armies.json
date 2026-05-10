@@ -1,0 +1,150 @@
+[
+  {
+    "name": "Space Marines",
+    "subfactions": [
+      "Ultramarines",
+      "Blood Angels",
+      "Dark Angels",
+      "Space Wolves",
+      "Salamanders",
+      "Imperial Fists"
+    ],
+    "commonUnits": [
+      "Intercessor Squad",
+      "Terminator Squad",
+      "Redemptor Dreadnought",
+      "Librarian"
+    ]
+  },
+  {
+    "name": "Chaos Space Marines",
+    "subfactions": [
+      "Black Legion",
+      "Word Bearers",
+      "Night Lords",
+      "Iron Warriors"
+    ],
+    "commonUnits": [
+      "Legionaries",
+      "Chosen",
+      "Havocs",
+      "Daemon Prince"
+    ]
+  },
+  {
+    "name": "Necrons",
+    "subfactions": [
+      "Sautekh",
+      "Novokh",
+      "Mephrit",
+      "Szarekhan"
+    ],
+    "commonUnits": [
+      "Warriors",
+      "Immortals",
+      "Lychguard",
+      "Canoptek Doomstalker"
+    ]
+  },
+  {
+    "name": "Aeldari",
+    "subfactions": [
+      "Ulthwe",
+      "Biel-Tan",
+      "Saim-Hann",
+      "Iyanden"
+    ],
+    "commonUnits": [
+      "Guardian Defenders",
+      "Windriders",
+      "Wraithguard",
+      "Farseer"
+    ]
+  },
+  {
+    "name": "Orks",
+    "subfactions": [
+      "Goffs",
+      "Evil Sunz",
+      "Deathskulls",
+      "Bad Moons"
+    ],
+    "commonUnits": [
+      "Boyz",
+      "Nobz",
+      "Warbikers",
+      "Warboss"
+    ]
+  },
+  {
+    "name": "T'au Empire",
+    "subfactions": [
+      "T'au Sept",
+      "Bork'an",
+      "Farsight Enclaves",
+      "Sa'cea"
+    ],
+    "commonUnits": [
+      "Breacher Team",
+      "Crisis Battlesuits",
+      "Riptide",
+      "Commander"
+    ]
+  },
+  {
+    "name": "Adeptus Custodes",
+    "subfactions": [
+      "Emperor's Chosen",
+      "Shadowkeepers",
+      "Dread Host",
+      "Solar Watch"
+    ],
+    "commonUnits": [
+      "Custodian Guard",
+      "Allarus Custodians",
+      "Vertus Praetors",
+      "Blade Champion"
+    ]
+  },
+  {
+    "name": "World Eaters",
+    "subfactions": [
+      "Berzerker Warband",
+      "Daemonkin Host"
+    ],
+    "commonUnits": [
+      "Khorne Berzerkers",
+      "Eightbound",
+      "Exalted Eightbound",
+      "Angron"
+    ]
+  },
+  {
+    "name": "Grey Knights",
+    "subfactions": [
+      "Brotherhood of Psykers",
+      "Prescient Brethren"
+    ],
+    "commonUnits": [
+      "Strike Squad",
+      "Terminator Squad",
+      "Dreadknight",
+      "Grand Master"
+    ]
+  },
+  {
+    "name": "Imperial Guard / Astra Militarum",
+    "subfactions": [
+      "Cadian",
+      "Catachan",
+      "Krieg",
+      "Tallarn"
+    ],
+    "commonUnits": [
+      "Infantry Squad",
+      "Kasrkin",
+      "Leman Russ",
+      "Rogal Dorn"
+    ]
+  }
+]

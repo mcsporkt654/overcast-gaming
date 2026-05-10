@@ -88,6 +88,9 @@ const DATA_DIR = path.join(__dirname, 'data');
 const PLAYERS_FILE = path.join(DATA_DIR, 'players.json');
 const MATCHES_FILE = path.join(DATA_DIR, 'matches.json');
 const POSTS_FILE = path.join(DATA_DIR, 'posts.json');
+const ARMIES_FILE = path.join(DATA_DIR, 'armies.json');
+const MISSIONS_FILE = path.join(DATA_DIR, 'missions.json');
+const EVENTS_FILE = path.join(DATA_DIR, 'events.json');
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.disable('x-powered-by');
@@ -126,6 +129,81 @@ function normalizeString(value, maxLength = 120) {
 
 function isIsoDate(value) {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function normalizeOptionalInteger(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function normalizeUnits(value, maxUnits = 20) {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map(unit => {
+      if (typeof unit === 'string') {
+        const unitName = normalizeString(unit, 80);
+        return unitName ? { unitName, count: 1, role: '', points: null } : null;
+      }
+
+      if (!unit || typeof unit !== 'object') return null;
+
+      const unitName = normalizeString(unit.unitName, 80);
+      if (!unitName) return null;
+
+      const count = normalizeOptionalInteger(unit.count);
+      const points = normalizeOptionalInteger(unit.points);
+      const role = normalizeString(unit.role, 40);
+
+      return {
+        unitName,
+        count: count && count > 0 ? count : 1,
+        role,
+        points: points === null ? null : points
+      };
+    })
+    .filter(Boolean)
+    .slice(0, maxUnits);
+}
+
+function invertResult(result) {
+  if (result === 'W') return 'L';
+  if (result === 'L') return 'W';
+  return 'D';
+}
+
+function buildSideRecords(matches) {
+  const records = [];
+
+  matches.forEach(match => {
+    const armyUsed = normalizeString(match.armyUsed, 80);
+    const opponentArmy = normalizeString(match.opponentArmy, 80);
+    const result = ['W', 'L', 'D'].includes(match.result) ? match.result : 'D';
+    const pointsDiff = Number.isInteger(match.pointsDiff) ? match.pointsDiff : null;
+
+    if (armyUsed && opponentArmy) {
+      records.push({
+        army: armyUsed,
+        opponentArmy,
+        result,
+        pointsDiff,
+        date: match.date,
+        matchId: match.id
+      });
+
+      records.push({
+        army: opponentArmy,
+        opponentArmy: armyUsed,
+        result: invertResult(result),
+        pointsDiff: pointsDiff === null ? null : -pointsDiff,
+        date: match.date,
+        matchId: match.id
+      });
+    }
+  });
+
+  return records;
 }
 
 function normalizeHttpUrl(value) {
@@ -207,6 +285,63 @@ app.post('/api/players', requireAdmin, (req, res) => {
   res.json({ success: true, player: newPlayer });
 });
 
+// ─── API: Reference Data ─────────────────────────────────────────────────────
+app.get('/api/armies', (req, res) => {
+  const armies = readJSON(ARMIES_FILE);
+  res.json(Array.isArray(armies) ? armies : []);
+});
+
+app.get('/api/missions', (req, res) => {
+  const missions = readJSON(MISSIONS_FILE);
+  res.json(Array.isArray(missions) ? missions : []);
+});
+
+app.get('/api/events', (req, res) => {
+  const events = readJSON(EVENTS_FILE);
+  const sorted = (Array.isArray(events) ? events : []).sort((a, b) => {
+    const left = new Date(b.startDate || b.date || 0);
+    const right = new Date(a.startDate || a.date || 0);
+    return left - right;
+  });
+  res.json(sorted);
+});
+
+app.post('/api/events', requireAdmin, (req, res) => {
+  const events = readJSON(EVENTS_FILE);
+  const { name, format, location, startDate, endDate, notes } = req.body;
+
+  const cleanName = normalizeString(name, 120);
+  const cleanFormat = normalizeString(format, 80);
+  const cleanLocation = normalizeString(location, 120);
+  const cleanNotes = normalizeString(notes, 1000);
+
+  if (!cleanName) {
+    return res.status(400).json({ error: 'Event name is required.' });
+  }
+
+  if (startDate && !isIsoDate(startDate)) {
+    return res.status(400).json({ error: 'startDate must be YYYY-MM-DD.' });
+  }
+
+  if (endDate && !isIsoDate(endDate)) {
+    return res.status(400).json({ error: 'endDate must be YYYY-MM-DD.' });
+  }
+
+  const newEvent = {
+    id: `event-${Date.now()}`,
+    name: cleanName,
+    format: cleanFormat,
+    location: cleanLocation,
+    startDate: startDate || '',
+    endDate: endDate || '',
+    notes: cleanNotes
+  };
+
+  const nextEvents = Array.isArray(events) ? [...events, newEvent] : [newEvent];
+  writeJSON(EVENTS_FILE, nextEvents);
+  res.json({ success: true, event: newEvent });
+});
+
 // ─── API: Matches ─────────────────────────────────────────────────────────────
 app.get('/api/matches', (req, res) => {
   const matches = readJSON(MATCHES_FILE);
@@ -215,11 +350,47 @@ app.get('/api/matches', (req, res) => {
   res.json(matches);
 });
 
+app.get('/api/matches/:id', (req, res) => {
+  const matches = readJSON(MATCHES_FILE);
+  const match = matches.find(m => m.id === req.params.id);
+
+  if (!match) {
+    return res.status(404).json({ error: 'Match not found.' });
+  }
+
+  res.json(match);
+});
+
 app.post('/api/matches', requireAdmin, (req, res) => {
   const matches = readJSON(MATCHES_FILE);
   const players = readJSON(PLAYERS_FILE);
+  const missions = readJSON(MISSIONS_FILE);
+  const events = readJSON(EVENTS_FILE);
 
-  const { date, playerId, armyUsed, opponentName, opponentArmy, result, pointsDiff } = req.body;
+  const {
+    date,
+    playerId,
+    armyUsed,
+    armySubfaction,
+    armyPoints,
+    playerUnits,
+    opponentName,
+    opponentArmy,
+    opponentSubfaction,
+    opponentPoints,
+    opponentUnits,
+    missionId,
+    eventId,
+    primaryScorePlayer,
+    primaryScoreOpponent,
+    secondaryScorePlayer,
+    secondaryScoreOpponent,
+    destructionScorePlayer,
+    destructionScoreOpponent,
+    result,
+    pointsDiff,
+    battleNotes
+  } = req.body;
 
   if (!date || !playerId || !armyUsed || !opponentName || !opponentArmy || !result) {
     return res.status(400).json({ error: 'All fields except pointsDiff are required.' });
@@ -255,16 +426,64 @@ app.post('/api/matches', requireAdmin, (req, res) => {
     normalizedPointsDiff = parsed;
   }
 
+  const cleanArmySubfaction = normalizeString(armySubfaction, 80);
+  const cleanOpponentSubfaction = normalizeString(opponentSubfaction, 80);
+  const normalizedArmyPoints = normalizeOptionalInteger(armyPoints);
+  const normalizedOpponentPoints = normalizeOptionalInteger(opponentPoints);
+  const normalizedPrimaryScorePlayer = normalizeOptionalInteger(primaryScorePlayer);
+  const normalizedPrimaryScoreOpponent = normalizeOptionalInteger(primaryScoreOpponent);
+  const normalizedSecondaryScorePlayer = normalizeOptionalInteger(secondaryScorePlayer);
+  const normalizedSecondaryScoreOpponent = normalizeOptionalInteger(secondaryScoreOpponent);
+  const normalizedDestructionScorePlayer = normalizeOptionalInteger(destructionScorePlayer);
+  const normalizedDestructionScoreOpponent = normalizeOptionalInteger(destructionScoreOpponent);
+
+  const cleanMissionId = normalizeString(missionId, 80);
+  const mission = cleanMissionId
+    ? (Array.isArray(missions) ? missions.find(m => m.id === cleanMissionId) : null)
+    : null;
+  if (cleanMissionId && !mission) {
+    return res.status(400).json({ error: 'missionId does not match any known mission.' });
+  }
+
+  const cleanEventId = normalizeString(eventId, 80);
+  const event = cleanEventId
+    ? (Array.isArray(events) ? events.find(ev => ev.id === cleanEventId) : null)
+    : null;
+  if (cleanEventId && !event) {
+    return res.status(400).json({ error: 'eventId does not match any known event.' });
+  }
+
+  const cleanBattleNotes = normalizeString(battleNotes, 1500);
+  const normalizedPlayerUnits = normalizeUnits(playerUnits);
+  const normalizedOpponentUnits = normalizeUnits(opponentUnits);
+
   const newMatch = {
     id: 'match-' + Date.now(),
     date,
     playerId,
     playerName: player.name,
     armyUsed: cleanArmyUsed,
+    armySubfaction: cleanArmySubfaction,
+    armyPoints: normalizedArmyPoints,
+    playerUnits: normalizedPlayerUnits,
     opponentName: cleanOpponentName,
     opponentArmy: cleanOpponentArmy,
+    opponentSubfaction: cleanOpponentSubfaction,
+    opponentPoints: normalizedOpponentPoints,
+    opponentUnits: normalizedOpponentUnits,
+    missionId: mission ? mission.id : '',
+    missionName: mission ? mission.name : '',
+    eventId: event ? event.id : '',
+    eventName: event ? event.name : '',
+    primaryScorePlayer: normalizedPrimaryScorePlayer,
+    primaryScoreOpponent: normalizedPrimaryScoreOpponent,
+    secondaryScorePlayer: normalizedSecondaryScorePlayer,
+    secondaryScoreOpponent: normalizedSecondaryScoreOpponent,
+    destructionScorePlayer: normalizedDestructionScorePlayer,
+    destructionScoreOpponent: normalizedDestructionScoreOpponent,
     result: normalizedResult,
-    pointsDiff: normalizedPointsDiff
+    pointsDiff: normalizedPointsDiff,
+    battleNotes: cleanBattleNotes
   };
 
   matches.push(newMatch);
@@ -314,6 +533,136 @@ app.get('/api/stats', (req, res) => {
   res.json({ totalPlayers, totalGames, mostPlayedArmy, leaderboard, armyWinRates });
 });
 
+app.get('/api/analytics/matchups', (req, res) => {
+  const matches = readJSON(MATCHES_FILE);
+  const sideRecords = buildSideRecords(matches);
+  const armyFilter = normalizeString(req.query.army, 80);
+  const opponentFilter = normalizeString(req.query.opponent, 80);
+
+  const matchupMap = {};
+
+  sideRecords.forEach(record => {
+    if (armyFilter && record.army !== armyFilter) return;
+    if (opponentFilter && record.opponentArmy !== opponentFilter) return;
+
+    const key = `${record.army}__${record.opponentArmy}`;
+    if (!matchupMap[key]) {
+      matchupMap[key] = {
+        army: record.army,
+        opponentArmy: record.opponentArmy,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        totalGames: 0,
+        totalPointsDiff: 0
+      };
+    }
+
+    const row = matchupMap[key];
+    row.totalGames += 1;
+    if (record.result === 'W') row.wins += 1;
+    if (record.result === 'L') row.losses += 1;
+    if (record.result === 'D') row.draws += 1;
+    if (record.pointsDiff !== null) row.totalPointsDiff += record.pointsDiff;
+  });
+
+  const matchups = Object.values(matchupMap)
+    .map(row => ({
+      ...row,
+      winRate: row.totalGames ? Math.round((row.wins / row.totalGames) * 100) : 0,
+      avgPointsDiff: row.totalGames ? Number((row.totalPointsDiff / row.totalGames).toFixed(1)) : 0
+    }))
+    .sort((a, b) => {
+      if (b.totalGames !== a.totalGames) return b.totalGames - a.totalGames;
+      return b.winRate - a.winRate;
+    });
+
+  const factions = [...new Set(sideRecords.map(r => r.army))].sort();
+  res.json({ factions, matchups });
+});
+
+app.get('/api/analytics/meta', (req, res) => {
+  const matches = readJSON(MATCHES_FILE);
+  const sideRecords = buildSideRecords(matches);
+
+  const overallMap = {};
+  const monthlyMap = {};
+  let totalAppearances = 0;
+
+  sideRecords.forEach(record => {
+    if (!record.army || !record.date || !isIsoDate(record.date)) return;
+
+    totalAppearances += 1;
+    if (!overallMap[record.army]) {
+      overallMap[record.army] = {
+        faction: record.army,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        totalGames: 0,
+        totalPointsDiff: 0
+      };
+    }
+
+    const overall = overallMap[record.army];
+    overall.totalGames += 1;
+    if (record.result === 'W') overall.wins += 1;
+    if (record.result === 'L') overall.losses += 1;
+    if (record.result === 'D') overall.draws += 1;
+    if (record.pointsDiff !== null) overall.totalPointsDiff += record.pointsDiff;
+
+    const monthKey = record.date.slice(0, 7);
+    if (!monthlyMap[monthKey]) monthlyMap[monthKey] = {};
+    if (!monthlyMap[monthKey][record.army]) {
+      monthlyMap[monthKey][record.army] = {
+        faction: record.army,
+        games: 0,
+        wins: 0,
+        losses: 0,
+        draws: 0
+      };
+    }
+
+    const monthly = monthlyMap[monthKey][record.army];
+    monthly.games += 1;
+    if (record.result === 'W') monthly.wins += 1;
+    if (record.result === 'L') monthly.losses += 1;
+    if (record.result === 'D') monthly.draws += 1;
+  });
+
+  const overall = Object.values(overallMap)
+    .map(row => ({
+      ...row,
+      winRate: row.totalGames ? Math.round((row.wins / row.totalGames) * 100) : 0,
+      avgPointsDiff: row.totalGames ? Number((row.totalPointsDiff / row.totalGames).toFixed(1)) : 0,
+      metaShare: totalAppearances ? Math.round((row.totalGames / totalAppearances) * 100) : 0
+    }))
+    .sort((a, b) => {
+      if (b.totalGames !== a.totalGames) return b.totalGames - a.totalGames;
+      return b.winRate - a.winRate;
+    });
+
+  const monthly = Object.keys(monthlyMap)
+    .sort()
+    .map(month => {
+      const rows = Object.values(monthlyMap[month]);
+      const totalGames = rows.reduce((sum, row) => sum + row.games, 0);
+      return {
+        month,
+        totalGames,
+        factions: rows
+          .map(row => ({
+            ...row,
+            winRate: row.games ? Math.round((row.wins / row.games) * 100) : 0,
+            metaShare: totalGames ? Math.round((row.games / totalGames) * 100) : 0
+          }))
+          .sort((a, b) => b.games - a.games)
+      };
+    });
+
+  res.json({ totalAppearances, overall, monthly });
+});
+
 // ─── API: Admin verify (checks password server-side, never exposes it) ────────
 app.post('/api/admin/verify', (req, res) => {
   pruneAuthState();
@@ -353,6 +702,9 @@ app.get('/api/posts', (req, res) => {
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/roster', (req, res) => res.sendFile(path.join(__dirname, 'public', 'roster.html')));
 app.get('/stats', (req, res) => res.sendFile(path.join(__dirname, 'public', 'stats.html')));
+app.get('/match-detail', (req, res) => res.sendFile(path.join(__dirname, 'public', 'match-detail.html')));
+app.get('/matchups', (req, res) => res.sendFile(path.join(__dirname, 'public', 'matchups.html')));
+app.get('/meta', (req, res) => res.sendFile(path.join(__dirname, 'public', 'meta.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 app.get('/feed', (req, res) => res.sendFile(path.join(__dirname, 'public', 'feed.html')));
 app.get('/news', (req, res) => res.sendFile(path.join(__dirname, 'public', 'news.html')));

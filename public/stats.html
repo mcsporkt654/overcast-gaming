@@ -41,6 +41,11 @@
 
   <section class="section">
 
+    <div style="display:flex; gap:0.65rem; flex-wrap:wrap; margin-bottom:1.4rem;">
+      <a href="/matchups" class="btn btn-outline" style="font-size:0.7rem;">Matchup Matrix</a>
+      <a href="/meta" class="btn btn-outline" style="font-size:0.7rem;">Meta Trends</a>
+    </div>
+
     <!-- Summary: Leaderboard + Army Win Rates -->
     <div class="summary-grid" id="summary-grid">
       <div class="summary-card" id="leaderboard-card">
@@ -284,8 +289,11 @@
         dateCell.textContent = date;
 
         const playerCell = document.createElement('td');
-        playerCell.style.cssText = 'font-weight:600; color:var(--text-primary)';
-        playerCell.textContent = m.playerName;
+        const playerLink = document.createElement('a');
+        playerLink.href = `/match-detail?id=${encodeURIComponent(m.id)}`;
+        playerLink.style.cssText = 'font-weight:600; color:var(--text-primary)';
+        playerLink.textContent = m.playerName;
+        playerCell.appendChild(playerLink);
 
         const armyCell = document.createElement('td');
         const armyTag = document.createElement('span');
@@ -294,7 +302,11 @@
         armyCell.appendChild(armyTag);
 
         const oppNameCell = document.createElement('td');
-        oppNameCell.textContent = m.opponentName;
+        const oppLink = document.createElement('a');
+        oppLink.href = `/match-detail?id=${encodeURIComponent(m.id)}`;
+        oppLink.style.color = 'var(--text-secondary)';
+        oppLink.textContent = m.opponentName;
+        oppNameCell.appendChild(oppLink);
 
         const oppArmyCell = document.createElement('td');
         const oppArmyTag = document.createElement('span');

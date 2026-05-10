@@ -1,0 +1,37 @@
+[
+  {
+    "id": "mission-take-and-hold",
+    "name": "Take and Hold",
+    "missionPack": "Leviathan",
+    "primaryDescription": "Score progressively by controlling objectives.",
+    "secondaryDescription": "Players select fixed or tactical secondaries."
+  },
+  {
+    "id": "mission-sites-of-power",
+    "name": "Sites of Power",
+    "missionPack": "Leviathan",
+    "primaryDescription": "Characters lead objective control for stronger scoring.",
+    "secondaryDescription": "Players select fixed or tactical secondaries."
+  },
+  {
+    "id": "mission-priority-targets",
+    "name": "Priority Targets",
+    "missionPack": "Leviathan",
+    "primaryDescription": "Rotating objective emphasis each battle round.",
+    "secondaryDescription": "Players select fixed or tactical secondaries."
+  },
+  {
+    "id": "mission-scorched-earth",
+    "name": "Scorched Earth",
+    "missionPack": "Leviathan",
+    "primaryDescription": "Burn and hold objectives to deny opponent scoring.",
+    "secondaryDescription": "Players select fixed or tactical secondaries."
+  },
+  {
+    "id": "mission-sweep-and-clear",
+    "name": "Sweep and Clear",
+    "missionPack": "Leviathan",
+    "primaryDescription": "Secure and retain multiple midfield objectives.",
+    "secondaryDescription": "Players select fixed or tactical secondaries."
+  }
+]

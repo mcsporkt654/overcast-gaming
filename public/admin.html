@@ -90,6 +90,23 @@
             </div>
 
             <div class="form-group">
+              <label for="match-subfaction">Player Subfaction <span style="color:var(--text-muted)">(optional)</span></label>
+              <select id="match-subfaction">
+                <option value="">— Select Subfaction —</option>
+                <option value="__custom__">+ Custom Subfaction...</option>
+              </select>
+            </div>
+            <div class="form-group" id="match-subfaction-custom-group" style="display:none">
+              <label for="match-subfaction-custom">Custom Player Subfaction</label>
+              <input type="text" id="match-subfaction-custom" placeholder="e.g. Vanguard Spearhead" />
+            </div>
+
+            <div class="form-group">
+              <label for="match-army-points">Player Army Points <span style="color:var(--text-muted)">(optional)</span></label>
+              <input type="number" id="match-army-points" placeholder="e.g. 2000" />
+            </div>
+
+            <div class="form-group">
               <label for="match-opponent">Opponent Name</label>
               <input type="text" id="match-opponent" placeholder="e.g. Silas Dorn" required />
             </div>
@@ -104,6 +121,65 @@
             <div class="form-group" id="match-opp-army-custom-group" style="display:none">
               <label for="match-opp-army-custom">Custom Opponent Army</label>
               <input type="text" id="match-opp-army-custom" placeholder="e.g. Leagues of Votann" />
+            </div>
+
+            <div class="form-group">
+              <label for="match-opp-subfaction">Opponent Subfaction <span style="color:var(--text-muted)">(optional)</span></label>
+              <select id="match-opp-subfaction">
+                <option value="">— Select Subfaction —</option>
+                <option value="__custom__">+ Custom Subfaction...</option>
+              </select>
+            </div>
+            <div class="form-group" id="match-opp-subfaction-custom-group" style="display:none">
+              <label for="match-opp-subfaction-custom">Custom Opponent Subfaction</label>
+              <input type="text" id="match-opp-subfaction-custom" placeholder="e.g. Righteous Crusaders" />
+            </div>
+
+            <div class="form-group">
+              <label for="match-opp-points">Opponent Army Points <span style="color:var(--text-muted)">(optional)</span></label>
+              <input type="number" id="match-opp-points" placeholder="e.g. 2000" />
+            </div>
+
+            <div class="form-group">
+              <label for="match-mission">Mission <span style="color:var(--text-muted)">(optional)</span></label>
+              <select id="match-mission">
+                <option value="">— Select Mission —</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="match-event">Event <span style="color:var(--text-muted)">(optional)</span></label>
+              <select id="match-event">
+                <option value="">— No Event —</option>
+              </select>
+              <p class="form-hint">Use events to group local tournaments or campaign rounds.</p>
+            </div>
+
+            <div class="form-group">
+              <label style="color:var(--accent); font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase;">Objective Scores <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.4rem;">
+                <input type="number" id="match-primary-player" placeholder="Primary (player)" />
+                <input type="number" id="match-primary-opp" placeholder="Primary (opponent)" />
+                <input type="number" id="match-secondary-player" placeholder="Secondary (player)" />
+                <input type="number" id="match-secondary-opp" placeholder="Secondary (opponent)" />
+                <input type="number" id="match-destruction-player" placeholder="Destruction (player)" />
+                <input type="number" id="match-destruction-opp" placeholder="Destruction (opponent)" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="match-player-units">Player Key Units <span style="color:var(--text-muted)">(comma-separated, optional)</span></label>
+              <textarea id="match-player-units" rows="3" placeholder="e.g. Terminators, Redemptor Dreadnought, Librarian"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="match-opp-units">Opponent Key Units <span style="color:var(--text-muted)">(comma-separated, optional)</span></label>
+              <textarea id="match-opp-units" rows="3" placeholder="e.g. Crisis Suits, Breachers, Commander"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="match-notes">Battle Notes <span style="color:var(--text-muted)">(optional)</span></label>
+              <textarea id="match-notes" rows="4" placeholder="Key turning points, tactical notes, and notable unit performance..."></textarea>
             </div>
 
             <div class="form-group">
@@ -211,7 +287,7 @@
 
   <script>
     // ─── Army list ──────────────────────────────────────────────────
-    const ARMIES = [
+    const FALLBACK_ARMIES = [
       'Adeptus Custodes', 'Adeptus Mechanicus', 'Aeldari', 'Agents of the Imperium',
       'Blood Angels', 'Chaos Daemons', 'Chaos Knights', 'Chaos Space Marines',
       'Dark Angels', 'Death Guard', 'Deathwatch', 'Drukhari',
@@ -223,6 +299,10 @@
       'Thousand Sons', 'Tyranids / Hive Fleet', 'Ultramarines',
       'World Eaters'
     ];
+
+    let armyReference = [];
+    let missionReference = [];
+    let eventReference = [];
 
     // ─── Auth ───────────────────────────────────────────────────────
     let adminToken = null; // set after server-side verification, never hardcoded
@@ -290,31 +370,117 @@
     document.getElementById('match-form').addEventListener('submit', submitMatch);
     document.getElementById('player-form').addEventListener('submit', submitPlayer);
 
+    function normalizeListFromText(value) {
+      return String(value || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
+    function getArmyNames() {
+      if (armyReference.length) return armyReference.map(a => a.name);
+      return FALLBACK_ARMIES;
+    }
+
+    function populateArmySelect(id) {
+      const select = document.getElementById(id);
+      while (select.options.length > 2) select.remove(2);
+      getArmyNames().forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a;
+        opt.textContent = a;
+        select.appendChild(opt);
+      });
+    }
+
+    function populateSubfactionSelect(selectId, factionName) {
+      const select = document.getElementById(selectId);
+      while (select.options.length > 2) select.remove(2);
+
+      if (!factionName || factionName === '__custom__') return;
+
+      const ref = armyReference.find(a => a.name === factionName);
+      if (!ref || !Array.isArray(ref.subfactions)) return;
+
+      ref.subfactions.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = s;
+        select.appendChild(opt);
+      });
+    }
+
+    function handleCustomSelect(selectId, customGroupId, customInputId) {
+      const select = document.getElementById(selectId);
+      const customGroup = document.getElementById(customGroupId);
+      const customInput = document.getElementById(customInputId);
+      const useCustom = select.value === '__custom__';
+      customGroup.style.display = useCustom ? 'block' : 'none';
+      customInput.required = useCustom;
+      if (!useCustom) customInput.value = '';
+    }
+
+    async function loadReferenceData() {
+      const [armiesRes, missionsRes, eventsRes] = await Promise.allSettled([
+        fetch('/api/armies'),
+        fetch('/api/missions'),
+        fetch('/api/events')
+      ]);
+
+      if (armiesRes.status === 'fulfilled' && armiesRes.value.ok) {
+        const payload = await armiesRes.value.json();
+        armyReference = Array.isArray(payload) ? payload : [];
+      }
+
+      if (missionsRes.status === 'fulfilled' && missionsRes.value.ok) {
+        const payload = await missionsRes.value.json();
+        missionReference = Array.isArray(payload) ? payload : [];
+      }
+
+      if (eventsRes.status === 'fulfilled' && eventsRes.value.ok) {
+        const payload = await eventsRes.value.json();
+        eventReference = Array.isArray(payload) ? payload : [];
+      }
+    }
+
     // ─── Init Admin ─────────────────────────────────────────────────
-    function initAdmin() {
+    async function initAdmin() {
       // Set today as default date
       document.getElementById('match-date').value = new Date().toISOString().split('T')[0];
 
+      await loadReferenceData();
+
       // Populate army dropdowns
       const armySelects = ['match-army', 'match-opp-army'];
-      armySelects.forEach(id => {
-        const sel = document.getElementById(id);
-        // Clear existing options except first two (blank + custom)
-        while (sel.options.length > 2) sel.remove(2);
-        ARMIES.forEach(a => {
-          const opt = document.createElement('option');
-          opt.value = a; opt.textContent = a;
-          sel.appendChild(opt);
-        });
-      });
+      armySelects.forEach(populateArmySelect);
 
       // Populate player armies multi-select
       const paSelect = document.getElementById('player-armies');
       paSelect.innerHTML = '';
-      ARMIES.forEach(a => {
+      getArmyNames().forEach(a => {
         const opt = document.createElement('option');
         opt.value = a; opt.textContent = a;
         paSelect.appendChild(opt);
+      });
+
+      // Populate mission selector
+      const missionSelect = document.getElementById('match-mission');
+      while (missionSelect.options.length > 1) missionSelect.remove(1);
+      missionReference.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.missionPack ? `${m.name} (${m.missionPack})` : m.name;
+        missionSelect.appendChild(opt);
+      });
+
+      // Populate event selector
+      const eventSelect = document.getElementById('match-event');
+      while (eventSelect.options.length > 1) eventSelect.remove(1);
+      eventReference.forEach(ev => {
+        const opt = document.createElement('option');
+        opt.value = ev.id;
+        opt.textContent = ev.startDate ? `${ev.name} (${ev.startDate})` : ev.name;
+        eventSelect.appendChild(opt);
       });
 
       // Load players for match dropdown
@@ -330,18 +496,23 @@
           });
         });
 
-      // Custom army toggle — match
+      // Custom army and subfaction toggles + dynamic subfaction lists
       document.getElementById('match-army').addEventListener('change', e => {
-        const cg = document.getElementById('match-army-custom-group');
-        const ci = document.getElementById('match-army-custom');
-        cg.style.display = e.target.value === '__custom__' ? 'block' : 'none';
-        ci.required = e.target.value === '__custom__';
+        handleCustomSelect('match-army', 'match-army-custom-group', 'match-army-custom');
+        populateSubfactionSelect('match-subfaction', e.target.value);
       });
+
       document.getElementById('match-opp-army').addEventListener('change', e => {
-        const cg = document.getElementById('match-opp-army-custom-group');
-        const ci = document.getElementById('match-opp-army-custom');
-        cg.style.display = e.target.value === '__custom__' ? 'block' : 'none';
-        ci.required = e.target.value === '__custom__';
+        handleCustomSelect('match-opp-army', 'match-opp-army-custom-group', 'match-opp-army-custom');
+        populateSubfactionSelect('match-opp-subfaction', e.target.value);
+      });
+
+      document.getElementById('match-subfaction').addEventListener('change', () => {
+        handleCustomSelect('match-subfaction', 'match-subfaction-custom-group', 'match-subfaction-custom');
+      });
+
+      document.getElementById('match-opp-subfaction').addEventListener('change', () => {
+        handleCustomSelect('match-opp-subfaction', 'match-opp-subfaction-custom-group', 'match-opp-subfaction-custom');
       });
     }
 
@@ -361,14 +532,39 @@
         ? document.getElementById('match-opp-army-custom').value.trim()
         : oppArmySel;
 
+      const subfactionSel = document.getElementById('match-subfaction').value;
+      const armySubfaction = subfactionSel === '__custom__'
+        ? document.getElementById('match-subfaction-custom').value.trim()
+        : subfactionSel;
+
+      const oppSubfactionSel = document.getElementById('match-opp-subfaction').value;
+      const opponentSubfaction = oppSubfactionSel === '__custom__'
+        ? document.getElementById('match-opp-subfaction-custom').value.trim()
+        : oppSubfactionSel;
+
       const payload = {
         date: document.getElementById('match-date').value,
         playerId: document.getElementById('match-player').value,
         armyUsed,
+        armySubfaction,
+        armyPoints: document.getElementById('match-army-points').value,
+        playerUnits: normalizeListFromText(document.getElementById('match-player-units').value),
         opponentName: document.getElementById('match-opponent').value.trim(),
         opponentArmy,
+        opponentSubfaction,
+        opponentPoints: document.getElementById('match-opp-points').value,
+        opponentUnits: normalizeListFromText(document.getElementById('match-opp-units').value),
+        missionId: document.getElementById('match-mission').value,
+        eventId: document.getElementById('match-event').value,
+        primaryScorePlayer: document.getElementById('match-primary-player').value,
+        primaryScoreOpponent: document.getElementById('match-primary-opp').value,
+        secondaryScorePlayer: document.getElementById('match-secondary-player').value,
+        secondaryScoreOpponent: document.getElementById('match-secondary-opp').value,
+        destructionScorePlayer: document.getElementById('match-destruction-player').value,
+        destructionScoreOpponent: document.getElementById('match-destruction-opp').value,
         result: document.getElementById('match-result').value,
-        pointsDiff: document.getElementById('match-points').value
+        pointsDiff: document.getElementById('match-points').value,
+        battleNotes: document.getElementById('match-notes').value.trim()
       };
 
       try {
@@ -389,6 +585,14 @@
           document.getElementById('match-date').value = new Date().toISOString().split('T')[0];
           document.getElementById('match-army-custom-group').style.display = 'none';
           document.getElementById('match-opp-army-custom-group').style.display = 'none';
+          document.getElementById('match-subfaction-custom-group').style.display = 'none';
+          document.getElementById('match-opp-subfaction-custom-group').style.display = 'none';
+
+          const subfactionSelects = ['match-subfaction', 'match-opp-subfaction'];
+          subfactionSelects.forEach(id => {
+            const sel = document.getElementById(id);
+            while (sel.options.length > 2) sel.remove(2);
+          });
         } else {
           throw new Error(data.error || 'Unknown error');
         }
