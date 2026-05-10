@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Overcast Gaming — Warhammer 40K League | Portland, OR</title>
+  <meta name="description" content="Overcast Gaming is a Warhammer 40K competitive gaming group based in Portland, Oregon." />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-deep:#0a1a1a;--bg-dark:#111f1f;--bg-card:#152828;--border:#2a4a4a;
+      --border-glow:#4ecdc4;--accent:#4ecdc4;--accent-dim:#2a7a74;--accent-bright:#7fffd4;
+      --text-primary:#e8f4f4;--text-secondary:#9ec5c5;--text-muted:#557070;
+      --win:#4ecdc4;--loss:#e05c5c;--draw:#c4a44e;
+      --font-gothic:'Cinzel',Georgia,serif;--font-body:'Rajdhani','Segoe UI',sans-serif;
+      --gutter:1.5rem;--radius:6px;--glow:0 0 18px rgba(78,205,196,0.18);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg-deep);color:var(--text-primary);font-family:var(--font-body);font-size:16px;line-height:1.6;min-height:100vh;background-image:radial-gradient(ellipse at 10% 20%,rgba(78,205,196,0.04) 0%,transparent 60%),radial-gradient(ellipse at 90% 80%,rgba(78,205,196,0.03) 0%,transparent 50%)}
+    ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg-deep)}::-webkit-scrollbar-thumb{background:var(--accent-dim);border-radius:3px}
+    h1,h2,h3,h4{font-family:var(--font-gothic);letter-spacing:0.04em;line-height:1.2}
+    a{color:var(--accent);text-decoration:none;transition:color 0.2s}a:hover{color:var(--accent-bright)}
+
+    /* Nav */
+    nav{background:rgba(10,26,26,0.95);border-bottom:1px solid var(--border);backdrop-filter:blur(8px);position:sticky;top:0;z-index:100;padding:0 var(--gutter)}
+    .nav-inner{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;height:60px}
+    .nav-logo{font-family:var(--font-gothic);font-size:1.2rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.1em;display:flex;align-items:center;gap:0.5rem}
+    .nav-tabs{display:flex;gap:0;list-style:none}
+    .nav-tabs li a{font-family:var(--font-gothic);font-size:0.85rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.12em;padding:0.4rem 1.2rem;border-bottom:2px solid transparent;transition:color 0.2s,border-color 0.2s;cursor:pointer;display:block}
+    .nav-tabs li a:hover,.nav-tabs li a.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+    /* Pages */
+    .page{display:none}.page.active{display:block}
+
+    /* Hero */
+    .hero{position:relative;padding:5rem var(--gutter) 4rem;text-align:center;overflow:hidden;background:linear-gradient(to bottom,rgba(10,26,26,0) 0%,var(--bg-deep) 100%),repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(78,205,196,0.02) 40px,rgba(78,205,196,0.02) 41px)}
+    .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(78,205,196,0.12) 0%,transparent 70%);pointer-events:none}
+    .hero-eyebrow{font-family:var(--font-gothic);font-size:0.75rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--accent-dim);margin-bottom:1rem}
+    .hero h1{font-size:clamp(2.5rem,6vw,5rem);font-weight:900;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.06em;text-shadow:0 0 40px rgba(78,205,196,0.3),0 2px 0 rgba(0,0,0,0.8);margin-bottom:1rem}
+    .hero h1 span{color:var(--accent)}
+    .hero-tagline{font-size:1.2rem;font-weight:300;color:var(--text-secondary);letter-spacing:0.08em;margin-bottom:0.5rem}
+    .hero-location{font-size:0.85rem;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:2.5rem}
+    .hero-divider{width:80px;height:2px;background:linear-gradient(to right,transparent,var(--accent),transparent);margin:0 auto 2.5rem}
+    .hero-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+
+    /* Buttons */
+    .btn{display:inline-flex;align-items:center;gap:0.4rem;padding:0.65rem 1.6rem;border-radius:var(--radius);font-family:var(--font-gothic);font-size:0.8rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;border:none}
+    .btn-primary{background:var(--accent);color:var(--bg-deep);box-shadow:0 0 20px rgba(78,205,196,0.3)}
+    .btn-primary:hover{background:var(--accent-bright);box-shadow:0 0 28px rgba(78,205,196,0.5);color:var(--bg-deep)}
+    .btn-outline{background:transparent;color:var(--accent);border:1px solid var(--accent-dim)}
+    .btn-outline:hover{background:rgba(78,205,196,0.08);border-color:var(--accent);color:var(--accent-bright)}
+
+    /* Stats Bar */
+    .stats-bar{background:var(--bg-card);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:2rem var(--gutter)}
+    .stats-bar-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;text-align:center}
+    .stat-item{padding:1rem;position:relative}
+    .stat-item:not(:last-child)::after{content:'';position:absolute;right:0;top:20%;bottom:20%;width:1px;background:var(--border)}
+    .stat-value{font-family:var(--font-gothic);font-size:2.2rem;font-weight:700;color:var(--accent);display:block;line-height:1;margin-bottom:0.4rem}
+    .stat-label{font-size:0.75rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted)}
+
+    /* Section */
+    .section{max-width:1200px;margin:0 auto;padding:3rem var(--gutter)}
+    .section-header{display:flex;align-items:center;gap:1rem;margin-bottom:2rem}
+    .section-header h2{font-size:1.6rem;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.08em}
+    .section-line{flex:1;height:1px;background:linear-gradient(to right,var(--border),transparent)}
+
+    /* Page Header */
+    .page-header{background:var(--bg-card);border-bottom:1px solid var(--border);padding:2.5rem var(--gutter) 2rem}
+    .page-header-inner{max-width:1200px;margin:0 auto}
+    .page-header-inner p.eyebrow{font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.4rem}
+    .page-header-inner h1{font-size:2rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-primary)}
+    .page-header-inner h1 span{color:var(--accent)}
+    .page-header-inner p.sub{color:var(--text-muted);font-size:0.9rem;margin-top:0.4rem}
+
+    /* Roster */
+    .roster-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.5rem}
+    .player-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem 1rem;text-align:center;transition:border-color 0.2s,box-shadow 0.2s,transform 0.2s;position:relative;overflow:hidden}
+    .player-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,var(--accent),transparent);opacity:0;transition:opacity 0.3s}
+    .player-card:hover{border-color:var(--border-glow);box-shadow:var(--glow);transform:translateY(-2px)}
+    .player-card:hover::before{opacity:1}
+    .player-avatar{width:80px;height:80px;border-radius:50%;margin:0 auto 1rem;background:var(--bg-dark);border:2px solid var(--border-glow);display:flex;align-items:center;justify-content:center;font-size:2rem;color:var(--accent-dim)}
+    .player-name{font-family:var(--font-gothic);font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.06em}
+    .army-tags{display:flex;flex-wrap:wrap;gap:0.35rem;justify-content:center;margin-bottom:1rem}
+    .army-tag{font-size:0.65rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);background:rgba(78,205,196,0.1);border:1px solid rgba(78,205,196,0.25);border-radius:3px;padding:0.2rem 0.5rem}
+    .player-stat-block{margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border)}
+    .player-win-rate{font-family:var(--font-gothic);font-size:1.4rem;font-weight:700;color:var(--accent);display:block;margin-bottom:0.2rem}
+    .player-win-label{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted)}
+    .player-wld{font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem}
+    .w{color:var(--win)}.l{color:var(--loss)}.d{color:var(--draw)}
+
+    /* Tables */
+    .table-wrapper{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+    table{width:100%;border-collapse:collapse;font-size:0.9rem}
+    thead tr{background:var(--bg-card);border-bottom:2px solid var(--border)}
+    thead th{padding:0.9rem 1rem;text-align:left;font-family:var(--font-gothic);font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);white-space:nowrap}
+    tbody tr{border-bottom:1px solid var(--border);transition:background 0.15s}
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:hover{background:rgba(78,205,196,0.04)}
+    td{padding:0.75rem 1rem;color:var(--text-secondary);vertical-align:middle}
+    .result-badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:4px;font-family:var(--font-gothic);font-size:0.8rem;font-weight:700}
+    .result-W{background:rgba(78,205,196,0.15);color:var(--win);border:1px solid rgba(78,205,196,0.3)}
+    .result-L{background:rgba(224,92,92,0.15);color:var(--loss);border:1px solid rgba(224,92,92,0.3)}
+    .result-D{background:rgba(196,164,78,0.15);color:var(--draw);border:1px solid rgba(196,164,78,0.3)}
+    .points-pos{color:var(--win)}.points-neg{color:var(--loss)}
+
+    /* Summary Cards */
+    .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2.5rem}
+    .summary-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem}
+    .summary-card h3{font-size:0.8rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem}
+    .summary-card h3::after{content:'';flex:1;height:1px;background:var(--border)}
+    .leaderboard-row{display:flex;align-items:center;gap:1rem;padding:0.6rem 0;border-bottom:1px solid var(--border)}
+    .leaderboard-row:last-child{border-bottom:none}
+    .lb-rank{font-family:var(--font-gothic);font-size:0.8rem;font-weight:700;color:var(--text-muted);width:24px;text-align:center}
+    .lb-rank.gold{color:#ffd700}.lb-rank.silver{color:#c0c0c0}.lb-rank.bronze{color:#cd7f32}
+    .lb-name{flex:1;font-weight:600;font-size:0.9rem;color:var(--text-primary)}
+    .lb-record{font-size:0.75rem;color:var(--text-muted)}
+    .lb-winrate{font-family:var(--font-gothic);font-size:1rem;font-weight:700;color:var(--accent);width:50px;text-align:right}
+    .army-row{display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid var(--border)}
+    .army-row:last-child{border-bottom:none}
+    .army-name{flex:1;font-size:0.85rem;color:var(--text-secondary)}
+    .army-bar-wrap{width:80px;height:6px;background:var(--bg-deep);border-radius:3px;overflow:hidden}
+    .army-bar{height:100%;background:var(--accent);border-radius:3px}
+    .army-winrate{font-size:0.85rem;font-weight:600;color:var(--accent);width:36px;text-align:right}
+
+    /* Merch Banner */
+    .merch-banner{background:linear-gradient(135deg,var(--bg-card) 0%,#1a3535 100%);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;text-align:center;margin:0 var(--gutter) 3rem;max-width:1200px;margin-left:auto;margin-right:auto;position:relative;overflow:hidden}
+    .merch-banner::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(-45deg,transparent,transparent 20px,rgba(78,205,196,0.015) 20px,rgba(78,205,196,0.015) 21px)}
+    .merch-banner h3{font-size:1.2rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-primary);margin-bottom:0.5rem;position:relative}
+    .merch-banner p{color:var(--text-muted);font-size:0.9rem;margin-bottom:1.25rem;position:relative}
+    .merch-banner .btn{position:relative}
+
+    /* Filter Bar */
+    .filter-bar{display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap}
+    .filter-bar input,.filter-bar select{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);padding:0.55rem 1rem;font-family:var(--font-body);font-size:0.9rem;outline:none;transition:border-color 0.2s;flex:1;min-width:180px}
+    .filter-bar input:focus,.filter-bar select:focus{border-color:var(--accent)}
+    .filter-bar select option{background:var(--bg-dark)}
+
+    /* Footer */
+    footer{border-top:1px solid var(--border);padding:2rem var(--gutter);text-align:center;color:var(--text-muted);font-size:0.8rem;letter-spacing:0.08em}
+    .skull-divider{margin:0 0.75rem;color:var(--accent-dim)}
+
+    /* Preview Banner */
+    .preview-banner{background:rgba(78,205,196,0.08);border-bottom:1px solid rgba(78,205,196,0.2);padding:0.6rem var(--gutter);text-align:center;font-size:0.8rem;color:var(--accent-dim);letter-spacing:0.05em}
+    .preview-banner span{color:var(--accent)}
+
+    /* ─── News Feed ────────────────────────────────────────────────── */
+    .feed-grid{display:grid;grid-template-columns:1fr;gap:1.5rem;max-width:820px;margin:0 auto}
+    .news-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color 0.2s,box-shadow 0.2s,transform 0.2s;position:relative}
+    .news-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,var(--accent),transparent);opacity:0;transition:opacity 0.3s}
+    .news-card:hover{border-color:var(--border-glow);box-shadow:var(--glow);transform:translateY(-2px)}
+    .news-card:hover::before{opacity:1}
+    .news-card-inner{padding:1.75rem 2rem}
+    .news-meta{display:flex;align-items:center;gap:0.75rem;margin-bottom:0.9rem;flex-wrap:wrap}
+    .news-tag{font-family:var(--font-gothic);font-size:0.6rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;padding:0.25rem 0.65rem;border-radius:3px;border:1px solid}
+    .news-tag.league{color:var(--accent);background:rgba(78,205,196,0.1);border-color:rgba(78,205,196,0.3)}
+    .news-tag.battle{color:var(--loss);background:rgba(224,92,92,0.1);border-color:rgba(224,92,92,0.3)}
+    .news-tag.event{color:var(--draw);background:rgba(196,164,78,0.1);border-color:rgba(196,164,78,0.3)}
+    .news-tag.spotlight{color:#c084fc;background:rgba(192,132,252,0.1);border-color:rgba(192,132,252,0.3)}
+    .news-tag.rules{color:var(--text-secondary);background:rgba(158,197,197,0.08);border-color:rgba(158,197,197,0.2)}
+    .news-date{font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted)}
+    .news-card h3{font-family:var(--font-gothic);font-size:1.15rem;font-weight:700;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.6rem;line-height:1.3}
+    .news-excerpt{font-size:0.9rem;color:var(--text-secondary);line-height:1.65;margin-bottom:1rem}
+    .news-footer{display:flex;align-items:center;justify-content:space-between;padding-top:1rem;border-top:1px solid var(--border);gap:1rem;flex-wrap:wrap}
+    .news-author{font-size:0.75rem;color:var(--text-muted);letter-spacing:0.05em}
+    .news-author strong{color:var(--text-secondary)}
+    .news-card-featured{border-color:var(--accent-dim)}
+    .news-card-featured .news-card-inner{padding-top:2rem}
+    .feed-header-note{text-align:center;font-size:0.8rem;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:2.5rem;padding:0.75rem;background:rgba(78,205,196,0.04);border:1px solid var(--border);border-radius:var(--radius)}
+
+    @media(max-width:768px){
+      .stats-bar-inner{grid-template-columns:1fr;gap:0.5rem}
+      .stat-item::after{display:none}
+      .summary-grid{grid-template-columns:1fr}
+      .roster-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+      .nav-tabs{gap:0}
+      .nav-tabs li a{padding:0.4rem 0.7rem;font-size:0.72rem}
+      .hero h1{font-size:2rem}
+      .news-card-inner{padding:1.25rem}
+    }
+    @media(max-width:480px){
+      .filter-bar{flex-direction:column}
+    }
+  </style>
+</head>
+<body>
+
+<div class="preview-banner">⚠ <span>Design Preview</span> — Sample data shown. Full site requires server.</div>
+
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo" onclick="showPage('home');return false">
+      <span>☠</span> Overcast Gaming
+    </a>
+    <ul class="nav-tabs">
+      <li><a href="#" class="active" id="tab-home" onclick="showPage('home');return false">Home</a></li>
+      <li><a href="#" id="tab-roster" onclick="showPage('roster');return false">Roster</a></li>
+      <li><a href="#" id="tab-stats" onclick="showPage('stats');return false">Stats</a></li>
+      <li><a href="#" id="tab-feed" onclick="showPage('feed');return false">Feed</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ═══ HOME PAGE ═══ -->
+<div class="page active" id="page-home">
+  <section class="hero">
+    <p class="hero-eyebrow">Est. Portland, Oregon &mdash; In the Grimdark of the Far Future</p>
+    <h1><span>Overcast</span> Gaming</h1>
+    <p class="hero-tagline">For the Glory of the Battle. For the Honor of the Faction.</p>
+    <p class="hero-location">⚔ Portland, Oregon &bull; Warhammer 40,000 Competitive League</p>
+    <div class="hero-divider"></div>
+    <div class="hero-actions">
+      <a href="#" class="btn btn-primary" onclick="showPage('roster');return false">⚔ View Roster</a>
+      <a href="#" class="btn btn-outline" onclick="showPage('stats');return false">📊 Match Stats</a>
+      <a href="#" class="btn btn-outline" onclick="showPage('feed');return false">📡 Community Feed</a>
+    </div>
+  </section>
+
+  <section class="stats-bar">
+    <div class="stats-bar-inner">
+      <div class="stat-item"><span class="stat-value">5</span><span class="stat-label">Active Players</span></div>
+      <div class="stat-item"><span class="stat-value">10</span><span class="stat-label">Games Played</span></div>
+      <div class="stat-item"><span class="stat-value" style="font-size:1.2rem;padding-top:0.3rem">Necrons</span><span class="stat-label">Top Army Played</span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Recent Battles</h2>
+      <span class="section-line"></span>
+      <a href="#" class="btn btn-outline" style="font-size:0.72rem;padding:0.4rem 1rem" onclick="showPage('stats');return false">All Stats →</a>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Date</th><th>Player</th><th>Army</th><th>vs. Opponent</th><th>Opp. Army</th><th>Result</th><th>Pts Diff</th></tr></thead>
+        <tbody id="recent-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="merch-banner">
+    <h3>⚙ Gear Up, Commander</h3>
+    <p>Rep your faction. Overcast Gaming merch — shirts, dice bags, accessories.</p>
+    <a href="#" class="btn btn-primary">🛒 Visit the Merch Store</a>
+  </div>
+</div>
+
+<!-- ═══ ROSTER PAGE ═══ -->
+<div class="page" id="page-roster">
+  <div class="page-header">
+    <div class="page-header-inner">
+      <p class="eyebrow">Portland, Oregon</p>
+      <h1>The <span>Roster</span></h1>
+      <p class="sub">The commanders of Overcast Gaming and the factions they command.</p>
+    </div>
+  </div>
+  <section class="section">
+    <div class="roster-grid" id="roster-grid"></div>
+  </section>
+</div>
+
+<!-- ═══ STATS PAGE ═══ -->
+<div class="page" id="page-stats">
+  <div class="page-header">
+    <div class="page-header-inner">
+      <p class="eyebrow">The Annals of War</p>
+      <h1>Match <span>Statistics</span></h1>
+      <p class="sub">Complete battle records, faction performance, and league standings.</p>
+    </div>
+  </div>
+  <section class="section">
+    <div class="summary-grid">
+      <div class="summary-card">
+        <h3>Leaderboard</h3>
+        <div id="leaderboard-list"></div>
+      </div>
+      <div class="summary-card">
+        <h3>Faction Win Rates</h3>
+        <div id="army-list"></div>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <input type="text" id="filter-player" placeholder="🔍 Filter by player name..." oninput="applyFilters()" />
+      <select id="filter-result" onchange="applyFilters()">
+        <option value="">All Results</option>
+        <option value="W">Wins</option>
+        <option value="L">Losses</option>
+        <option value="D">Draws</option>
+      </select>
+    </div>
+    <div class="section-header" style="margin-bottom:1rem">
+      <h2>Battle Log</h2>
+      <span class="section-line"></span>
+      <span id="match-count" style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap"></span>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Date</th><th>Player</th><th>Army Used</th><th>vs. Opponent</th><th>Opp. Army</th><th>Result</th><th>Pts Diff</th></tr></thead>
+        <tbody id="match-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- ═══ FEED PAGE ═══ -->
+<div class="page" id="page-feed">
+  <div class="page-header">
+    <div class="page-header-inner">
+      <p class="eyebrow">Dispatches from the Front</p>
+      <h1>Community <span>Feed</span></h1>
+      <p class="sub">League announcements, battle reports, and dispatches from the commanders of Portland.</p>
+    </div>
+  </div>
+  <section class="section">
+    <div class="feed-header-note">
+      ☠ &nbsp; Transmissions logged by COGITATOR-7. All data is current as of the last synchronisation cycle. &nbsp; ☠
+    </div>
+    <div class="feed-grid">
+
+      <!-- Post 1: Featured League Announcement -->
+      <div class="news-card news-card-featured">
+        <div class="news-card-inner">
+          <div class="news-meta">
+            <span class="news-tag league">League Dispatch</span>
+            <span class="news-date">May 1, 2026</span>
+          </div>
+          <h3>Season III Begins — New Points System &amp; Expanded Roster</h3>
+          <p class="news-excerpt">
+            By the Emperor's will, Season III of the Overcast Gaming Warhammer 40K League is now live. This season introduces a revised scoring system — Eternal War primary missions with a 10-point victory threshold — and opens registration to two new commanders. The Overlord has petitioned to run a second army alongside his Necron dynasty, a request still under deliberation by the High Council. All matches must be reported within 48 hours of completion. Glory to the most punctual.
+          </p>
+          <div class="news-footer">
+            <span class="news-author">Filed by <strong>Commissioner Ash</strong> — Overcast League Administration</span>
+            <a href="#" class="btn btn-outline" style="font-size:0.65rem;padding:0.35rem 0.9rem;" onclick="showPage('stats');return false">View Standings →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Post 2: Battle Report -->
+      <div class="news-card">
+        <div class="news-card-inner">
+          <div class="news-meta">
+            <span class="news-tag battle">Battle Report</span>
+            <span class="news-date">April 12, 2026</span>
+          </div>
+          <h3>The Eldar Civil War: Lady Thornwood vs. Wraithborn — Full Recap</h3>
+          <p class="news-excerpt">
+            What began as a routine league match on the industrial wastelands of Tabla IV descended into something far more personal. Lady Thornwood's Aeldari host and Wraithborn's Drukhari blade-sworn clashed across three grueling rounds, with the Drukharis' superior mobility nearly overcoming Thornwood's psychic dominance in the final push. Final score: Thornwood, 78 VP to 61. The postgame handshake lasted approximately four seconds. Tensions remain high.
+          </p>
+          <div class="news-footer">
+            <span class="news-author">Filed by <strong>Brother Kael</strong> — Eyewitness Account</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Post 3: Upcoming Event -->
+      <div class="news-card">
+        <div class="news-card-inner">
+          <div class="news-meta">
+            <span class="news-tag event">Upcoming Event</span>
+            <span class="news-date">April 28, 2026</span>
+          </div>
+          <h3>Grimdark Grand Slam — May 17th at Millennium Games, Portland</h3>
+          <p class="news-excerpt">
+            Mark your dateslates, commanders. The Grimdark Grand Slam is a one-day, four-round narrative event at Millennium Games in SE Portland. Overcast Gaming will field at least three representatives. Armies must comply with 10th Edition core rules — no Legends, no exceptions. Prize support includes store credit and a hand-painted chapter badge for Best Painted. Registration closes May 10th. Contact Commissioner Ash to claim your spot under the Overcast banner.
+          </p>
+          <div class="news-footer">
+            <span class="news-author">Filed by <strong>Commissioner Ash</strong></span>
+            <span style="font-size:0.7rem;color:var(--draw);font-weight:600;letter-spacing:0.05em;">⚑ Registration Open</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Post 4: Player Spotlight -->
+      <div class="news-card">
+        <div class="news-card-inner">
+          <div class="news-meta">
+            <span class="news-tag spotlight">Commander Spotlight</span>
+            <span class="news-date">March 18, 2026</span>
+          </div>
+          <h3>Spotlight: The Overlord &amp; His Ever-Expanding Dynasty</h3>
+          <p class="news-excerpt">
+            He arrived with a single Necron Overlord model and a vague menace. Two seasons later, The Overlord fields a fully painted 2,000-point Szarekhan Dynasty with magnetised weapon options on every Immortal. We sat down with Portland's most ominous tabletop general to talk list-building philosophy, the psychological warfare of silent dice placement, and why he refuses to use movement trays. "Efficiency," he said. "The dynasty does not hurry."
+          </p>
+          <div class="news-footer">
+            <span class="news-author">Filed by <strong>COGITATOR-7</strong> — Overcast Data Engine</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Post 5: Rules Update -->
+      <div class="news-card">
+        <div class="news-card-inner">
+          <div class="news-meta">
+            <span class="news-tag rules">Rules Update</span>
+            <span class="news-date">February 20, 2026</span>
+          </div>
+          <h3>League Adopts GW February Balance Dataslate — Key Changes Logged</h3>
+          <p class="news-excerpt">
+            Following Games Workshop's February 2026 Balance Dataslate, the Overcast League will implement all points adjustments effective immediately for any matches played after Feb 28th. Notable impacts: Chaos Daemons Nurglings cost increase (+5pts per unit), T'au Kroot Lone-Spear adjusted, and the Adeptus Custodes stratagem errata is now in effect. Commander Vex has already updated his list and is reportedly furious about the World Eaters Rhino clarification. See GW's official documentation for the full breakdown.
+          </p>
+          <div class="news-footer">
+            <span class="news-author">Filed by <strong>COGITATOR-7</strong> — Overcast Data Engine</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<footer>
+  <p>Overcast Gaming <span class="skull-divider">☠</span> Portland, Oregon <span class="skull-divider">☠</span> Warhammer 40,000 League</p>
+  <p style="margin-top:0.5rem;font-size:0.7rem;color:var(--text-muted)">Not affiliated with Games Workshop. Warhammer 40,000 © Games Workshop Ltd.</p>
+</footer>
+
+<script>
+// ─── Sample Data ──────────────────────────────────────────────────────────────
+const PLAYERS = [
+  { id:'player-1', name:'Commander Vex',   armies:['Chaos Space Marines','World Eaters'], wins:1, losses:1, draws:0, total:2, winRate:50 },
+  { id:'player-2', name:'Lady Thornwood',  armies:['Necrons','Aeldari'],                 wins:2, losses:0, draws:0, total:2, winRate:100 },
+  { id:'player-3', name:'Brother Kael',    armies:['Space Marines','Blood Angels'],       wins:1, losses:1, draws:0, total:2, winRate:50 },
+  { id:'player-4', name:'The Overlord',    armies:['Necrons'],                            wins:1, losses:1, draws:0, total:2, winRate:50 },
+  { id:'player-5', name:'Wraithborn',      armies:['Aeldari','Drukhari'],                 wins:1, losses:0, draws:1, total:2, winRate:50 }
+];
+
+const MATCHES = [
+  { date:'2026-03-10', playerName:'The Overlord',   armyUsed:'Necrons',              opponentName:'Mira Volks',    opponentArmy:"Thousand Sons",                    result:'L', pointsDiff:-5 },
+  { date:'2026-03-01', playerName:'Wraithborn',      armyUsed:'Drukhari',             opponentName:'Fenris Rath',   opponentArmy:'Death Guard',                       result:'W', pointsDiff:14 },
+  { date:'2026-02-15', playerName:'Brother Kael',    armyUsed:'Space Marines',        opponentName:'Davan Crul',    opponentArmy:'Chaos Daemons',                     result:'W', pointsDiff:9 },
+  { date:'2026-02-08', playerName:'Lady Thornwood',  armyUsed:'Aeldari',              opponentName:'Brax Solenne',  opponentArmy:'Orks',                              result:'W', pointsDiff:18 },
+  { date:'2026-02-01', playerName:'Commander Vex',   armyUsed:'World Eaters',         opponentName:'Lorian Ash',    opponentArmy:'Adeptus Custodes',                  result:'L', pointsDiff:-12 },
+  { date:'2026-01-19', playerName:'Wraithborn',      armyUsed:'Aeldari',              opponentName:'Cassius Drel',  opponentArmy:'Imperial Guard / Astra Militarum',  result:'D', pointsDiff:0 },
+  { date:'2026-01-12', playerName:'The Overlord',    armyUsed:'Necrons',              opponentName:'Fenris Rath',   opponentArmy:'Space Wolves',                      result:'W', pointsDiff:30 },
+  { date:'2026-01-05', playerName:'Brother Kael',    armyUsed:'Blood Angels',         opponentName:'Mira Volks',    opponentArmy:"T'au Empire",                       result:'L', pointsDiff:-8 },
+  { date:'2025-12-28', playerName:'Lady Thornwood',  armyUsed:'Necrons',              opponentName:'Silas Dorn',    opponentArmy:'Tyranids / Hive Fleet',             result:'W', pointsDiff:22 },
+  { date:'2025-12-20', playerName:'Commander Vex',   armyUsed:'Chaos Space Marines',  opponentName:'Garrick Hale',  opponentArmy:'Grey Knights',                      result:'W', pointsDiff:15 }
+];
+
+// ─── Navigation ───────────────────────────────────────────────────────────────
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tabs a').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const tab = document.getElementById('tab-' + page);
+  if (tab) tab.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function fmtDate(d) {
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+function fmtPts(p) {
+  if (p == null) return '—';
+  if (p > 0) return `<span class="points-pos">+${p}</span>`;
+  if (p < 0) return `<span class="points-neg">${p}</span>`;
+  return '0';
+}
+
+// ─── Render Home ──────────────────────────────────────────────────────────────
+document.getElementById('recent-tbody').innerHTML = MATCHES.slice(0, 5).map(m => `
+  <tr>
+    <td>${fmtDate(m.date)}</td>
+    <td style="font-weight:600;color:var(--text-primary)">${m.playerName}</td>
+    <td><span class="army-tag">${m.armyUsed}</span></td>
+    <td>${m.opponentName}</td>
+    <td><span class="army-tag" style="color:var(--text-muted);border-color:var(--border)">${m.opponentArmy}</span></td>
+    <td><span class="result-badge result-${m.result}">${m.result}</span></td>
+    <td>${fmtPts(m.pointsDiff)}</td>
+  </tr>`).join('');
+
+// ─── Render Roster ────────────────────────────────────────────────────────────
+document.getElementById('roster-grid').innerHTML = PLAYERS.map(p => `
+  <div class="player-card">
+    <div class="player-avatar">☠</div>
+    <div class="player-name">${p.name}</div>
+    <div class="army-tags">${p.armies.map(a => `<span class="army-tag">${a}</span>`).join('')}</div>
+    <div class="player-stat-block">
+      <span class="player-win-rate">${p.winRate}%</span>
+      <span class="player-win-label">Win Rate</span>
+      <p class="player-wld"><span class="w">W ${p.wins}</span> &bull; <span class="l">L ${p.losses}</span> &bull; <span class="d">D ${p.draws}</span> &nbsp;(${p.total} games)</p>
+    </div>
+  </div>`).join('');
+
+// ─── Render Stats ─────────────────────────────────────────────────────────────
+const rankClasses = ['gold','silver','bronze'];
+const leaderboard = [...PLAYERS].sort((a,b) => b.winRate - a.winRate);
+document.getElementById('leaderboard-list').innerHTML = leaderboard.map((p,i) => `
+  <div class="leaderboard-row">
+    <span class="lb-rank ${rankClasses[i]||''}">${i+1}</span>
+    <span class="lb-name">${p.name}</span>
+    <span class="lb-record"><span style="color:var(--win)">W${p.wins}</span> / <span style="color:var(--loss)">L${p.losses}</span> / <span style="color:var(--draw)">D${p.draws}</span></span>
+    <span class="lb-winrate">${p.winRate}%</span>
+  </div>`).join('');
+
+const armyStats = {};
+MATCHES.forEach(m => {
+  if (!armyStats[m.armyUsed]) armyStats[m.armyUsed] = { wins:0, total:0 };
+  armyStats[m.armyUsed].total++;
+  if (m.result === 'W') armyStats[m.armyUsed].wins++;
+});
+const armyRates = Object.entries(armyStats).map(([army,s]) => ({ army, wins:s.wins, total:s.total, winRate:Math.round(s.wins/s.total*100) })).sort((a,b) => b.winRate-a.winRate);
+document.getElementById('army-list').innerHTML = armyRates.map(a => `
+  <div class="army-row">
+    <span class="army-name">${a.army}</span>
+    <span style="font-size:0.7rem;color:var(--text-muted)">${a.wins}/${a.total}</span>
+    <div class="army-bar-wrap"><div class="army-bar" style="width:${a.winRate}%"></div></div>
+    <span class="army-winrate">${a.winRate}%</span>
+  </div>`).join('');
+
+let filteredMatches = [...MATCHES];
+function applyFilters() {
+  const player = document.getElementById('filter-player').value.toLowerCase();
+  const result = document.getElementById('filter-result').value;
+  filteredMatches = MATCHES.filter(m => {
+    if (player && !m.playerName.toLowerCase().includes(player) && !m.opponentName.toLowerCase().includes(player)) return false;
+    if (result && m.result !== result) return false;
+    return true;
+  });
+  renderMatchTable();
+}
+function renderMatchTable() {
+  document.getElementById('match-count').textContent = `${filteredMatches.length} match${filteredMatches.length !== 1 ? 'es' : ''}`;
+  document.getElementById('match-tbody').innerHTML = filteredMatches.length ? filteredMatches.map(m => `
+    <tr>
+      <td style="color:var(--text-muted);white-space:nowrap">${fmtDate(m.date)}</td>
+      <td style="font-weight:600;color:var(--text-primary)">${m.playerName}</td>
+      <td><span class="army-tag">${m.armyUsed}</span></td>
+      <td>${m.opponentName}</td>
+      <td><span class="army-tag" style="color:var(--text-muted);border-color:var(--border)">${m.opponentArmy}</span></td>
+      <td><span class="result-badge result-${m.result}">${m.result}</span></td>
+      <td>${fmtPts(m.pointsDiff)}</td>
+    </tr>`).join('')
+    : '<tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text-muted)">No matches found.</td></tr>';
+}
+renderMatchTable();
+</script>
+</body>
+</html>
