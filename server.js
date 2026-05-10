@@ -28,6 +28,7 @@ function requireAdmin(req, res, next) {
 const DATA_DIR = path.join(__dirname, 'data');
 const PLAYERS_FILE = path.join(DATA_DIR, 'players.json');
 const MATCHES_FILE = path.join(DATA_DIR, 'matches.json');
+const POSTS_FILE = path.join(DATA_DIR, 'posts.json');
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(express.json());
@@ -187,11 +188,20 @@ app.post('/api/admin/verify', (req, res) => {
   res.json({ success: true, token: ADMIN_PASSWORD });
 });
 
+// ─── API: Posts ───────────────────────────────────────────────────────────────
+app.get('/api/posts', (req, res) => {
+  const posts = readJSON(POSTS_FILE);
+  res.json(posts);
+});
+
 // ─── HTML Routes ──────────────────────────────────────────────────────────────
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/roster', (req, res) => res.sendFile(path.join(__dirname, 'public', 'roster.html')));
 app.get('/stats', (req, res) => res.sendFile(path.join(__dirname, 'public', 'stats.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/feed', (req, res) => res.sendFile(path.join(__dirname, 'public', 'feed.html')));
+app.get('/gallery', (req, res) => res.sendFile(path.join(__dirname, 'public', 'gallery.html')));
+app.get('/owl', (req, res) => res.sendFile(path.join(__dirname, 'public', 'owl.html')));
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Community Feed — Overcast Gaming</title>
+  <meta name="description" content="Latest news, battle reports, and updates from the Overcast Gaming Warhammer 40K community." />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .feed-hero {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 2.5rem var(--gutter) 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .feed-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 80% 50%, rgba(78,205,196,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .feed-hero-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .feed-eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+    .feed-title {
+      font-size: 2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-primary);
+    }
+    .feed-title span { color: var(--accent); }
+    .feed-subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 0.4rem;
+    }
+
+    /* Post Cards */
+    .post-list {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 3rem var(--gutter);
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+    }
+
+    .post-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem 2.25rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+      cursor: pointer;
+    }
+    .post-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(to right, transparent, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .post-card:hover {
+      border-color: var(--border-glow);
+      box-shadow: var(--glow);
+      transform: translateY(-2px);
+    }
+    .post-card:hover::before { opacity: 1; }
+
+    .post-card.expanded .post-body { display: block; }
+    .post-card.expanded .post-read-more { display: none; }
+
+    .post-meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.9rem;
+    }
+    .post-date {
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-family: var(--font-gothic);
+    }
+    .post-tag {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(78,205,196,0.1);
+      border: 1px solid rgba(78,205,196,0.25);
+      border-radius: 3px;
+      padding: 0.15rem 0.5rem;
+    }
+
+    .post-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-primary);
+      margin-bottom: 0.75rem;
+      line-height: 1.25;
+    }
+
+    .post-excerpt {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.65;
+      margin-bottom: 1rem;
+    }
+
+    .post-body {
+      display: none;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin-bottom: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .post-read-more {
+      font-family: var(--font-gothic);
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: color 0.2s;
+    }
+    .post-read-more:hover { color: var(--accent-bright); }
+
+    .post-collapse {
+      display: none;
+      font-family: var(--font-gothic);
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      transition: color 0.2s;
+    }
+    .post-card.expanded .post-collapse { display: inline-flex; align-items: center; gap: 0.4rem; }
+
+    .loader-posts {
+      text-align: center;
+      padding: 4rem;
+      color: var(--text-muted);
+      font-family: var(--font-gothic);
+      font-size: 0.9rem;
+      letter-spacing: 0.1em;
+    }
+
+    .feed-empty {
+      text-align: center;
+      padding: 4rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Discord CTA */
+    .feed-cta {
+      max-width: 860px;
+      margin: 0 auto 3rem;
+      padding: 0 var(--gutter);
+    }
+    .feed-cta-card {
+      background: linear-gradient(135deg, var(--bg-card) 0%, rgba(88,101,242,0.08) 100%);
+      border: 1px solid rgba(88,101,242,0.3);
+      border-radius: var(--radius);
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .feed-cta-text h4 {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-primary);
+      margin-bottom: 0.2rem;
+    }
+    .feed-cta-text p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+    .btn-discord {
+      background: #5865F2;
+      color: #fff;
+      box-shadow: 0 0 16px rgba(88,101,242,0.3);
+    }
+    .btn-discord:hover {
+      background: #6b78f5;
+      box-shadow: 0 0 24px rgba(88,101,242,0.5);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <span class="skull">☠</span> Overcast Gaming
+      </a>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/feed" class="active">Community</a></li>
+        <li><a href="/gallery">Gallery</a></li>
+        <li><a href="/roster">Roster</a></li>
+        <li><a href="/owl">The OWL</a></li>
+        <li><a href="/stats">Stats</a></li>
+        <li><a href="https://arma.gg/collections/overcast" target="_blank" rel="noopener">Merch</a></li>
+        <li><a href="/admin">Admin</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Feed Hero -->
+  <div class="feed-hero">
+    <div class="feed-hero-inner">
+      <p class="feed-eyebrow">Dispatches from the Warzone</p>
+      <h1 class="feed-title">Community <span>Feed</span></h1>
+      <p class="feed-subtitle">Battle reports, league updates, and dispatches from the front lines.</p>
+    </div>
+  </div>
+
+  <!-- Post List -->
+  <div class="post-list" id="post-list">
+    <div class="loader-posts">Loading dispatches...</div>
+  </div>
+
+  <!-- Discord CTA -->
+  <div class="feed-cta">
+    <div class="feed-cta-card">
+      <div class="feed-cta-text">
+        <h4>Join the Conversation</h4>
+        <p>Post match reports, challenge opponents, and keep up with league news on Discord.</p>
+      </div>
+      <a href="https://discord.gg/zKSgE9AwEa" target="_blank" rel="noopener" class="btn btn-discord">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03z"/></svg>
+        Join Discord
+      </a>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>Overcast Gaming <span class="skull-divider">☠</span> Portland, Oregon <span class="skull-divider">☠</span> Warhammer 40,000 League</p>
+    <p style="margin-top:0.5rem; font-size:0.7rem; color: var(--text-muted);">Not affiliated with Games Workshop. Warhammer 40,000 © Games Workshop Ltd.</p>
+  </footer>
+
+  <script>
+    function formatDate(dateStr) {
+      const d = new Date(dateStr + 'T12:00:00');
+      return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+
+    function togglePost(card) {
+      card.classList.toggle('expanded');
+    }
+
+    fetch('/api/posts')
+      .then(r => r.json())
+      .then(posts => {
+        const list = document.getElementById('post-list');
+        if (!posts.length) {
+          list.innerHTML = '<div class="feed-empty">No posts yet. Check back soon, commander.</div>';
+          return;
+        }
+        list.innerHTML = posts.map(post => `
+          <div class="post-card" onclick="togglePost(this)">
+            <div class="post-meta">
+              <span class="post-date">${formatDate(post.date)}</span>
+              <span class="post-tag">OWL Update</span>
+            </div>
+            <h2 class="post-title">${post.title}</h2>
+            <p class="post-excerpt">${post.excerpt}</p>
+            <div class="post-body">${post.body}</div>
+            <span class="post-read-more">Read More →</span>
+            <button class="post-collapse" onclick="event.stopPropagation(); this.closest('.post-card').classList.remove('expanded')">↑ Collapse</button>
+          </div>
+        `).join('');
+      })
+      .catch(() => {
+        document.getElementById('post-list').innerHTML = '<div class="feed-empty">Could not load posts. The warp interferes.</div>';
+      });
+  </script>
+
+</body>
+</html>
