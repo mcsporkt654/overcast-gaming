@@ -549,10 +549,24 @@
 
     function setupViewControls() {
       const controls = document.getElementById('feed-view-controls');
-      controls.querySelectorAll('.feed-view-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          applyFeedView(btn.dataset.view || 'card');
-        });
+      const btns = Array.from(controls.querySelectorAll('.feed-view-btn'));
+
+      btns.forEach(btn => {
+        btn.addEventListener('click', () => applyFeedView(btn.dataset.view || 'card'));
+      });
+
+      controls.addEventListener('keydown', event => {
+        const focused = document.activeElement;
+        const idx = btns.indexOf(focused);
+        if (idx === -1) return;
+
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+          event.preventDefault();
+          btns[(idx + 1) % btns.length].focus();
+        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          btns[(idx - 1 + btns.length) % btns.length].focus();
+        }
       });
     }
 
@@ -563,18 +577,46 @@
       const categories = ['All', ...new Set(items.map(item => item.category).filter(Boolean))];
       let active = 'All';
 
+      function activateChip(btn, category) {
+        active = category;
+        controls.querySelectorAll('.feed-chip').forEach(chip => {
+          chip.classList.remove('active');
+          chip.setAttribute('aria-pressed', 'false');
+        });
+        btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
+        renderFeedPosts(items, active);
+      }
+
       categories.forEach(category => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = `feed-chip${category === active ? ' active' : ''}`;
         btn.textContent = category;
-        btn.addEventListener('click', () => {
-          active = category;
-          controls.querySelectorAll('.feed-chip').forEach(chip => chip.classList.remove('active'));
-          btn.classList.add('active');
-          renderFeedPosts(items, active);
-        });
+        btn.setAttribute('aria-pressed', category === active ? 'true' : 'false');
+        btn.addEventListener('click', () => activateChip(btn, category));
         controls.appendChild(btn);
+      });
+
+      controls.addEventListener('keydown', event => {
+        const chips = Array.from(controls.querySelectorAll('.feed-chip'));
+        const focused = document.activeElement;
+        const idx = chips.indexOf(focused);
+        if (idx === -1) return;
+
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+          event.preventDefault();
+          chips[(idx + 1) % chips.length].focus();
+        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          chips[(idx - 1 + chips.length) % chips.length].focus();
+        } else if (event.key === 'Home') {
+          event.preventDefault();
+          chips[0].focus();
+        } else if (event.key === 'End') {
+          event.preventDefault();
+          chips[chips.length - 1].focus();
+        }
       });
     }
 
