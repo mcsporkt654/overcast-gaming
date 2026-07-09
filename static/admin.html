@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Overcast Gaming</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="nav.js" defer></script>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <span class="skull">☠</span> Overcast Gaming
+      </a>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/feed">Community</a></li>
+        <li><a href="/gallery">Gallery</a></li>
+        <li><a href="/roster">Roster</a></li>
+        <li><a href="/owl">The OWL</a></li>
+        <li><a href="/stats">Stats</a></li>
+        <li><a href="https://arma.gg/collections/overcast" target="_blank" rel="noopener">Merch</a></li>
+        <li><a href="/admin" class="active">Admin</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Login Screen -->
+  <div class="login-screen" id="login-screen">
+    <div class="login-card">
+      <h2>☠ Command Access</h2>
+      <p>Enter your access code to manage the league.</p>
+      <div class="form-group">
+        <label for="password-input">Access Code</label>
+        <input type="password" id="password-input" placeholder="Enter password..." autocomplete="current-password" />
+      </div>
+      <div class="alert" id="login-error" style="display:none"></div>
+      <button class="btn btn-primary" style="width:100%; margin-top:0.5rem" id="login-btn" type="button">Authenticate</button>
+      <p style="margin-top:1.5rem; font-size:0.72rem; color:var(--text-muted)">Authorized commanders only. All actions are logged.</p>
+    </div>
+  </div>
+
+  <!-- Admin Panel -->
+  <div class="admin-panel" id="admin-panel">
+
+    <div style="background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 2rem var(--gutter);">
+      <div style="max-width:1200px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <h1 style="font-size:1.8rem; text-transform:uppercase; letter-spacing:0.08em;">League <span style="color:var(--accent)">Admin</span></h1>
+          <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.3rem;">Manage players and record match results.</p>
+        </div>
+        <button class="btn btn-outline" id="logout-btn" type="button" style="font-size:0.72rem">⬅ Logout</button>
+      </div>
+    </div>
+
+    <section class="section">
+      <div class="admin-grid">
+
+        <!-- Add Match Form -->
+        <div class="admin-form-card">
+          <h3>⚔ Record a Match</h3>
+          <div class="alert" id="match-alert"></div>
+          <form id="match-form">
+
+            <div class="form-group">
+              <label for="match-date">Date</label>
+              <input type="date" id="match-date" required />
+            </div>
+
+            <div class="form-group">
+              <label for="match-player">Player</label>
+              <select id="match-player" required>
+                <option value="">— Select Player —</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="match-army">Army Used</label>
+              <select id="match-army" required>
+                <option value="">— Select Army —</option>
+                <option value="__custom__">+ Custom Army...</option>
+              </select>
+            </div>
+            <div class="form-group" id="match-army-custom-group" style="display:none">
+              <label for="match-army-custom">Custom Army Name</label>
+              <input type="text" id="match-army-custom" placeholder="e.g. Harlequins" />
+            </div>
+
+            <div class="form-group">
+              <label for="match-subfaction">Player Subfaction <span style="color:var(--text-muted)">(optional)</span></label>
+              <select id="match-subfaction">
+                <option value="">— Select Subfaction —</option>
+                <option value="__custom__">+ Custom Subfaction...</option>
+              </select>
+            </div>
+            <div class="form-group" id="match-subfaction-custom-group" style="display:none">
+              <label for="match-subfaction-custom">Custom Player Subfaction</label>
+              <input type="text" id="match-subfaction-custom" placeholder="e.g. Vanguard Spearhead" />
+            </div>
+
+            <div class="form-group">
+              <label for="match-army-points">Player Army Points <span style="color:var(--text-muted)">(optional)</span></label>
+              <input type="number" id="match-army-points" placeholder="e.g. 2000" />
+            </div>
+
+            <div class="form-group">
+              <label for="match-opponent">Opponent Name</label>
+              <input type="text" id="match-opponent" placeholder="e.g. Silas Dorn" required />
+            </div>
+
+            <div class="form-group">
+              <label for="match-opp-army">Opponent's Army</label>
+              <select id="match-opp-army" required>
+                <option value="">— Select Army —</option>
+                <option value="__custom__">+ Custom Army...</option>
+              </select>
+            </div>
+            <div class="form-group" id="match-opp-army-custom-group" style="display:none">
+              <label for="match-opp-army-custom">Custom Opponent Army</label>
+              <input type="text" id="match-opp-army-custom" placeholder="e.g. Leagues of Votann" />
+            </div>
+
+            <div class="form-group">
+              <label for="match-opp-subfaction">Opponent Subfaction <span style="color:var(--text-muted)">(optional)</span></label>
+              <select id="match-opp-subfaction">
+                <option value="">— Select Subfaction —</option>
+                <option value="__custom__">+ Custom Subfaction...</option>
+              </select>
+            </div>
+            <div class="form-group" id="match-opp-subfaction-custom-group" style="display:none">
+              <label for="match-opp-subfaction-custom">Custom Opponent Subfaction</label>
+              <input type="text" id="match-opp-subfaction-custom" placeholder="e.g. Righteous Crusaders" />
+            </div>
+
+            <div class="form-group">
+              <label for="match-opp-points">Opponent Army Points <span style="color:var(--text-muted)">(optional)</span></label>
+              <input type="number" id="match-opp-points" placeholder="e.g. 2000" />
+            </div>
+
+            <div class="form-group">
+              <label for="match-mission">Mission <span style="color:var(--text-muted)">(optional)</span></label>
+              <select id="match-mission">
+                <option value="">— Select Mission —</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="match-event">Event <span style="color:var(--text-muted)">(optional)</span></label>
+              <select id="match-event">
+                <option value="">— No Event —</option>
+              </select>
+              <p class="form-hint">Use events to group local tournaments or campaign rounds.</p>
+            </div>
+
+            <div class="form-group">
+              <label style="color:var(--accent); font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase;">Objective Scores <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.4rem;">
+                <input type="number" id="match-primary-player" placeholder="Primary (player)" />
+                <input type="number" id="match-primary-opp" placeholder="Primary (opponent)" />
+                <input type="number" id="match-secondary-player" placeholder="Secondary (player)" />
+                <input type="number" id="match-secondary-opp" placeholder="Secondary (opponent)" />
+                <input type="number" id="match-destruction-player" placeholder="Destruction (player)" />
+                <input type="number" id="match-destruction-opp" placeholder="Destruction (opponent)" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="match-player-units">Player Key Units <span style="color:var(--text-muted)">(comma-separated, optional)</span></label>
+              <textarea id="match-player-units" rows="3" placeholder="e.g. Terminators, Redemptor Dreadnought, Librarian"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="match-opp-units">Opponent Key Units <span style="color:var(--text-muted)">(comma-separated, optional)</span></label>
+              <textarea id="match-opp-units" rows="3" placeholder="e.g. Crisis Suits, Breachers, Commander"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="match-notes">Battle Notes <span style="color:var(--text-muted)">(optional)</span></label>
+              <textarea id="match-notes" rows="4" placeholder="Key turning points, tactical notes, and notable unit performance..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="match-result">Result</label>
+              <select id="match-result" required>
+                <option value="">— Select Result —</option>
+                <option value="W">Win</option>
+                <option value="L">Loss</option>
+                <option value="D">Draw</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="match-points">Points Differential <span style="color:var(--text-muted)">(optional)</span></label>
+              <input type="number" id="match-points" placeholder="e.g. 15 or -8" />
+              <p class="form-hint">Positive = you scored more. Negative = opponent scored more.</p>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem">⚔ Record Match</button>
+          </form>
+        </div>
+
+        <!-- Add Player Form -->
+        <div class="admin-form-card">
+          <h3>➕ Add a Player</h3>
+          <div class="alert" id="player-alert"></div>
+          <form id="player-form">
+
+            <div class="form-group">
+              <label for="player-name">Player Name</label>
+              <input type="text" id="player-name" placeholder="e.g. Inquisitor Mourne" required />
+            </div>
+
+            <div class="form-group">
+              <label for="player-armies">Armies (hold Ctrl/Cmd for multiple)</label>
+              <select id="player-armies" multiple required>
+                <!-- populated by JS -->
+              </select>
+              <p class="form-hint">Hold Ctrl (Windows) or Cmd (Mac) to select multiple factions.</p>
+            </div>
+
+            <div class="form-group">
+              <label for="player-armies-custom">Additional Armies <span style="color:var(--text-muted)">(comma-separated, optional)</span></label>
+              <input type="text" id="player-armies-custom" placeholder="e.g. Harlequins, Votann" />
+              <p class="form-hint">These will be merged with your selections above.</p>
+            </div>
+
+            <div class="form-group">
+              <label for="player-photo">Photo URL <span style="color:var(--text-muted)">(optional)</span></label>
+              <input type="url" id="player-photo" placeholder="https://example.com/avatar.jpg" />
+              <p class="form-hint">Leave blank to use the default placeholder.</p>
+            </div>
+
+            <div class="form-group">
+              <label style="color:var(--accent); font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase;">Social Links <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.4rem;">
+                <div>
+                  <label for="social-instagram" style="font-size:0.72rem; color:var(--text-muted);">Instagram</label>
+                  <input type="text" id="social-instagram" placeholder="username or URL" />
+                </div>
+                <div>
+                  <label for="social-twitter" style="font-size:0.72rem; color:var(--text-muted);">X / Twitter</label>
+                  <input type="text" id="social-twitter" placeholder="username or URL" />
+                </div>
+                <div>
+                  <label for="social-youtube" style="font-size:0.72rem; color:var(--text-muted);">YouTube</label>
+                  <input type="url" id="social-youtube" placeholder="https://youtube.com/..." />
+                </div>
+                <div>
+                  <label for="social-twitch" style="font-size:0.72rem; color:var(--text-muted);">Twitch</label>
+                  <input type="text" id="social-twitch" placeholder="username or URL" />
+                </div>
+                <div>
+                  <label for="social-tiktok" style="font-size:0.72rem; color:var(--text-muted);">TikTok</label>
+                  <input type="text" id="social-tiktok" placeholder="username or URL" />
+                </div>
+                <div>
+                  <label for="social-discord" style="font-size:0.72rem; color:var(--text-muted);">Discord</label>
+                  <input type="text" id="social-discord" placeholder="username or server URL" />
+                </div>
+                <div>
+                  <label for="social-reddit" style="font-size:0.72rem; color:var(--text-muted);">Reddit</label>
+                  <input type="text" id="social-reddit" placeholder="u/username or URL" />
+                </div>
+                <div>
+                  <label for="social-facebook" style="font-size:0.72rem; color:var(--text-muted);">Facebook</label>
+                  <input type="url" id="social-facebook" placeholder="https://facebook.com/..." />
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem">➕ Add Player</button>
+          </form>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>Overcast Gaming <span class="skull-divider">☠</span> Portland, Oregon <span class="skull-divider">☠</span> Warhammer 40,000 League</p>
+  </footer>
+
+  <script>
+    // ─── Army list ──────────────────────────────────────────────────
+    const FALLBACK_ARMIES = [
+      'Adeptus Custodes', 'Adeptus Mechanicus', 'Aeldari', 'Agents of the Imperium',
+      'Blood Angels', 'Chaos Daemons', 'Chaos Knights', 'Chaos Space Marines',
+      'Dark Angels', 'Death Guard', 'Deathwatch', 'Drukhari',
+      'Genestealer Cults', 'Grey Knights', 'Imperial Fists',
+      'Imperial Guard / Astra Militarum', 'Imperial Knights',
+      'Leagues of Votann', 'Necrons', 'Orks',
+      'Salamanders', 'Sisters of Battle / Adepta Sororitas',
+      'Space Marines', 'Space Wolves', "T'au Empire",
+      'Thousand Sons', 'Tyranids / Hive Fleet', 'Ultramarines',
+      'World Eaters'
+    ];
+
+    let armyReference = [];
+    let missionReference = [];
+    let eventReference = [];
+
+    // ─── Auth ───────────────────────────────────────────────────────
+    let adminToken = null; // set after server-side verification, never hardcoded
+
+    async function doLogin() {
+      const pw = document.getElementById('password-input').value;
+      const err = document.getElementById('login-error');
+      try {
+        const res = await fetch('/api/admin/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pw })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          adminToken = data.token;
+          document.getElementById('login-screen').style.display = 'none';
+          document.getElementById('admin-panel').classList.add('visible');
+          err.className = 'alert';
+          initAdmin();
+        } else if (res.status === 429) {
+          const wait = data.retryAfterSeconds ? ` Wait ${data.retryAfterSeconds}s.` : '';
+          err.textContent = 'Too many attempts.' + wait;
+          err.className = 'alert error';
+        } else {
+          err.textContent = data.error || 'Invalid access code. Try again.';
+          err.className = 'alert error';
+        }
+      } catch (e) {
+        err.textContent = 'Server error. Try again.';
+        err.className = 'alert error';
+      }
+    }
+
+    async function doLogout() {
+      if (adminToken) {
+        try {
+          await fetch('/api/admin/logout', {
+            method: 'POST',
+            headers: { 'x-admin-token': adminToken }
+          });
+        } catch (_) {
+          // Ignore logout transport failures and continue local reset.
+        }
+      }
+      adminToken = null;
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('admin-panel').classList.remove('visible');
+      document.getElementById('password-input').value = '';
+      document.getElementById('login-error').className = 'alert';
+    }
+
+    function handleUnauthorized(alertElement, message) {
+      alertElement.textContent = message;
+      alertElement.className = 'alert error';
+      doLogout();
+    }
+
+    document.getElementById('password-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+
+    document.getElementById('login-btn').addEventListener('click', doLogin);
+    document.getElementById('logout-btn').addEventListener('click', doLogout);
+    document.getElementById('match-form').addEventListener('submit', submitMatch);
+    document.getElementById('player-form').addEventListener('submit', submitPlayer);
+
+    function normalizeListFromText(value) {
+      return String(value || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
+    function getArmyNames() {
+      if (armyReference.length) return armyReference.map(a => a.name);
+      return FALLBACK_ARMIES;
+    }
+
+    function populateArmySelect(id) {
+      const select = document.getElementById(id);
+      while (select.options.length > 2) select.remove(2);
+      getArmyNames().forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a;
+        opt.textContent = a;
+        select.appendChild(opt);
+      });
+    }
+
+    function populateSubfactionSelect(selectId, factionName) {
+      const select = document.getElementById(selectId);
+      while (select.options.length > 2) select.remove(2);
+
+      if (!factionName || factionName === '__custom__') return;
+
+      const ref = armyReference.find(a => a.name === factionName);
+      if (!ref || !Array.isArray(ref.subfactions)) return;
+
+      ref.subfactions.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = s;
+        select.appendChild(opt);
+      });
+    }
+
+    function handleCustomSelect(selectId, customGroupId, customInputId) {
+      const select = document.getElementById(selectId);
+      const customGroup = document.getElementById(customGroupId);
+      const customInput = document.getElementById(customInputId);
+      const useCustom = select.value === '__custom__';
+      customGroup.style.display = useCustom ? 'block' : 'none';
+      customInput.required = useCustom;
+      if (!useCustom) customInput.value = '';
+    }
+
+    async function loadReferenceData() {
+      const [armiesRes, missionsRes, eventsRes] = await Promise.allSettled([
+        fetch('/api/armies'),
+        fetch('/api/missions'),
+        fetch('/api/events')
+      ]);
+
+      if (armiesRes.status === 'fulfilled' && armiesRes.value.ok) {
+        const payload = await armiesRes.value.json();
+        armyReference = Array.isArray(payload) ? payload : [];
+      }
+
+      if (missionsRes.status === 'fulfilled' && missionsRes.value.ok) {
+        const payload = await missionsRes.value.json();
+        missionReference = Array.isArray(payload) ? payload : [];
+      }
+
+      if (eventsRes.status === 'fulfilled' && eventsRes.value.ok) {
+        const payload = await eventsRes.value.json();
+        eventReference = Array.isArray(payload) ? payload : [];
+      }
+    }
+
+    // ─── Init Admin ─────────────────────────────────────────────────
+    async function initAdmin() {
+      // Set today as default date
+      document.getElementById('match-date').value = new Date().toISOString().split('T')[0];
+
+      await loadReferenceData();
+
+      // Populate army dropdowns
+      const armySelects = ['match-army', 'match-opp-army'];
+      armySelects.forEach(populateArmySelect);
+
+      // Populate player armies multi-select
+      const paSelect = document.getElementById('player-armies');
+      paSelect.innerHTML = '';
+      getArmyNames().forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a; opt.textContent = a;
+        paSelect.appendChild(opt);
+      });
+
+      // Populate mission selector
+      const missionSelect = document.getElementById('match-mission');
+      while (missionSelect.options.length > 1) missionSelect.remove(1);
+      missionReference.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.missionPack ? `${m.name} (${m.missionPack})` : m.name;
+        missionSelect.appendChild(opt);
+      });
+
+      // Populate event selector
+      const eventSelect = document.getElementById('match-event');
+      while (eventSelect.options.length > 1) eventSelect.remove(1);
+      eventReference.forEach(ev => {
+        const opt = document.createElement('option');
+        opt.value = ev.id;
+        opt.textContent = ev.startDate ? `${ev.name} (${ev.startDate})` : ev.name;
+        eventSelect.appendChild(opt);
+      });
+
+      // Load players for match dropdown
+      fetch('/api/players')
+        .then(r => r.json())
+        .then(players => {
+          const sel = document.getElementById('match-player');
+          while (sel.options.length > 1) sel.remove(1);
+          players.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id; opt.textContent = p.name;
+            sel.appendChild(opt);
+          });
+        });
+
+      // Custom army and subfaction toggles + dynamic subfaction lists
+      document.getElementById('match-army').addEventListener('change', e => {
+        handleCustomSelect('match-army', 'match-army-custom-group', 'match-army-custom');
+        populateSubfactionSelect('match-subfaction', e.target.value);
+      });
+
+      document.getElementById('match-opp-army').addEventListener('change', e => {
+        handleCustomSelect('match-opp-army', 'match-opp-army-custom-group', 'match-opp-army-custom');
+        populateSubfactionSelect('match-opp-subfaction', e.target.value);
+      });
+
+      document.getElementById('match-subfaction').addEventListener('change', () => {
+        handleCustomSelect('match-subfaction', 'match-subfaction-custom-group', 'match-subfaction-custom');
+      });
+
+      document.getElementById('match-opp-subfaction').addEventListener('change', () => {
+        handleCustomSelect('match-opp-subfaction', 'match-opp-subfaction-custom-group', 'match-opp-subfaction-custom');
+      });
+    }
+
+    // ─── Submit Match ───────────────────────────────────────────────
+    async function submitMatch(e) {
+      e.preventDefault();
+      const alert = document.getElementById('match-alert');
+      alert.className = 'alert';
+
+      const armySel = document.getElementById('match-army').value;
+      const armyUsed = armySel === '__custom__'
+        ? document.getElementById('match-army-custom').value.trim()
+        : armySel;
+
+      const oppArmySel = document.getElementById('match-opp-army').value;
+      const opponentArmy = oppArmySel === '__custom__'
+        ? document.getElementById('match-opp-army-custom').value.trim()
+        : oppArmySel;
+
+      const subfactionSel = document.getElementById('match-subfaction').value;
+      const armySubfaction = subfactionSel === '__custom__'
+        ? document.getElementById('match-subfaction-custom').value.trim()
+        : subfactionSel;
+
+      const oppSubfactionSel = document.getElementById('match-opp-subfaction').value;
+      const opponentSubfaction = oppSubfactionSel === '__custom__'
+        ? document.getElementById('match-opp-subfaction-custom').value.trim()
+        : oppSubfactionSel;
+
+      const payload = {
+        date: document.getElementById('match-date').value,
+        playerId: document.getElementById('match-player').value,
+        armyUsed,
+        armySubfaction,
+        armyPoints: document.getElementById('match-army-points').value,
+        playerUnits: normalizeListFromText(document.getElementById('match-player-units').value),
+        opponentName: document.getElementById('match-opponent').value.trim(),
+        opponentArmy,
+        opponentSubfaction,
+        opponentPoints: document.getElementById('match-opp-points').value,
+        opponentUnits: normalizeListFromText(document.getElementById('match-opp-units').value),
+        missionId: document.getElementById('match-mission').value,
+        eventId: document.getElementById('match-event').value,
+        primaryScorePlayer: document.getElementById('match-primary-player').value,
+        primaryScoreOpponent: document.getElementById('match-primary-opp').value,
+        secondaryScorePlayer: document.getElementById('match-secondary-player').value,
+        secondaryScoreOpponent: document.getElementById('match-secondary-opp').value,
+        destructionScorePlayer: document.getElementById('match-destruction-player').value,
+        destructionScoreOpponent: document.getElementById('match-destruction-opp').value,
+        result: document.getElementById('match-result').value,
+        pointsDiff: document.getElementById('match-points').value,
+        battleNotes: document.getElementById('match-notes').value.trim()
+      };
+
+      try {
+        const res = await fetch('/api/matches', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
+          body: JSON.stringify(payload)
+        });
+        if (res.status === 401) {
+          handleUnauthorized(alert, 'Session expired. Please log in again.');
+          return;
+        }
+        const data = await res.json();
+        if (data.success) {
+          alert.textContent = `✓ Match recorded: ${data.match.playerName} vs ${data.match.opponentName} — ${data.match.result}`;
+          alert.className = 'alert success';
+          document.getElementById('match-form').reset();
+          document.getElementById('match-date').value = new Date().toISOString().split('T')[0];
+          document.getElementById('match-army-custom-group').style.display = 'none';
+          document.getElementById('match-opp-army-custom-group').style.display = 'none';
+          document.getElementById('match-subfaction-custom-group').style.display = 'none';
+          document.getElementById('match-opp-subfaction-custom-group').style.display = 'none';
+
+          const subfactionSelects = ['match-subfaction', 'match-opp-subfaction'];
+          subfactionSelects.forEach(id => {
+            const sel = document.getElementById(id);
+            while (sel.options.length > 2) sel.remove(2);
+          });
+        } else {
+          throw new Error(data.error || 'Unknown error');
+        }
+      } catch (err) {
+        alert.textContent = '✗ Error: ' + err.message;
+        alert.className = 'alert error';
+      }
+    }
+
+    // ─── Submit Player ──────────────────────────────────────────────
+    async function submitPlayer(e) {
+      e.preventDefault();
+      const alert = document.getElementById('player-alert');
+      alert.className = 'alert';
+
+      const selectArmies = Array.from(document.getElementById('player-armies').selectedOptions).map(o => o.value);
+      const customArmies = document.getElementById('player-armies-custom').value
+        .split(',').map(s => s.trim()).filter(Boolean);
+      const armies = [...new Set([...selectArmies, ...customArmies])];
+
+      const socialKeys = ['instagram','twitter','youtube','twitch','tiktok','discord','reddit','facebook'];
+      const socials = {};
+      socialKeys.forEach(k => {
+        const val = document.getElementById('social-' + k)?.value.trim();
+        if (val) socials[k] = val;
+      });
+
+      const payload = {
+        name: document.getElementById('player-name').value.trim(),
+        armies,
+        photo: document.getElementById('player-photo').value.trim(),
+        socials
+      };
+
+      try {
+        const res = await fetch('/api/players', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
+          body: JSON.stringify(payload)
+        });
+        if (res.status === 401) {
+          handleUnauthorized(alert, 'Session expired. Please log in again.');
+          return;
+        }
+        const data = await res.json();
+        if (data.success) {
+          alert.textContent = `✓ Player added: ${data.player.name} (${data.player.armies.join(', ')})`;
+          alert.className = 'alert success';
+          document.getElementById('player-form').reset();
+
+          // Refresh player dropdown in match form
+          fetch('/api/players').then(r => r.json()).then(players => {
+            const sel = document.getElementById('match-player');
+            while (sel.options.length > 1) sel.remove(1);
+            players.forEach(p => {
+              const opt = document.createElement('option');
+              opt.value = p.id; opt.textContent = p.name;
+              sel.appendChild(opt);
+            });
+          });
+        } else {
+          throw new Error(data.error || 'Unknown error');
+        }
+      } catch (err) {
+        alert.textContent = '✗ Error: ' + err.message;
+        alert.className = 'alert error';
+      }
+    }
+  </script>
+
+</body>
+</html>

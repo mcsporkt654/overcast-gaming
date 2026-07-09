@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Community Feed — Overcast Gaming</title>
+  <meta name="description" content="Latest news, battle reports, and updates from the Overcast Gaming Warhammer 40K community." />
+  <link rel="stylesheet" href="style.css" />
+  <script src="news-data.js" defer></script>
+  <script src="nav.js" defer></script>
+  <style>
+    .feed-hero {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 2.5rem var(--gutter) 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .feed-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 80% 50%, rgba(78,205,196,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .feed-hero-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .feed-eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+    .feed-title {
+      font-size: 2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-primary);
+    }
+    .feed-title span { color: var(--accent); }
+    .feed-subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 0.4rem;
+    }
+
+    .feed-controls {
+      max-width: 860px;
+      margin: 1.4rem auto 0;
+      padding: 0 var(--gutter);
+      display: flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }
+
+    .feed-view-controls {
+      max-width: 860px;
+      margin: 0.8rem auto 0;
+      padding: 0 var(--gutter);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.45rem;
+    }
+
+    .feed-view-btn {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-family: var(--font-gothic);
+      font-size: 0.65rem;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      border-radius: 999px;
+      padding: 0.32rem 0.72rem;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+
+    .feed-view-btn:hover,
+    .feed-view-btn.active {
+      color: var(--accent);
+      border-color: rgba(78,205,196,0.38);
+      background: rgba(78,205,196,0.07);
+    }
+
+    .feed-chip {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-family: var(--font-gothic);
+      font-size: 0.68rem;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      border-radius: 999px;
+      padding: 0.35rem 0.8rem;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .feed-chip:hover,
+    .feed-chip.active {
+      color: var(--accent);
+      border-color: rgba(78,205,196,0.38);
+      background: rgba(78,205,196,0.07);
+    }
+
+    /* Post Cards */
+    .post-list {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 3rem var(--gutter);
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+    }
+
+    .post-list.view-timeline {
+      position: relative;
+      padding-left: calc(var(--gutter) + 1.2rem);
+    }
+
+    .post-list.view-timeline::before {
+      content: '';
+      position: absolute;
+      left: calc(var(--gutter) + 0.3rem);
+      top: 3rem;
+      bottom: 3rem;
+      width: 2px;
+      background: linear-gradient(to bottom, transparent, rgba(78,205,196,0.5), transparent);
+    }
+
+    .post-list.view-timeline .post-card {
+      margin-left: 1.2rem;
+    }
+
+    .post-list.view-timeline .post-card::after {
+      content: '';
+      position: absolute;
+      left: -1.95rem;
+      top: 2rem;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(78,205,196,0.16);
+    }
+
+    .post-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem 2.25rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    }
+
+    .post-card.reveal-pending {
+      opacity: 0;
+      transform: translateY(18px) scale(0.985);
+    }
+
+    .post-card.reveal-in {
+      animation: feedReveal 0.45s ease forwards;
+      animation-delay: var(--reveal-delay, 0ms);
+    }
+
+    @keyframes feedReveal {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    .post-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(to right, transparent, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .post-card:hover {
+      border-color: var(--border-glow);
+      box-shadow: var(--glow);
+      transform: translateY(-2px);
+    }
+    .post-card:hover::before { opacity: 1; }
+
+    .post-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
+
+    .post-meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.9rem;
+    }
+    .post-date {
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-family: var(--font-gothic);
+    }
+    .post-tag {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(78,205,196,0.1);
+      border: 1px solid rgba(78,205,196,0.25);
+      border-radius: 3px;
+      padding: 0.15rem 0.5rem;
+    }
+
+    .post-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-primary);
+      margin-bottom: 0.75rem;
+      line-height: 1.25;
+    }
+
+    .post-excerpt {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.65;
+      margin-bottom: 1rem;
+    }
+
+    .post-body {
+      display: none;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin-bottom: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .post-read-more {
+      text-decoration: none;
+      font-family: var(--font-gothic);
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: color 0.2s;
+    }
+    .post-read-more:hover { color: var(--accent-bright); }
+
+    .loader-posts {
+      text-align: center;
+      padding: 4rem;
+      color: var(--text-muted);
+      font-family: var(--font-gothic);
+      font-size: 0.9rem;
+      letter-spacing: 0.1em;
+    }
+
+    .feed-empty {
+      text-align: center;
+      padding: 4rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Discord CTA */
+    .feed-cta {
+      max-width: 860px;
+      margin: 0 auto 3rem;
+      padding: 0 var(--gutter);
+    }
+    .feed-cta-card {
+      background: linear-gradient(135deg, var(--bg-card) 0%, rgba(88,101,242,0.08) 100%);
+      border: 1px solid rgba(88,101,242,0.3);
+      border-radius: var(--radius);
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .feed-cta-text h4 {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-primary);
+      margin-bottom: 0.2rem;
+    }
+    .feed-cta-text p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+    .btn-discord {
+      background: #5865F2;
+      color: #fff;
+      box-shadow: 0 0 16px rgba(88,101,242,0.3);
+    }
+    .btn-discord:hover {
+      background: #6b78f5;
+      box-shadow: 0 0 24px rgba(88,101,242,0.5);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <span class="skull">☠</span> Overcast Gaming
+      </a>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/feed" class="active">Community</a></li>
+        <li><a href="/gallery">Gallery</a></li>
+        <li><a href="/roster">Roster</a></li>
+        <li><a href="/owl">The OWL</a></li>
+        <li><a href="/stats">Stats</a></li>
+        <li><a href="https://arma.gg/collections/overcast" target="_blank" rel="noopener">Merch</a></li>
+        <li><a href="/admin">Admin</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Feed Hero -->
+  <div class="feed-hero">
+    <div class="feed-hero-inner">
+      <p class="feed-eyebrow">Dispatches from the Warzone</p>
+      <h1 class="feed-title">Community <span>Feed</span></h1>
+      <p class="feed-subtitle">Battle reports, league updates, and dispatches from the front lines.</p>
+    </div>
+  </div>
+
+  <div class="feed-controls" id="feed-controls"></div>
+  <div class="feed-view-controls" id="feed-view-controls">
+    <button type="button" class="feed-view-btn active" data-view="card">Card View</button>
+    <button type="button" class="feed-view-btn" data-view="timeline">Timeline</button>
+  </div>
+
+  <!-- Post List -->
+  <div class="post-list" id="post-list">
+    <div class="loader-posts">Loading dispatches...</div>
+  </div>
+
+  <!-- Discord CTA -->
+  <div class="feed-cta">
+    <div class="feed-cta-card">
+      <div class="feed-cta-text">
+        <h4>Join the Conversation</h4>
+        <p>Post match reports, challenge opponents, and keep up with league news on Discord.</p>
+      </div>
+      <a href="https://discord.gg/zKSgE9AwEa" target="_blank" rel="noopener" class="btn btn-discord">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03z"/></svg>
+        Join Discord
+      </a>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>Overcast Gaming <span class="skull-divider">☠</span> Portland, Oregon <span class="skull-divider">☠</span> Warhammer 40,000 League</p>
+    <p style="margin-top:0.5rem; font-size:0.7rem; color: var(--text-muted);">Not affiliated with Games Workshop. Warhammer 40,000 © Games Workshop Ltd.</p>
+  </footer>
+
+  <script>
+    let currentFeedView = 'card';
+    let timelineObserver = null;
+
+    function formatDate(dateStr) {
+      const d = new Date(dateStr + 'T12:00:00');
+      return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+
+    function slugToHref(slug) {
+      return `/news?slug=${encodeURIComponent(slug)}`;
+    }
+
+    function createEmptyState(message) {
+      const empty = document.createElement('div');
+      empty.className = 'feed-empty';
+      empty.textContent = message;
+      return empty;
+    }
+
+    function createPostCard(post) {
+      const card = document.createElement('div');
+      card.className = 'post-card';
+
+      const image = document.createElement('img');
+      image.className = 'post-image';
+      image.src = post.image;
+      image.alt = `${post.title} preview image`;
+
+      const byline = document.createElement('span');
+      byline.className = 'post-date';
+      byline.textContent = `${formatDate(post.date)} • ${post.author} • ${post.readTime}`;
+
+      const meta = document.createElement('div');
+      meta.className = 'post-meta';
+
+      const tag = document.createElement('span');
+      tag.className = 'post-tag';
+      tag.textContent = post.category || 'Update';
+
+      if (post.pinned) {
+        const pin = document.createElement('span');
+        pin.className = 'post-tag';
+        pin.textContent = 'Pinned';
+        meta.appendChild(pin);
+      }
+
+      meta.appendChild(byline);
+      meta.appendChild(tag);
+
+      const title = document.createElement('h2');
+      title.className = 'post-title';
+      title.textContent = post.title || 'Untitled Dispatch';
+
+      const excerpt = document.createElement('p');
+      excerpt.className = 'post-excerpt';
+      excerpt.textContent = post.excerpt || '';
+
+      const readMore = document.createElement('a');
+      readMore.className = 'post-read-more';
+      readMore.href = slugToHref(post.slug);
+      readMore.textContent = 'Read More →';
+
+      card.appendChild(image);
+      card.appendChild(meta);
+      card.appendChild(title);
+      card.appendChild(excerpt);
+      card.appendChild(readMore);
+
+      return card;
+    }
+
+    function clearTimelineReveal() {
+      if (timelineObserver) {
+        timelineObserver.disconnect();
+        timelineObserver = null;
+      }
+
+      document.querySelectorAll('.post-card').forEach(card => {
+        card.classList.remove('reveal-pending', 'reveal-in');
+        card.style.removeProperty('--reveal-delay');
+      });
+    }
+
+    function applyTimelineReveal() {
+      const cards = Array.from(document.querySelectorAll('.post-list .post-card'));
+      if (!cards.length) return;
+
+      clearTimelineReveal();
+      cards.forEach((card, index) => {
+        card.classList.add('reveal-pending');
+        card.style.setProperty('--reveal-delay', `${Math.min(index * 70, 420)}ms`);
+      });
+
+      if (!('IntersectionObserver' in window)) {
+        cards.forEach(card => {
+          card.classList.remove('reveal-pending');
+          card.classList.add('reveal-in');
+        });
+        return;
+      }
+
+      timelineObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          const card = entry.target;
+          card.classList.remove('reveal-pending');
+          card.classList.add('reveal-in');
+          observer.unobserve(card);
+        });
+      }, {
+        threshold: 0.15,
+        rootMargin: '0px 0px -10% 0px'
+      });
+
+      cards.forEach(card => timelineObserver.observe(card));
+    }
+
+    function renderFeedPosts(items, category = 'All') {
+      const list = document.getElementById('post-list');
+      list.textContent = '';
+
+      const filtered = category === 'All'
+        ? items
+        : items.filter(item => item.category === category);
+
+      const sorted = [...filtered].sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return new Date(b.date) - new Date(a.date);
+      });
+
+      if (!sorted.length) {
+        list.appendChild(createEmptyState('No dispatches match that filter yet.'));
+        return;
+      }
+
+      sorted.forEach(post => list.appendChild(createPostCard(post)));
+
+      if (currentFeedView === 'timeline') {
+        applyTimelineReveal();
+      }
+    }
+
+    function applyFeedView(view) {
+      currentFeedView = view;
+      const list = document.getElementById('post-list');
+      const controls = document.getElementById('feed-view-controls');
+      const isTimeline = view === 'timeline';
+      list.classList.toggle('view-timeline', isTimeline);
+      controls.querySelectorAll('.feed-view-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === view);
+      });
+
+      if (isTimeline) {
+        applyTimelineReveal();
+      } else {
+        clearTimelineReveal();
+      }
+    }
+
+    function setupViewControls() {
+      const controls = document.getElementById('feed-view-controls');
+      const btns = Array.from(controls.querySelectorAll('.feed-view-btn'));
+
+      btns.forEach(btn => {
+        btn.addEventListener('click', () => applyFeedView(btn.dataset.view || 'card'));
+      });
+
+      controls.addEventListener('keydown', event => {
+        const focused = document.activeElement;
+        const idx = btns.indexOf(focused);
+        if (idx === -1) return;
+
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+          event.preventDefault();
+          btns[(idx + 1) % btns.length].focus();
+        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          btns[(idx - 1 + btns.length) % btns.length].focus();
+        }
+      });
+    }
+
+    function renderFeedControls(items) {
+      const controls = document.getElementById('feed-controls');
+      controls.textContent = '';
+
+      const categories = ['All', ...new Set(items.map(item => item.category).filter(Boolean))];
+      let active = 'All';
+
+      function activateChip(btn, category) {
+        active = category;
+        controls.querySelectorAll('.feed-chip').forEach(chip => {
+          chip.classList.remove('active');
+          chip.setAttribute('aria-pressed', 'false');
+        });
+        btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
+        renderFeedPosts(items, active);
+      }
+
+      categories.forEach(category => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `feed-chip${category === active ? ' active' : ''}`;
+        btn.textContent = category;
+        btn.setAttribute('aria-pressed', category === active ? 'true' : 'false');
+        btn.addEventListener('click', () => activateChip(btn, category));
+        controls.appendChild(btn);
+      });
+
+      controls.addEventListener('keydown', event => {
+        const chips = Array.from(controls.querySelectorAll('.feed-chip'));
+        const focused = document.activeElement;
+        const idx = chips.indexOf(focused);
+        if (idx === -1) return;
+
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+          event.preventDefault();
+          chips[(idx + 1) % chips.length].focus();
+        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          chips[(idx - 1 + chips.length) % chips.length].focus();
+        } else if (event.key === 'Home') {
+          event.preventDefault();
+          chips[0].focus();
+        } else if (event.key === 'End') {
+          event.preventDefault();
+          chips[chips.length - 1].focus();
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const feedItems = Array.isArray(window.OVERCAST_NEWS_ITEMS) ? window.OVERCAST_NEWS_ITEMS : [];
+      if (!feedItems.length) {
+        const list = document.getElementById('post-list');
+        list.textContent = '';
+        list.appendChild(createEmptyState('No wireframe dispatches found.'));
+      } else {
+        setupViewControls();
+        renderFeedControls(feedItems);
+        renderFeedPosts(feedItems, 'All');
+        applyFeedView('card');
+      }
+    });
+  </script>
+
+</body>
+</html>
