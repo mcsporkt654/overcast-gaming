@@ -2,18 +2,10 @@
   <link rel="stylesheet" href="/style.css" />
 </svelte:head>
 
-{#if $page.data?.apiUnavailable}
-  <div class="service-banner" role="status" aria-live="polite">
-    Data service is temporarily unavailable. Some stats may be missing while we reconnect.
-  </div>
-{/if}
-
-<slot />
-
-<!-- nav.js handles mobile nav toggle and active-link highlighting globally -->
 <script>
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
+  import Header from '$lib/components/Header.svelte';
 
   onMount(() => {
     // Dynamically load nav.js once, letting it run its own DOMContentLoaded logic
@@ -26,10 +18,18 @@
   });
 </script>
 
+<Header />
+
+{#if $page.data?.apiUnavailable}
+  <div class="service-banner" role="status" aria-live="polite">
+    Data service is temporarily unavailable. Some stats may be missing while we reconnect.
+  </div>
+{/if}
+
+<slot />
+
 <style>
   .service-banner {
-    position: sticky;
-    top: 0;
     z-index: 1000;
     padding: 0.65rem 1rem;
     background: #fff5cc;

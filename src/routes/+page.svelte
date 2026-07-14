@@ -9,22 +9,6 @@
   <title>Overcast Gaming — Warhammer 40K League</title>
 </svelte:head>
 
-<!-- Navigation (rendered by nav.js) -->
-<nav class="nav">
-  <div class="nav-inner">
-    <a class="nav-logo" href="/">Overcast<span>Gaming</span></a>
-    <div class="nav-links">
-      <a href="/" class="active">Home</a>
-      <a href="/roster">Roster</a>
-      <a href="/stats">Stats</a>
-      <a href="/matchups">Matchups</a>
-      <a href="/meta">Meta</a>
-      <a href="/owl">OWL</a>
-      <a href="/feed">Dispatch</a>
-    </div>
-  </div>
-</nav>
-
 <main class="page-main">
   {#if stats}
     <section class="stats-bar">

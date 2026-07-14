@@ -9,21 +9,6 @@
   <title>Roster — Overcast Gaming</title>
 </svelte:head>
 
-<nav class="nav">
-  <div class="nav-inner">
-    <a class="nav-logo" href="/">Overcast<span>Gaming</span></a>
-    <div class="nav-links">
-      <a href="/">Home</a>
-      <a href="/roster" class="active">Roster</a>
-      <a href="/stats">Stats</a>
-      <a href="/matchups">Matchups</a>
-      <a href="/meta">Meta</a>
-      <a href="/owl">OWL</a>
-      <a href="/feed">Dispatch</a>
-    </div>
-  </div>
-</nav>
-
 <main class="page-main">
   <h1>Commander Roster</h1>
 
