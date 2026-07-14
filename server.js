@@ -3,11 +3,15 @@
  * Node.js + Express server with JSON flat-file database
  */
 
-require('dotenv').config();
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
+import 'dotenv/config';
+import express from 'express';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3459;
