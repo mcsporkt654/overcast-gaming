@@ -1,5 +1,6 @@
 import { signAdminToken, buildAdminCookie } from '$lib/auth.js';
 import { errorResponse, jsonResponse } from '$lib/validation.js';
+import { ADMIN_PASSWORD } from '$env/static/private';
 
 // Simple in-process rate limiter (resets on server restart — acceptable for single-instance deploy)
 /** @type {Map<string, { count: number, windowEndsAt: number }>} */
@@ -27,7 +28,7 @@ function clearAttempts(ip) {
 }
 
 export async function POST({ request, getClientAddress, cookies }) {
-  if (!process.env.ADMIN_PASSWORD) {
+  if (!ADMIN_PASSWORD) {
     return errorResponse('Admin access is not configured.', 503);
   }
 
@@ -41,7 +42,7 @@ export async function POST({ request, getClientAddress, cookies }) {
   }
 
   const body = await request.json().catch(() => ({}));
-  if (body.password !== process.env.ADMIN_PASSWORD) {
+  if (body.password !== ADMIN_PASSWORD) {
     return errorResponse('Invalid credentials.', 401);
   }
 

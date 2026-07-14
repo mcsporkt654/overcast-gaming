@@ -4,7 +4,7 @@
   "description": "Overcast Gaming — Warhammer 40K League Site (Portland, OR)",
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "node -r dotenv/config node_modules/vite/bin/vite.js dev",
     "build": "vite build",
     "start": "node -r dotenv/config build/index.js",
     "preview": "vite preview",
