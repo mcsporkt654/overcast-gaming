@@ -1,260 +1,152 @@
+// Demo/seed community posts.
+// Mirrors the live league feed at https://overcastwargaming.com/feed-2/ so the
+// page reads realistically until this is backed by the database.
 window.OVERCAST_NEWS_ITEMS = [
   {
-    slug: 'owl-season-three-deployment',
-    title: 'OWL Season 3 Deployment Begins',
-    category: 'League Update',
-    date: '2026-05-08',
-    author: 'High Command',
-    readTime: '4 min read',
-    pinned: true,
-    image: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?auto=format&fit=crop&w=1600&q=80',
-    excerpt: 'Eighteen commanders have entered the theater for Season 3. Round one objectives are now live and mission packets have been issued.',
-    body: [
-      'Season 3 of The Overcast Warhammer League is now active with 18 registered commanders across six campaign rounds. Pairings have been released and each table assignment includes deployment maps and mission constraints to keep match quality consistent.',
-      'League officials confirmed updated scoring guidance this season, including stronger tie-break criteria and a revised margin-of-victory impact model. Players are encouraged to review all packet updates before their first game.',
-      'Submission workflow remains unchanged: report match outcomes in Admin and post photo evidence in Discord dispatch channels. Competitive integrity checks will continue every Monday.'
-    ],
-    highlights: [
-      'Round 1 deadline: Friday, 10:00 PM',
-      'Minimum 3 games still required for standings visibility',
-      'Terrain pack updates are now available in Discord resources'
-    ],
-    gallery: [
-      'https://images.unsplash.com/photo-1526498460520-4c246339dccb?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1511886929837-354d827aae26?auto=format&fit=crop&w=1200&q=80'
-    ]
-  },
-  {
-    slug: 'raven-guard-vs-necrons-aftermath',
-    title: 'After Action Report: Raven Guard 88 - 84 Necrons',
-    category: 'Match Result',
-    date: '2026-05-06',
-    author: 'Battle Desk',
+    slug: 'owl-round-4-final-round',
+    title: 'Owl Round 4! Final Round',
+    category: 'Announcements',
+    date: '2026-02-19',
+    author: 'david.mcdonald',
     readTime: '5 min read',
-    pinned: false,
-    image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1600&q=80',
-    excerpt: 'A late turn-five objective pivot gave Raven Guard a narrow four-point victory in one of the closest matches this season.',
+    pinned: true,
+    image: '/images/community/owl-round-4.png',
+    excerpt: 'Apologies for missing last week! I was too busy trying to do something about the panama papers.',
     body: [
-      'The Raven Guard-Necrons engagement remained deadlocked through turn four with both sides trading objective pressure and attrition efficiently. Momentum shifted in final activations when Raven Guard executed a disciplined redeploy on the central lane.',
-      'Necron command maintained board durability but dropped critical secondary points after failing a final action chain. The four-point spread now stands as the smallest margin of victory this season.',
-      'Analyst review highlights deployment discipline and tempo denial as decisive factors. Both commanders are now top contenders in their bracket.'
+      'Hammering Community, we are on the final round! What a season full of laughs, loves lost, fiends and friends made, and some serious dice rolling! Let’s take a look at our standings going into Week 4!',
+      'And now for our matchups!',
+      'Hyun-Young versus Ethan — The big championship game! Hyun-Young’s greedy Votann take on Ethan’s raiders in a lip-curling, tongue-tying, planet shaking battle of titans! An epic tale between two peerless enemies – Who will come out on top?',
+      'Tom versus Karl — It’s a matchup older than time, drama kids versus playground bugs! Karl’s Marines are here to kick ass and chew bubblegum, but Tom’s Tyranids control the bubblegum means of production!',
+      'David versus Dylan — You can’t burn the stink away – or can you? David’s marines may have lost to Dylan’s Death guard every single time they’ve played – But this round we will answer the question on everyone’s mind- Does anyone beat the Salamanders 4 times in a row? Spoiler: It’s probably',
+      'Derek versus Ian — Derek’s Big boys are back in town, and Ian’s Grey boys also happen to be back in town. The Imperial knights made the mistake of acknowledging the Grey Knights presence – and that only means one thing – war.',
+      'Luke versus Erik — Nobody knows why Luke’s oily boys keep running into Necrons, but at this point – it can only mean war. Time to find out if the oiled up grizzled sexy men really do have abs stronger than necrodermis.',
+      'Robert versus Jeremy — The infestation continues as Jeremy’s big one-eyed monster leads an assault against Robert’s Necrons. Will the Silent king keep things quiet? Or will the nightmare bugs feast upon their very buns?',
+      'Pat versus Tomas — The banana boat has no room for heresy, and that’s exactly what Pat’s Custodes believe as they defend their pool party from Tomas’s Renegade Raiders. Will Vashtor be allowed into the water park? Or will the Custodes keep their holy Big Splash sacred?',
+      'John versus Cynthia — Mayday! Mayday! The sacred ShadowSight fanfics are under assault by Cynthia’s big Heretical Monsters! Will John’s T’au be able to defend that which is so loved? Or will Cynthia’s Chaos Knights tear them apart?',
+      'Josh versus Taylor — The Lion was playing Uno with Azrael when disaster struck! Two C’tans burst into the room and played 10 draw-4’s back to back! They are clearly cheating! Will Taylor’s Dark Knights avenge this disrespect? Or will Josh’s Necrons take home the trophy in war and Uno?'
     ],
     highlights: [
-      'Final score differential: +4',
-      'Raven Guard climbs to 3-1',
-      'Necrons retain strongest defensive metrics in league'
-    ],
-    gallery: [
-      'https://images.unsplash.com/photo-1534423861386-85a16f5d13fd?auto=format&fit=crop&w=1200&q=80'
-    ]
-  },
-  {
-    slug: 'boarding-actions-open-table-night',
-    title: 'Boarding Actions Open Table Night Announced',
-    category: 'Event',
-    date: '2026-05-18',
-    author: 'Community Ops',
-    readTime: '3 min read',
-    pinned: false,
-    image: 'https://images.unsplash.com/photo-1533106418989-88406c7cc8ca?auto=format&fit=crop&w=1600&q=80',
-    excerpt: 'Saturday open tables return with a boarding actions format, hobby swap corner, and newcomer-friendly mentorship pods.',
-    body: [
-      'Overcast Gaming will host a community open table session focused on compact boarding actions missions. The event includes rotating maps for quick rounds and mentoring tables for new commanders.',
-      'Attendees can join a hobby swap lane, bring painted units for a weekly showcase, and participate in the tactical challenge board. Loaner lists will be available in limited quantity.',
-      'Registration remains informal for this wireframe phase, but attendance signals from Discord are encouraged to help with table planning.'
-    ],
-    highlights: [
-      'Start time: 6:30 PM local',
-      'Loaner lists available for new players',
-      'Painting showcase voting opens at 8:00 PM'
+      'Hyun-Young',
+      'Ethan Gardner',
+      'Tom Wyka',
+      'Karl Fiebiger',
+      'David McDonald',
+      'Dylan Gouty',
+      'Derek Dominquez',
+      'Ian McKay',
+      'Luke Burnham',
+      'Erik Vanvynck',
+      'Robert Nesting',
+      'Jeremy Castro',
+      'Pat Bowen',
+      'Tomas Herbertson',
+      'John Michals',
+      'Cynthia Morrigan',
+      'Josh Stanley',
+      'Taylor Boling'
     ],
     gallery: []
   },
   {
-    slug: 'faction-spotlight-aeldari-surge',
-    title: 'Faction Spotlight: Aeldari Surge in Weekly Poll',
-    category: 'Community',
-    date: '2026-05-04',
-    author: 'Community Intel',
-    readTime: '4 min read',
-    pinned: false,
-    image: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=1600&q=80',
-    excerpt: 'The community poll crowned Aeldari this week, with players sharing tactical notes and showcase-ready model updates.',
-    body: [
-      'This week\'s faction spotlight vote closed with Aeldari in first place by a clear margin. Discussion threads highlighted mobility pressure, mission tempo control, and unit synergy as common themes.',
-      'Community members also submitted terrain and paint references to the showcase channel. Several commanders requested a tactics deep-dive session for next month.',
-      'Spotlight archives are now part of the feed roadmap to help new players explore faction playstyles quickly.'
-    ],
-    highlights: [
-      'Top poll result: Aeldari',
-      'Most discussed topic: objective tempo',
-      'Next week spotlight nominations open Sunday'
-    ],
-    gallery: [
-      'https://images.unsplash.com/photo-1508873535684-277a3cbcc4e8?auto=format&fit=crop&w=1200&q=80'
-    ]
-  },
-  {
-    slug: 'season-two-champion-interview',
-    title: "Season 2 Champion Interview: Commander Vale's Road to the Top",
-    category: 'Community',
-    date: '2026-04-28',
-    author: 'Community Intel',
+    slug: 'round-2-of-the-owl',
+    title: 'Round 2 of the OWL!',
+    category: 'The OWL',
+    date: '2026-01-22',
+    author: 'david.mcdonald',
     readTime: '6 min read',
     pinned: false,
-    image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1600&q=80',
-    excerpt: "We sat down with Season 2's undefeated champion to talk prep, pivots, and what the rest of the league should expect in Season 3.",
+    image: '/images/community/owl-round-2.png',
+    excerpt: 'Well folks, Round 1 was ELECTRIC, with everyone playing their asses off and leaving everything on the Board. Let’s see how the ranking shape up after one round of rolling.',
     body: [
-      "Commander Vale finished Season 2 with a perfect 6-0 record — the only player to do so since the league's founding. We caught up with them after the award ceremony to dig into what drove that run.",
-      '"A lot of it came down to the pregame," Vale said. "I watched every recorded match I could find. I knew every active army on the roster and had at least two mental game plans before walking to the table."',
-      'When asked about the closest match of the season — the round-four draw scare against Wraithborn — Vale smiled. "That was the game. I almost handed it away on secondary. Learned more in that turn than I did all year."',
-      "For Season 3, Vale has switched factions entirely, citing a desire to challenge themselves. 'I'm not here to coast on what worked. The league deserves a better opponent.'"
+      'First of all, Congrats to Craig for a BIG 100! Second of all, congrats to all of our Round 1 Winners. Now lets take a look at the Round 2 Matchups:',
+      'Craig vs Tom — A battle of TITANS! Craig’s grizzled, muscular, hairy, sweaty, dirty, manly company hopes to fend off Tom’s Creepy Crawlies. Will the grizzled company add some Tyranid meat to their stew? Or will the Hivemind add the greasy biomass to their stores?',
+      'Ian vs Ethan — Ethan’s raiders (which I definitely don’t hold a grudge against) have been caught in the act! They were drawing naughty pictures on the battle ships owned by Ian’s Grey Knights. Fortunately for the Grey Knights, they love fighting Chaos, and fortunately for Chaos – It was hilarious.',
+      'Hyun-Young vs Karl — Karl’s Space Marines were creeping along in the night, as Raven Guard do, when a bunch of Hyun-Young’s dwarves landed a mile over and started mining for unobtainum! With Kayvaan Shrike having a horrible headache, the Space Marines have no choice but to try and stop the noise!',
+      'Luke vs Derek — Luke’s Guard were just hanging around, being super sweaty and grizzled and sexy at a pool party when some of Derek’s Imperial Knights decided that the slip-n-slide was taking things too far. The Knight’s opinion? They must die.',
+      'Cynthia vs Dylan — Like many things in the warp, the forces of Chaos do not always coexist peacefully. And when Cynthia’s Chaos Knights heard that Typhus & Dylan’s Death Guard had all 7 seasons of Sabrina the Teenage Witch on Blu-ray, they decided that war is the only answer.',
+      'Tomas vs Erik — Orikan and Erik’s Necrons were just kicking back, pretending they still had skin when Vashtor & Tomas’s Raiders had a flat tire near their Tomb World. Will Orikan assist them? Or will they die for their poor tire pressure?',
+      'Robert vs Pat — Pat’s Custodes were in the neighborhood when they heard about the upcoming buffs to C’tans. They immediately launched an assault upon Robert & his Necrons, hoping to fight the star-god one last time before they become way stronger.',
+      'Taylor vs David — Every 1,738 years, David’s Salamanders & Taylor’s Dark Angels meet on an empty world, fill their weapons with silly string, and have a mock battle to show their chapter’s might. On this rare occasion, who will take home the silly crown?',
+      'Jeremy vs Jayme — Jayme’s Votann have lost much to the Jeremy’s Tyranids over the past thousand years. One time, the Tyranids even ate a brewery world located near the center of the galaxy. The grudge was written, and the beer must be avenged! Or will it?',
+      'John vs Josh — Their names may be eerily similar, but their armies are not! John’s T’au have sent yet another diplomatic delegation to speak with Josh’s Necrons. I think you can guess how that is going to go.'
     ],
     highlights: [
-      'Season 2 record: 6-0',
-      'Switched faction for Season 3',
-      'Closest match: Round 4 vs Wraithborn (+2)'
+      'Craig Songao – 100',
+      'Tom Wyka – 98',
+      'Ethan Gardner – 97',
+      'Ian McKay – 97',
+      'Hyun-Young Kim – 93',
+      'Karl Fiebiger – 84',
+      'Luke Burnham – 84',
+      'Tomas Herbertson – 81',
+      'Derek Dominquez – 80',
+      'Cynthia Morrigan – 80',
+      'Dylan Gouty – 79',
+      'Erik Vanvynck – 77',
+      'Robert Nesting – 74',
+      'Taylor Boling – 70',
+      'Pat Bowen – 70',
+      'David McDonald – 65',
+      'Jeremy Castro – 61',
+      'Jayme Valentino – 40',
+      'John Michals – 38',
+      'Josh Stanley – 27'
     ],
-    gallery: [
-      'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1200&q=80'
-    ]
+    gallery: []
   },
   {
-    slug: 'terrain-workshop-recap',
-    title: 'Terrain Workshop Recap: Eight Tables Built in One Weekend',
-    category: 'Event',
-    date: '2026-04-20',
-    author: 'Community Ops',
-    readTime: '4 min read',
-    pinned: false,
-    image: 'https://images.unsplash.com/photo-1596495578065-6e0763fa1178?auto=format&fit=crop&w=1600&q=80',
-    excerpt: 'Fourteen members spent two days assembling, priming, and detailing full table setups ahead of Season 3.',
-    body: [
-      'The spring terrain weekend wrapped with eight fully playable table setups ready for Season 3 deployment. Fourteen community members contributed across both days, splitting into paint crews and assembly teams.',
-      'New pieces include modular ruins, elevated hab blocks, and a dual-access corridor set designed for boarding actions formats. Each section was numbered and catalogued into the terrain library.',
-      "Feedback from playtesters was strong — particularly on the hab blocks' sightline angles and the asymmetric canyon set built by the Kael crew. A second terrain weekend is tentatively scheduled for August."
-    ],
-    highlights: [
-      '8 table setups completed',
-      '14 community members contributed',
-      'New modular ruins and hab block sets added to terrain library'
-    ],
-    gallery: [
-      'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1200&q=80'
-    ]
-  },
-  {
-    slug: 'death-guard-vs-space-wolves-breakdown',
-    title: 'Breakdown: Death Guard 72 - 91 Space Wolves',
-    category: 'Match Result',
-    date: '2026-04-16',
-    author: 'Battle Desk',
+    slug: 'owl-season-3-begins-week-1-matchups',
+    title: 'OWL Season 3 Begins! Week 1 Matchups',
+    category: 'The OWL',
+    date: '2026-01-04',
+    author: 'david.mcdonald',
     readTime: '5 min read',
     pinned: false,
-    image: 'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?auto=format&fit=crop&w=1600&q=80',
-    excerpt: "Space Wolves dominated the mid-board from deployment onward, securing a 19-point win that pushed them into the Season 2 top three.",
+    image: '/images/community/owl-season-3-week-1.png',
+    excerpt: 'Welcome back to another gravity-altering season of the OWL! This season, with its new format, promises to light up the galaxy as some real heavy hitters go blow for blow in round one. Let’s get into the matchups for Round 1.',
     body: [
-      "Death Guard entered the match as slight favourites given their resilience profile, but Space Wolves' aggressive first-turn positioning neutralised most of that advantage before it could apply.",
-      'By turn three the primary gap was insurmountable. Space Wolves secured five consecutive primary points while holding backfield actions simultaneously — a pace Death Guard could not match.',
-      'Post-game notes from the Death Guard commander flagged secondary selection as a critical error. "I picked into my weaknesses. I should have known the board layout would cost me Engage." The 19-point loss ends their top-table ambitions for Season 2 but leaves their ranking intact for Season 3 seeding.'
+      'Taylor versus Hyun-Young — Honor of Battle award-winner Taylor and his Dark Angels are planetside for a pickle-ball tournament to challenge Hyun-Young’s Votann as they seek to mine yet another world to the core. Will the Lion and his (not so) merry men triumph over Buri Aegnirssen and his shortstacks?',
+      'Dylan versus Erik — Painter of the Year Dylan has gathered his little stinkers for an assault upon a Tomb world, coming face to face with Erik’s Canoptek Court. Luckily for Erik, the necrons don’t appear to have noses! We’ll find out soon if Typhus can truly infect anything, or if Szeras and Orikan can stave off the nasties.',
+      'Josh versus Ian — Ian’s Grey Knights find themselves pit against Two C’tan shards and Josh’s necrons during an investigation into warp activity. Can Castellan Crowe prevail against such monstrosities of the old galaxy? Or will the enslaved Star Gods feast upon their very souls?',
+      'Craig versus Jeremy — Jeremy’s One-eyed monster, Old One Eye, has set his sights upon an imperial world ripe for harvest – But all is not lost, Most-Improved Owl Craig and his Imperial Guard, led by Lord Solar Leontus, are ready to defend it. Will they prevail or be bugsnacks?',
+      'David Versus Ethan — For ten thousand years, the Space Marines have fought their heretical brethren across the stars. This battle is no different. David’s Salamanders and the forgefather himself, Vulkan He’stan, are bringing their Flamers to bear against Ethan’s Chaos Space Marines led by Cypher, the nemesis of the Dark Angels. Will the Salamanders do what the Dark Angels couldn’t? Or will the quest for Vulkan’s relics end?',
+      'Jayme versus Luke — Luke’s Lord Solar Leontus & A regiment of Kreigsmen were enjoying a nice vacation on New Hawaii, a tropical world. Unfortunately for them, Owl of the Year Jayme’s Votann decided that New Hawaii was actually an awesome place to mine for unobtainium. Will Luke’s Guard be able to defend against the greedy dwarves? Or will the Shorties claim this world for their League?',
+      'Karl versus Tomas — Suprising no one, Tomas’s Heretical Astartes led by Vashtorr have set their sights on an chilly imperial world, but luckily for New Alaska, Karl’s Raven Guard are there to respond. Chapter Master Aethon Shaan, accompanied by Kayvaan Shrike, look to defend New Alaska against the Arkifane and his constructs. Will the shadowy wings prevail, or will another world be claimed for the Soul Forge?',
+      'Tom versus John — A rematch for the ages, John’s T’au, led by Farsight & Shadowsun, seek to defend the Farsight Conclaves from yet another Tyranid attack. This time, led by Tom’s Subterranean Horrors. Can the old-man Farsight do it twice? Or will the Conclaves finally fall to the Hungry Hungry Tyranids?',
+      'Patrick versus Cynthia — A threat like a Heretical Knight House is one that everyone has to take seriously, and as such, the Golden Warriors themselves have risen to the threat. Cynthia’s Chaos Knights seek to make a statement to the Corpse-Emperor, and Patrick’s Custodes seek to put down yet another heretical threat.',
+      'Derek versus Robert — Robert’s Necrons, led by the Silent King himself, seek to claim the planet of New Toledo for themselves. However, New Toledo has a rich cultural history, and Derek’s Knights have answered the calls for help. Can Canis Rex and friends hope to defeat the Silent king and his pet C’tan?'
     ],
-    highlights: [
-      'Final score: Space Wolves +19',
-      'Space Wolves clinch top-three seed',
-      'Death Guard secondary efficiency: 28% (season low)'
-    ],
+    highlights: [],
     gallery: []
   },
   {
-    slug: 'painting-showcase-april',
-    title: 'Painting Showcase: April Submissions — 11 Entries, 1 Winner',
-    category: 'Community',
-    date: '2026-04-12',
-    author: 'Community Intel',
-    readTime: '3 min read',
+    slug: 'critcon-2025-player-pack',
+    title: 'Critcon 2025 Player Pack',
+    category: 'Announcements',
+    date: '2025-10-17',
+    author: 'david.mcdonald',
+    readTime: '1 min read',
     pinned: false,
-    image: 'https://images.unsplash.com/photo-1527576539890-dfa815648363?auto=format&fit=crop&w=1600&q=80',
-    excerpt: 'April brought the largest paint submission batch yet. The community voted and one entry stood out from the rest.',
-    body: [
-      'Eleven models and squads were submitted for the April community painting showcase — the highest monthly count since the showcase format launched. Voting ran for 72 hours on Discord with 43 members casting ballots.',
-      "The winning entry was Lady Thornwood's Necron Lychguard squad, finished in a cracked obsidian scheme with NMM gold accents. Runners-up included Brother Kael's First Company Veterans and an anonymous Aeldari Wraithguard set.",
-      'A recurring request from the voting thread: video walkarounds for finalists. That format is under consideration for the May showcase.'
-    ],
-    highlights: [
-      '11 entries submitted',
-      '43 votes cast',
-      "Winner: Lady Thornwood's Lychguard (Obsidian/NMM Gold)"
-    ],
-    gallery: [
-      'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1559181567-c3190bfbcdb6?auto=format&fit=crop&w=1200&q=80'
-    ]
-  },
-  {
-    slug: 'season-three-ruleset-changes',
-    title: 'Season 3 Ruleset Changes: What Every Commander Needs to Know',
-    category: 'League Update',
-    date: '2026-04-05',
-    author: 'High Command',
-    readTime: '5 min read',
-    pinned: false,
-    image: 'https://images.unsplash.com/photo-1495592822108-9e6261896da8?auto=format&fit=crop&w=1600&q=80',
-    excerpt: 'Revised deployment zones, tightened secondaries, and a new tiebreaker formula are the headline changes heading into Season 3.',
-    body: [
-      'High Command released the Season 3 ruleset packet following a two-week community review period. Three core changes were ratified by vote and take effect immediately.',
-      'First, deployment zones on four of the six standard mission layouts have been adjusted to reduce first-turn swing potential. Second, the Engage on All Fronts secondary now requires a minimum model count per zone to score full, closing a long-standing loophole. Third, a strength-of-schedule multiplier has been added to the tiebreaker formula for standings.',
-      'The terrain standardisation requirement remains: all league matches must use tables from the approved terrain library. Custom terrain must be pre-approved by High Command at least 48 hours before match day.'
-    ],
-    highlights: [
-      'Deployment zone revisions on 4 of 6 mission layouts',
-      'Engage on All Fronts scoring tightened',
-      'New strength-of-schedule tiebreaker multiplier'
-    ],
+    image: '/images/community/critcon-2025-player-pack.webp',
+    excerpt: 'Crit Con 25 player pack.',
+    body: [],
+    highlights: [],
     gallery: []
   },
   {
-    slug: 'new-player-spotlight-the-overlord',
-    title: "New Player Spotlight: The Overlord's First Season",
-    category: 'Community',
-    date: '2026-03-30',
-    author: 'Community Intel',
-    readTime: '4 min read',
+    slug: 'the-owls-fly-to-forest-grove',
+    title: 'The OWLs battle it out in Forest Grove',
+    category: 'Announcements',
+    date: '2025-08-13',
+    author: 'david.mcdonald',
+    readTime: '1 min read',
     pinned: false,
-    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1600&q=80',
-    excerpt: "The Overlord joined mid-season with zero competitive experience and closed out Season 2 with a 3-3 record. We talked to them about the learning curve.",
+    image: '/images/community/forest-grove-gt.jpg',
+    excerpt: 'On Saturday, six OWLs flew out to Gongaii’s Great Game for a five-game GT. The crew averaged about 2-3, and we all had an excellent time.',
     body: [
-      '"My first game I forgot to score any secondaries at all. I was so focused on killing things I just... didn\'t," The Overlord recalled. "Lost by 40-something points. I went home and read the entire packet twice."',
-      'The rapid turnaround — three losses to three wins over the final four weeks — surprised even veteran members. Deployment sharpened noticeably, and secondary selection moved from reactive to proactive by round five.',
-      '"The league was welcoming. People would tell me things after games that genuinely helped. That doesn\'t happen everywhere." The Overlord is registered for Season 3 and has added a second army to their roster.'
+      'Thanks again to Gongaii & PPM events for putting on a great tournament.'
     ],
-    highlights: [
-      'Joined mid-season, no prior competitive experience',
-      'Finished 3-3',
-      'Added second army for Season 3'
-    ],
-    gallery: []
-  },
-  {
-    slug: 'summer-grand-tournament-announced',
-    title: 'Summer Grand Tournament Announced — Portland, July 19',
-    category: 'Event',
-    date: '2026-03-22',
-    author: 'High Command',
-    readTime: '3 min read',
-    pinned: false,
-    image: 'https://images.unsplash.com/photo-1568992687947-868a62a9f521?auto=format&fit=crop&w=1600&q=80',
-    excerpt: 'A single-day open-format grand tournament is confirmed for July 19th in Portland. Registration opens May 20th.',
-    body: [
-      'Overcast Gaming is running its first public grand tournament on July 19th at a venue in Northeast Portland. The event is open to all players — not just current league members — with a cap of 24 participants.',
-      'Format will be four rounds of matched play using Season 3 terrain and mission packs. Painting is not required but a best-painted award will be voted on by attendees. Prize support is confirmed and details will be released with registration.',
-      'Registration opens May 20th via the Discord events channel. Early interest from outside the Portland area has already been noted, so spots are expected to fill quickly.'
-    ],
-    highlights: [
-      'Date: July 19, 2026 — Northeast Portland',
-      '24 player cap',
-      'Registration opens May 20th on Discord'
-    ],
+    highlights: [],
     gallery: []
   }
 ];
