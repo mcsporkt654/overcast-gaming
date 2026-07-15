@@ -10,7 +10,7 @@ window.OVERCAST_NEWS_ITEMS = [
     author: 'david.mcdonald',
     readTime: '5 min read',
     pinned: true,
-    image: '/images/community/owl-round-4.png',
+    image: '/images/community/owl-round-4.webp',
     excerpt: 'Apologies for missing last week! I was too busy trying to do something about the panama papers.',
     body: [
       'Hammering Community, we are on the final round! What a season full of laughs, loves lost, fiends and friends made, and some serious dice rolling! Let’s take a look at our standings going into Week 4!',
@@ -55,7 +55,7 @@ window.OVERCAST_NEWS_ITEMS = [
     author: 'david.mcdonald',
     readTime: '6 min read',
     pinned: false,
-    image: '/images/community/owl-round-2.png',
+    image: '/images/community/owl-round-2.webp',
     excerpt: 'Well folks, Round 1 was ELECTRIC, with everyone playing their asses off and leaving everything on the Board. Let’s see how the ranking shape up after one round of rolling.',
     body: [
       'First of all, Congrats to Craig for a BIG 100! Second of all, congrats to all of our Round 1 Winners. Now lets take a look at the Round 2 Matchups:',
@@ -102,7 +102,7 @@ window.OVERCAST_NEWS_ITEMS = [
     author: 'david.mcdonald',
     readTime: '5 min read',
     pinned: false,
-    image: '/images/community/owl-season-3-week-1.png',
+    image: '/images/community/owl-season-3-week-1.webp',
     excerpt: 'Welcome back to another gravity-altering season of the OWL! This season, with its new format, promises to light up the galaxy as some real heavy hitters go blow for blow in round one. Let’s get into the matchups for Round 1.',
     body: [
       'Taylor versus Hyun-Young — Honor of Battle award-winner Taylor and his Dark Angels are planetside for a pickle-ball tournament to challenge Hyun-Young’s Votann as they seek to mine yet another world to the core. Will the Lion and his (not so) merry men triumph over Buri Aegnirssen and his shortstacks?',
