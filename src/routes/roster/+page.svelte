@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-  <title>Roster — Overcast Gaming</title>
+  <title>Roster — Overcast Wargaming League</title>
 </svelte:head>
 
 <main class="page-main">

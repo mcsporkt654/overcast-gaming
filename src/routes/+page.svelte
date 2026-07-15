@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-  <title>Overcast Gaming — Warhammer 40K League</title>
+  <title>Overcast Wargaming League — Warhammer 40K League</title>
 </svelte:head>
 
 <main class="page-main">

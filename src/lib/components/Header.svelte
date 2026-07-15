@@ -54,7 +54,10 @@
 
 <nav class="nav" aria-label="Primary">
   <div class="nav-inner">
-    <a class="nav-logo" href="/">Overcast<span>Gaming</span></a>
+    <a class="nav-logo" href="/">
+      <img class="nav-mark" src="/owl-mark.png" alt="" width="34" height="34" />
+      Overcast
+    </a>
 
     <div class="nav-links">
       {#each navItems as item}

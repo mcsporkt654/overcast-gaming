@@ -17,7 +17,7 @@
 </script>
 
 <svelte:head>
-  <title>Stats — Overcast Gaming</title>
+  <title>Stats — Overcast Wargaming League</title>
 </svelte:head>
 
 <main class="page-main">
