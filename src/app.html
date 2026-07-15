@@ -2,12 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%sveltekit.assets%/favicon.ico" />
+    <link rel="icon" href="%sveltekit.assets%/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script>
       (function () {
         var storageKey = 'overcast-brand-theme';
-        var theme = 'original';
+        var theme = 'alternate';
 
         try {
           var storedTheme = localStorage.getItem(storageKey);
@@ -15,7 +15,7 @@
             theme = storedTheme;
           }
         } catch (error) {
-          theme = 'original';
+          theme = 'alternate';
         }
 
         document.documentElement.dataset.theme = theme;

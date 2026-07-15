@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "overcast-prod",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["-r", "dotenv/config", "build/index.js"],
+      "port": 3459
+    }
+  ]
+}

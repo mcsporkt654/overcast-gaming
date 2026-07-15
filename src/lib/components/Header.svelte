@@ -14,7 +14,7 @@
     { href: '/feed', label: 'Dispatch' }
   ];
 
-  let selectedTheme = 'original';
+  let selectedTheme = 'alternate';
   let isHydrated = false;
 
   function isActive(pathname, href) {

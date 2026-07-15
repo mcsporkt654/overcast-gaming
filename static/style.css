@@ -1,12 +1,45 @@
 /* ===================================================================
   Overcast Gaming — Warhammer 40K League Site
-  Style: Dark gothic, gritty but sleek. Dark blue-green + mint.
+  Style: Dark gothic, gritty but sleek. Void + petrol teals with Arc Cyan glow.
   =================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Barlow:wght@300;400;500;600;700&display=swap');
 
 /* ─── CSS Variables ──────────────────────────────────────────────── */
 :root {
+  /* Alternate brand palette — the site default (see documentation/branding_alternate_palette.md) */
+  --bg-deep: #0a0c0c;          /* Void */
+  --bg-dark: #06201d;          /* Midnight Petrol */
+  --bg-card: #04302c;          /* Deep Petrol */
+  --bg-card-hover: #0c4e48;    /* Storm Teal */
+  --border: #157068;           /* Sea Teal */
+  --border-glow: #26e3fe;      /* Arc Cyan */
+  --accent: #26e3fe;           /* Arc Cyan */
+  --accent-dim: #0c4e48;       /* Storm Teal */
+  --accent-bright: #f4f6f5;    /* Bone */
+  --accent-rgb: 38, 227, 254;
+  --text-primary: #f4f6f5;     /* Bone */
+  --text-secondary: #c6cdcc;   /* Overcast Fog */
+  --text-muted: #8fa3a0;       /* Mist */
+  --win: #26e3fe;
+  --loss: #e05c5c;
+  --draw: #d0da27;             /* Witchlight */
+  --danger: #e05c5c;
+  --surface-nav: rgba(6, 32, 29, 0.95);
+  --surface-nav-strong: rgba(4, 48, 44, 0.98);
+  --surface-panel: rgba(4, 48, 44, 0.95);
+  --surface-panel-strong: rgba(6, 32, 29, 0.98);
+  --surface-panel-soft: rgba(4, 48, 44, 0.9);
+  --font-gothic: 'Oswald', 'Arial Narrow', sans-serif;
+  --font-body: 'Barlow', 'Segoe UI', sans-serif;
+  --gutter: 1.5rem;
+  --radius: 6px;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  --glow: 0 0 18px rgba(var(--accent-rgb), 0.18);
+}
+
+html[data-theme='original'] {
+  /* Original palette — preserved for the palette switcher */
   --bg-deep: #0a1a1a;
   --bg-dark: #111f1f;
   --bg-card: #152828;
@@ -29,37 +62,6 @@
   --surface-panel: rgba(21, 40, 40, 0.95);
   --surface-panel-strong: rgba(11, 22, 22, 0.98);
   --surface-panel-soft: rgba(12, 24, 24, 0.9);
-  --font-gothic: 'Cinzel', Georgia, serif;
-  --font-body: 'Rajdhani', 'Segoe UI', sans-serif;
-  --gutter: 1.5rem;
-  --radius: 6px;
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
-  --glow: 0 0 18px rgba(var(--accent-rgb), 0.18);
-}
-
-html[data-theme='alternate'] {
-  --bg-deep: #0a0c0c;
-  --bg-dark: #06201d;
-  --bg-card: #04302c;
-  --bg-card-hover: #0c4e48;
-  --border: #157068;
-  --border-glow: #26e3fe;
-  --accent: #26e3fe;
-  --accent-dim: #0c4e48;
-  --accent-bright: #f4f6f5;
-  --accent-rgb: 38, 227, 254;
-  --text-primary: #f4f6f5;
-  --text-secondary: #c6cdcc;
-  --text-muted: #8fa3a0;
-  --win: #26e3fe;
-  --loss: #e05c5c;
-  --draw: #d0da27;
-  --danger: #e05c5c;
-  --surface-nav: rgba(6, 32, 29, 0.95);
-  --surface-nav-strong: rgba(4, 48, 44, 0.98);
-  --surface-panel: rgba(4, 48, 44, 0.95);
-  --surface-panel-strong: rgba(6, 32, 29, 0.98);
-  --surface-panel-soft: rgba(4, 48, 44, 0.9);
 }
 
 /* ─── Reset & Base ───────────────────────────────────────────────── */
@@ -390,7 +392,7 @@ nav {
   align-items: center;
   gap: 0.4rem;
   padding: 0.65rem 1.6rem;
-  border-radius: var(--radius);
+  border-radius: 999px;
   font-family: var(--font-gothic);
   font-size: 0.8rem;
   font-weight: 600;
@@ -472,6 +474,8 @@ nav {
   text-transform: uppercase;
   color: var(--text-muted);
 }
+/* Witchlight spark — reserve one small lime accent per view (brand guide) */
+.stat-item:first-child .stat-value { color: var(--draw); }
 
 /* ─── Section ────────────────────────────────────────────────────── */
 .section {

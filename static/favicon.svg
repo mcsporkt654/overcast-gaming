@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Overcast Gaming">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="70%">
+      <stop offset="0%" stop-color="#0c2b28"/>
+      <stop offset="100%" stop-color="#0a0c0c"/>
+    </radialGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="1.4" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="32" height="32" rx="7" fill="url(#bg)"/>
+  <!-- Eye Monogram: glowing Arc Cyan "O" -->
+  <circle cx="16" cy="16" r="10" fill="#26e3fe" filter="url(#glow)"/>
+  <!-- Void gap carves the ring -->
+  <circle cx="16" cy="16" r="6.6" fill="#0a0c0c"/>
+  <!-- Bone inner disc -->
+  <circle cx="16" cy="16" r="4.4" fill="#f4f6f5"/>
+  <!-- Witchlight pupil spark -->
+  <circle cx="16" cy="16" r="2" fill="#d0da27"/>
+</svg>
