@@ -4,23 +4,6 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%sveltekit.assets%/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script>
-      (function () {
-        var storageKey = 'overcast-brand-theme';
-        var theme = 'alternate';
-
-        try {
-          var storedTheme = localStorage.getItem(storageKey);
-          if (storedTheme === 'original' || storedTheme === 'alternate') {
-            theme = storedTheme;
-          }
-        } catch (error) {
-          theme = 'alternate';
-        }
-
-        document.documentElement.dataset.theme = theme;
-      })();
-    </script>
     %sveltekit.head%
   </head>
   <body data-sveltekit-preload-data="hover">
