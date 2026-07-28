@@ -1,11 +1,11 @@
-import { query } from '$lib/db.js';
+import { query, withDb } from '$lib/db.js';
 import { jsonResponse } from '$lib/validation.js';
 
-export async function GET() {
+export const GET = withDb(async () => {
   const { rows } = await query(`
     SELECT name, subfactions, common_units AS "commonUnits"
     FROM armies
     ORDER BY name
   `);
   return jsonResponse(rows);
-}
+});

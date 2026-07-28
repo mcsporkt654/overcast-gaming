@@ -1,7 +1,7 @@
-import { query } from '$lib/db.js';
+import { query, withDb } from '$lib/db.js';
 import { jsonResponse } from '$lib/validation.js';
 
-export async function GET() {
+export const GET = withDb(async () => {
   const { rows } = await query(`
     SELECT
       id,
@@ -13,4 +13,4 @@ export async function GET() {
     ORDER BY name
   `);
   return jsonResponse(rows);
-}
+});

@@ -1,10 +1,7 @@
 node_modules/
 .svelte-kit/
 .claude/settings.local.json
-
-# NOTE: build/ is intentionally committed — Render serves it directly
-# (build cmd: `npm install`, start cmd: `npm start` -> node build/index.js).
-# Do not gitignore build/ or deploys will run stale output.
+build/
 
 *.log
 npm-debug.log*

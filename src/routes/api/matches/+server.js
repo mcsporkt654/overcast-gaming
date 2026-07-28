@@ -1,4 +1,4 @@
-import { query } from '$lib/db.js';
+import { query, withDb } from '$lib/db.js';
 import {
   normalizeString,
   isIsoDate,
@@ -8,7 +8,7 @@ import {
   jsonResponse
 } from '$lib/validation.js';
 
-export async function GET() {
+export const GET = withDb(async () => {
   const { rows } = await query(`
     SELECT
       m.*,
@@ -19,9 +19,9 @@ export async function GET() {
   `);
 
   return jsonResponse(rows.map(rowToMatch));
-}
+});
 
-export async function POST({ request, locals }) {
+export const POST = withDb(async ({ request, locals }) => {
   if (!locals.admin) return errorResponse('Unauthorized', 401);
 
   const body = await request.json().catch(() => null);
@@ -117,7 +117,7 @@ export async function POST({ request, locals }) {
   // Attach player slug so the response shape matches the old API
   const row = { ...rows[0], player_slug: playerId };
   return jsonResponse({ success: true, match: rowToMatch(row) }, 201);
-}
+});
 
 /** @param {Record<string,unknown>} row */
 function rowToMatch(row) {

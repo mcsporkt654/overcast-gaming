@@ -124,4 +124,27 @@ export function getClient() {
     });
 }
 
-export default { query, getClient };
+/**
+ * Wrap a +server.js handler so a DatabaseUnavailableError (or a raw
+ * connection-level pg error that slips through) becomes a real 503
+ * response with Retry-After, instead of the generic 500 SvelteKit
+ * produces for any other unexpected error.
+ * @param {(event: import('@sveltejs/kit').RequestEvent) => Promise<Response>} handler
+ */
+export function withDb(handler) {
+  return async (event) => {
+    try {
+      return await handler(event);
+    } catch (error) {
+      if (error instanceof DatabaseUnavailableError || isDatabaseConnectionError(error)) {
+        return new Response(
+          JSON.stringify({ error: 'Service temporarily unavailable. Please try again shortly.' }),
+          { status: 503, headers: { 'Content-Type': 'application/json', 'Retry-After': '30' } }
+        );
+      }
+      throw error;
+    }
+  };
+}
+
+export default { query, getClient, withDb };

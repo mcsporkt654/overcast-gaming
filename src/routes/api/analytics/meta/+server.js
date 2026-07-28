@@ -1,7 +1,7 @@
-import { query } from '$lib/db.js';
+import { query, withDb } from '$lib/db.js';
 import { invertResult, isIsoDate, jsonResponse } from '$lib/validation.js';
 
-export async function GET() {
+export const GET = withDb(async () => {
   const { rows: matches } = await query(`
     SELECT army_used, opponent_army, result, points_diff, match_date
     FROM matches
@@ -79,4 +79,4 @@ export async function GET() {
     });
 
   return jsonResponse({ totalAppearances, overall: overallResult, monthly });
-}
+});

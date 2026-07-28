@@ -12,7 +12,10 @@ async function waitForServerReady(maxMs = 7000) {
   const start = Date.now();
   while (Date.now() - start < maxMs) {
     try {
-      const res = await fetch(`${BASE_URL}/api/stats`);
+      // Poll the static homepage rather than a DB-backed API route — this
+      // suite exercises auth/validation paths that don't require a database,
+      // and a real DATABASE_URL isn't assumed to be present here.
+      const res = await fetch(`${BASE_URL}/`);
       if (res.ok) return;
     } catch (_) {
       // Ignore until server is ready.
@@ -40,7 +43,7 @@ function assert(condition, message) {
 }
 
 async function run() {
-  const serverProcess = spawn(process.execPath, ['server.js'], {
+  const serverProcess = spawn(process.execPath, ['build/index.js'], {
     cwd: path.resolve(__dirname, '..'),
     env: {
       ...process.env,

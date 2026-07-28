@@ -1,8 +1,8 @@
-import { query } from '$lib/db.js';
-import { normalizeString, isIsoDate, invertResult, errorResponse, jsonResponse } from '$lib/validation.js';
+import { query, withDb } from '$lib/db.js';
+import { normalizeString, isIsoDate, errorResponse, jsonResponse } from '$lib/validation.js';
 
 /** @param {import('@sveltejs/kit').RequestEvent} event */
-export async function GET({ params }) {
+export const GET = withDb(async ({ params }) => {
   const { id } = params;
 
   // Resolve slug → numeric id
@@ -85,7 +85,7 @@ export async function GET({ params }) {
       .sort((a, b) => a.month.localeCompare(b.month)),
     matches
   });
-}
+});
 
 /** @param {Record<string,unknown>} row */
 function rowToMatch(row) {

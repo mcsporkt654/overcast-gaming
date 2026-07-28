@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "node -r dotenv/config node_modules/vite/bin/vite.js dev",
     "build": "vite build",
+    "postinstall": "npm run build",
     "start": "node -r dotenv/config build/index.js",
     "preview": "vite preview",
     "migrate": "node --env-file=.env scripts/migrate-to-pg.js",
-    "test:api": "node --env-file=.env scripts/api-integration-test.js",
-    "test": "npm run test:api"
+    "test:api": "npm run build && node --env-file=.env scripts/api-integration-test.cjs",
+    "test:smoke": "node scripts/smoke-test.cjs",
+    "test": "npm run test:smoke && npm run test:api"
   },
   "dependencies": {
     "jsonwebtoken": "^9.0.2",
@@ -24,7 +26,7 @@
     "vite": "^8.1.4"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "author": "Overcast Gaming",
   "license": "MIT"

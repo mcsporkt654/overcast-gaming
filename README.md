@@ -1,108 +1,101 @@
-# Overcast Gaming Wireframe
+# Overcast Wargaming League
 
-Frontend-first Warhammer 40K league prototype for layout, interaction, and content direction.
+Warhammer 40K league site for Portland, OR: roster, match stats/analytics,
+league standings ("The OWL"), a community feed, and a password-protected
+admin panel for entering players/matches/events.
 
-## Wireframe Intent
+## Stack
 
-This repository is intentionally a fancy wireframe, not a production system.
+- **App server:** SvelteKit ([`@sveltejs/adapter-node`](https://svelte.dev/docs/kit/adapter-node)) — serves `/api/*` and the admin auth flow
+- **Frontend:** static HTML/CSS/JS in [`static/`](static/) (13 hand-written pages fetching from `/api/*` client-side; not yet ported into Svelte routes — see "Known architecture debt" below)
+- **Database:** PostgreSQL (schema in [`schema.sql`](schema.sql))
+- **Auth:** admin password → signed JWT, stored as an HttpOnly cookie ([`src/lib/auth.js`](src/lib/auth.js))
+- **Hosting:** [Render](https://render.com) — one web service + one managed Postgres instance
 
-- All roster, match, and post content is placeholder/test data.
-- Community dispatches are static demo entries in [public/news-data.js](public/news-data.js).
-- Current API/data writes exist only to support demo interactions.
-- The backend should be treated as replaceable scaffolding for a future real implementation.
-
-## Quick Start
+## Quick start
 
 ```bash
-npm install
-cp .env.example .env
-node server.js
+npm install          # also runs `npm run build` via postinstall
+cp .env.example .env # fill in DATABASE_URL, ADMIN_PASSWORD, JWT_SECRET
+npm run dev
 ```
 
 Local URL: http://localhost:3459
 
-## Current Pages
-
-| Route | Purpose |
-| --- | --- |
-| `/` | Home + recent matches + featured cards + rotating dispatch spotlight |
-| `/feed` | Community listing with category filters, card/timeline view, and read-more links |
-| `/news?slug=...` | Dedicated community article detail view with related dispatch suggestions |
-| `/roster` | Player roster wireframe |
-| `/stats` | Leaderboards and match stat views |
-| `/gallery` | Community media gallery layout |
-| `/owl` | Overcast Warhammer League standings layout |
-| `/admin` | Admin demo controls for placeholder data editing |
-
-## Community Content Model (Wireframe)
-
-Community/news UX is now driven by a shared static dataset.
-
-- Source: [public/news-data.js](public/news-data.js)
-- Listing renderer: [public/feed.html](public/feed.html)
-- Detail renderer: [public/news.html](public/news.html)
-- Home featured cards: [public/index.html](public/index.html)
-
-Each article entry includes:
-
-- `slug`
-- `title`
-- `category`
-- `date`
-- `author`
-- `readTime`
-- `image`
-- `excerpt`
-- `body` (array of paragraphs)
-- `highlights` (array)
-- `gallery` (array)
-
-## Recently Added UI Features
-
-- Feed view mode toggle in [public/feed.html](public/feed.html): card mode and timeline mode.
-- Timeline-mode reveal animations (staggered entry while scrolling) in [public/feed.html](public/feed.html).
-- Related dispatch recommendations in [public/news.html](public/news.html).
-- Rotating homepage dispatch spotlight in [public/index.html](public/index.html).
-- Spotlight transitions now use crossfade + image preloading for smoother rotation in [public/index.html](public/index.html).
+You need a real Postgres database — either a local instance or the
+**external** connection string from your Render Postgres dashboard. On first
+request, the app automatically applies [`schema.sql`](schema.sql) and seeds
+from [`data/*.json`](data/) if the `players` table doesn't exist yet
+(see [`src/lib/migrate.js`](src/lib/migrate.js)); this is idempotent, so it's
+safe on every boot.
 
 ## Commands
 
 ```bash
-npm test
+npm run dev      # local dev server (vite)
+npm run build    # production build → build/
+npm start        # run the production build (build/index.js)
+npm run migrate  # one-time/standalone schema+seed script (scripts/migrate-to-pg.js) — usually unnecessary, see above
+npm test         # smoke test + API integration test (scripts/*.js)
 ```
 
-Test coverage includes:
+## Routes
 
-- Smoke validation for expected files/scripts
-- API integration checks for auth, validation, and error paths
+| Route | Purpose |
+| --- | --- |
+| `/` | Home + recent matches + stat tiles + rotating dispatch spotlight |
+| `/feed` | Community listing with category filters, card/timeline view |
+| `/news?slug=...` | Community article detail view |
+| `/roster` | Player roster |
+| `/stats` | Leaderboards and match stat views |
+| `/matchups` | Faction-vs-faction matchup matrix |
+| `/meta` | Meta trends over time |
+| `/gallery` | Community media gallery |
+| `/owl` | League standings |
+| `/admin` | Admin panel for entering players/matches/events |
 
-## Backend Handoff Notes (For Next Agent)
+All data-backed routes call `/api/*` (see [`src/routes/api/`](src/routes/api/)),
+which reads/writes Postgres via [`src/lib/db.js`](src/lib/db.js).
 
-If the next agent is building a real backend, keep this UI contract stable while replacing internals.
+## Environment variables
 
-1. Keep route compatibility for existing pages (`/`, `/feed`, `/news`, `/roster`, `/stats`, `/owl`, `/gallery`, `/admin`).
-2. Replace static community source ([public/news-data.js](public/news-data.js)) with API-backed content while preserving:
-	- `slug` based detail routing from `/news?slug=...`
-	- category labels used by feed filters
-	- image/gallery fields expected by the article template
-3. Replace JSON flat-file persistence in [data/players.json](data/players.json), [data/matches.json](data/matches.json), and [data/posts.json](data/posts.json) with a database.
-4. Keep admin auth behavior equivalent while migrating away from in-memory sessions.
-5. Preserve response shapes currently consumed by UI scripts in:
-	- [public/index.html](public/index.html)
-	- [public/roster.html](public/roster.html)
-	- [public/stats.html](public/stats.html)
-	- [public/feed.html](public/feed.html)
+See [`.env.example`](.env.example). All three are required for the app to
+function:
 
-## Suggested Next Frontend Features
+- `DATABASE_URL` — Postgres connection string
+- `ADMIN_PASSWORD` — checked server-side only, never sent to the client
+- `JWT_SECRET` — signs the admin session JWT
 
-1. Add subtle entrance transitions for timeline nodes in [public/feed.html](public/feed.html).
-2. Add article breadcrumb chips (category/date) for quick navigation in [public/news.html](public/news.html).
-3. Add optional manual spotlight pinning for key dispatches in [public/index.html](public/index.html).
+**If you rotate `ADMIN_PASSWORD` or `JWT_SECRET`, do it via the Render
+dashboard's Environment tab (or the Render API), not by editing a file that
+gets committed.** SvelteKit's `$env/dynamic/private` (used throughout this
+app) reads these at runtime and never bakes them into the build output.
 
-## Notes
+## Deploying
 
-- Do not treat current content as real league data.
-- Do not ship this as-is without backend/data replacement.
-- Keep this README updated whenever routes, UI contracts, or data model assumptions change.
+Render web service build command is `npm install` — the SvelteKit build runs
+automatically via the `postinstall` script in `package.json`, so `build/` is
+never committed to git (`build/` is gitignored). Start command is `npm start`.
+
+See [`documentation/render_fullstack_info.md`](documentation/render_fullstack_info.md)
+for the original Render setup walkthrough (web service + managed Postgres).
+
+## Known architecture debt
+
+This app is mid-migration from an older Express + flat-JSON prototype to
+SvelteKit + Postgres. The database and API layers have fully moved over, but
+the **frontend has not**: the 13 pages in `static/` are hand-written HTML
+that duplicate the nav/footer on every page and fetch data client-side
+(no SSR, no per-page SEO metadata). Three SvelteKit routes already exist
+(`src/routes/+page.svelte`, `roster/`, `stats/`) but are currently shadowed
+by the static files of the same name and are not live.
+
+See [`documentation/APP_REVIEW_AND_ROADMAP.md`](documentation/APP_REVIEW_AND_ROADMAP.md)
+for the full review and a phased plan to port the remaining static pages
+into SvelteKit routes, along with performance and UX recommendations.
+
+`data/*.json` is seed data only, consumed by the first-boot migration and by
+[`scripts/migrate-to-pg.js`](scripts/migrate-to-pg.js). Nothing reads or
+writes it at runtime — all reads/writes go through Postgres.
 
 Not affiliated with Games Workshop. Warhammer 40,000 copyright Games Workshop Ltd.

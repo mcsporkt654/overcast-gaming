@@ -1,4 +1,4 @@
-import { query } from '$lib/db.js';
+import { query, withDb } from '$lib/db.js';
 import { verifyAdminToken, extractAdminToken, signAdminToken, buildAdminCookie } from '$lib/auth.js';
 import {
   normalizeString,
@@ -7,7 +7,7 @@ import {
   jsonResponse
 } from '$lib/validation.js';
 
-export async function GET() {
+export const GET = withDb(async () => {
   const { rows: players } = await query(`
     SELECT
       p.id, p.slug, p.name, p.photo, p.armies, p.socials,
@@ -39,9 +39,9 @@ export async function GET() {
   }));
 
   return jsonResponse(result);
-}
+});
 
-export async function POST({ request, cookies, locals }) {
+export const POST = withDb(async ({ request, cookies, locals }) => {
   if (!locals.admin) return errorResponse('Unauthorized', 401);
 
   const body = await request.json().catch(() => null);
@@ -89,4 +89,4 @@ export async function POST({ request, cookies, locals }) {
     success: true,
     player: { id: p.slug, name: p.name, photo: p.photo, armies: p.armies, socials: p.socials }
   }, 201);
-}
+});

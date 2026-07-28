@@ -1,7 +1,7 @@
-import { query } from '$lib/db.js';
+import { query, withDb } from '$lib/db.js';
 import { errorResponse, jsonResponse } from '$lib/validation.js';
 
-export async function GET({ params }) {
+export const GET = withDb(async ({ params }) => {
   const { rows } = await query(
     `SELECT m.*, p.slug AS player_slug
      FROM matches m
@@ -43,4 +43,4 @@ export async function GET({ params }) {
     pointsDiff: row.points_diff,
     battleNotes: row.battle_notes ?? ''
   });
-}
+});

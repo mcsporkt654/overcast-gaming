@@ -42,20 +42,21 @@ function assertContains(relPath, needle) {
 }
 
 const htmlFiles = [
-  'public/index.html',
-  'public/feed.html',
-  'public/news.html',
-  'public/gallery.html',
-  'public/owl.html',
-  'public/roster.html',
-  'public/stats.html',
-  'public/admin.html'
+  'static/index.html',
+  'static/feed.html',
+  'static/news.html',
+  'static/gallery.html',
+  'static/owl.html',
+  'static/roster.html',
+  'static/stats.html',
+  'static/admin.html'
 ];
 
-assertExists('server.js');
-assertExists('public/style.css');
-assertExists('public/nav.js');
-assertExists('public/news-data.js');
+assertExists('src/hooks.server.js');
+assertExists('src/lib/db.js');
+assertExists('static/style.css');
+assertExists('static/nav.js');
+assertExists('static/news-data.js');
 assertExists('data/players.json');
 assertExists('data/matches.json');
 assertExists('data/posts.json');
@@ -65,9 +66,9 @@ assertValidJSON('data/matches.json');
 assertValidJSON('data/posts.json');
 
 htmlFiles.forEach(file => assertContains(file, '<script src="nav.js" defer></script>'));
-assertContains('public/feed.html', '<script src="news-data.js" defer></script>');
-assertContains('public/news.html', '<script src="news-data.js" defer></script>');
-assertContains('public/index.html', '<script src="news-data.js" defer></script>');
+assertContains('static/feed.html', '<script src="news-data.js" defer></script>');
+assertContains('static/news.html', '<script src="news-data.js" defer></script>');
+assertContains('static/index.html', '<script src="news-data.js" defer></script>');
 
 if (process.exitCode) {
   console.error('Smoke test failed.');

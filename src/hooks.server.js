@@ -1,5 +1,6 @@
 import { verifyAdminToken, extractAdminToken } from '$lib/auth.js';
 import { DatabaseUnavailableError, isDatabaseConnectionError } from '$lib/db.js';
+import { ensureMigrated } from '$lib/migrate.js';
 
 function databaseUnavailableResponse(event) {
   if (event.url.pathname.startsWith('/api/')) {
@@ -26,6 +27,17 @@ export async function handle({ event, resolve }) {
   // ── Admin auth — populate locals.admin before route handlers run ──────────
   const token = extractAdminToken(event);
   event.locals.admin = !!verifyAdminToken(token);
+
+  // ── First-boot schema/seed bootstrap — no-ops once tables exist ───────────
+  try {
+    await ensureMigrated();
+  } catch (error) {
+    if (!(error instanceof DatabaseUnavailableError) && !isDatabaseConnectionError(error)) {
+      console.error('[migrate] unexpected error during bootstrap', error);
+    }
+    // Fall through — the route handler's own db call will surface the
+    // right error (503 for connection issues) via the withDb wrapper.
+  }
 
   // ── Security headers (mirrors the old Express middleware) ─────────────────
   let response;

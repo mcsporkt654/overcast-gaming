@@ -1,7 +1,7 @@
-import { query } from '$lib/db.js';
+import { query, withDb } from '$lib/db.js';
 import { normalizeString, invertResult, jsonResponse } from '$lib/validation.js';
 
-export async function GET({ url }) {
+export const GET = withDb(async ({ url }) => {
   const armyFilter = normalizeString(url.searchParams.get('army') ?? '', 80);
   const opponentFilter = normalizeString(url.searchParams.get('opponent') ?? '', 80);
 
@@ -52,4 +52,4 @@ export async function GET({ url }) {
 
   const factions = [...new Set(sideRecords.map((r) => r.army))].sort();
   return jsonResponse({ factions, matchups });
-}
+});

@@ -1,4 +1,4 @@
-import { query } from '$lib/db.js';
+import { query, withDb } from '$lib/db.js';
 import {
   normalizeString,
   isIsoDate,
@@ -6,7 +6,7 @@ import {
   jsonResponse
 } from '$lib/validation.js';
 
-export async function GET() {
+export const GET = withDb(async () => {
   const { rows } = await query(`
     SELECT
       id, name, format, location,
@@ -17,9 +17,9 @@ export async function GET() {
     ORDER BY start_date DESC NULLS LAST, created_at DESC
   `);
   return jsonResponse(rows);
-}
+});
 
-export async function POST({ request, locals }) {
+export const POST = withDb(async ({ request, locals }) => {
   if (!locals.admin) return errorResponse('Unauthorized', 401);
 
   const body = await request.json().catch(() => null);
@@ -52,4 +52,4 @@ export async function POST({ request, locals }) {
   );
 
   return jsonResponse({ success: true, event: rows[0] }, 201);
-}
+});
