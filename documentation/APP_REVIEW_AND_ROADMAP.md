@@ -6,6 +6,47 @@
 
 ---
 
+## Status (updated 2026-07-27 — read this first)
+
+**Phase 0 (security + get production working) and Phase 1 (repo hygiene) are complete**, plus a first slice of Phase 2. Everything below the Status section describes the *original* review from July 17 — treat any claim of a currently-broken/insecure state as historical unless it's echoed here.
+
+**Done:**
+- **§4.1 Admin password leak** — rotated (new password on Render + local `.env`), root cause fixed (`$env/dynamic/private` instead of `$env/static/private`), and the old password purged from *all* git history (including a `.svelte-kit/output/` leak this review missed, plus plaintext mentions in old `server.js`/`README.md`) with `git filter-repo` + force-push.
+- **§4.2 Empty production DB** — fixed differently than planned: instead of manually running `scripts/migrate-to-pg.js` against an external connection string (no tool exposed one), built a self-healing migration (`src/lib/migrate.js`) that applies `schema.sql` + seeds `data/*.json` automatically on first boot if `players` doesn't exist. Confirmed live: 5 players, 50 matches in production Postgres.
+- **§4.3 Dead 503 path** — fixed with a `withDb()` wrapper (`src/lib/db.js`) applied to every DB-backed `+server.js` handler. Confirmed: `/api/*` returns real 503+`Retry-After` with DB down, not a generic 500.
+- **§4.4 Committed `build/`** — fixed via a `postinstall` script (`npm run build` runs automatically on Render's `npm install`) instead of a Render dashboard build-command change (no tool access to the dashboard). `build/` is gitignored and untracked.
+- **Phase 0.8 health endpoint** — added (`/api/health`). **Not done: Render's `healthCheckPath` dashboard setting** — no available tool exposes this; needs a manual dashboard visit (Service → Settings → Health Check Path → `/api/health`).
+- **Phase 1.1, 1.2, 1.4** — dead Express stack deleted (`server.js`, `public/`), README rewritten, `engines.node` bumped to `>=20`.
+- **Not done: Phase 1.3** (IP allowlist restriction, switch to internal DB connection string) — deliberately skipped; restricting the `0.0.0.0/0` allowlist risked locking out access without knowing all the user's IPs. Still using the external connection string with `rejectUnauthorized: false`. Worth revisiting with the user's input.
+- **Phase 2, first slice**: Home (`/`), Roster (`/roster`), and Stats (`/stats`) ported to real SvelteKit routes (Phase 2 list items 1–3 below). Gallery (`/gallery`) was **removed** rather than ported — see below.
+- **Extra fixes made along the way, not in the original review**: a real logout bug (JWTs are stateless, so "logout" only cleared the cookie, leaving the token valid via the legacy header for up to 8h more — added a revocation list in `src/lib/auth.js`); both `scripts/*.js` test files used CommonJS `require()` in an ESM package and were never actually runnable — renamed to `.cjs` and repointed at the current stack; removed a dead theme-switcher script from `src/app.html` (no UI ever used it; it caused a `hydration_mismatch` console warning once real SvelteKit routes started hydrating in production — see "Known non-blocking issue" below).
+
+**Product decision made mid-session:** Gallery (`/gallery`) was **removed**, not ported. The user asked whether it could pull real content from Instagram instead of shipping a placeholder gallery; a live auto-sync would require the user to set up a Meta Developer app (Business account, linked Facebook Page, app review) — out of scope for an agent to do unattended, and the user declined that setup rather than take it on. There is no `/gallery` route or nav link anymore, in `static/*.html`, `Header.svelte`, or this document's own recommendations below. **If asked to "finish porting the gallery page," stop and check with the user first — it was deliberately cut, not forgotten.**
+
+**Still open (Phase 2 continued):** 8 pages remain static HTML: `feed`, `news`, `matchups`, `meta`, `owl`, `admin`, `player`, `match-detail`. Same page-by-page pattern applies — pick up at Phase 2 list item 4 below, using the recipe in "Porting pattern established" below.
+
+**Known non-blocking issue:** a `hydration_mismatch` console warning appears on `/`, `/roster`, and `/stats` in production, with **zero functional impact** — confirmed via repeated interactive testing (player modal, stats filters, spotlight rotator all work correctly with real data on every deploy). Root cause not fully identified: removing the dead theme-switcher script (a legitimate fix in its own right) did not clear it. Worth a proper Svelte dev-mode investigation before porting more pages, since whatever's causing it will likely still be there.
+
+### Porting pattern established (reuse for the remaining 8 pages)
+
+Each of the 3 ported pages followed this recipe:
+
+1. Move the page's nav/footer into the shared `Header`/`Footer` components (`src/lib/components/`) — already done, this step doesn't repeat.
+2. Copy the page's markup (everything between the old `<nav>` and `<footer>`) into a new `src/routes/<name>/+page.svelte`, using `<svelte:head>` for `<title>` and meta tags.
+3. Extract the page's inline `<script>` **verbatim** into `static/<name>-page.js` — do **not** rewrite the working vanilla-JS interactivity as reactive Svelte state. That's a much bigger, riskier job than what's actually broken here (route-shadowing, duplicated chrome, no SSR/meta).
+4. Reference it via `<script src="/<name>-page.js" defer></script>` inside the page's `<svelte:head>`.
+5. **Critical — don't skip this:** wrap the entire contents of `<name>-page.js` in `window.addEventListener('load', function () { ... })`. Scripts declared in `<svelte:head>` execute *before* SvelteKit's own body-placed hydration script (both are `defer`; head content comes first in document order). Without the wrapper, the extracted script mutates the DOM, then Svelte's hydration runs afterward, detects the live DOM no longer matches its server-rendered snapshot, and silently reverts the mutation back to the placeholder ("Loading...", "Summoning warriors...", etc.) — data fetches successfully but the page never shows it. This shipped to production once before being caught (the stats leaderboard stayed stuck on "Loading..." despite `/api/stats` returning 200) and fixed. Any inner `document.addEventListener('DOMContentLoaded', ...)` wrapper inside the extracted script needs to become plain immediately-invoked code, since `DOMContentLoaded` has already fired by the time `load` fires.
+6. `git rm` the shadowing `static/<name>.html` — deleting it is literally what activates the Svelte route (adapter-node's static file serving takes priority over a SvelteKit route at the same path).
+7. Build, run `node scripts/smoke-test.cjs` (update its file lists for the newly-deleted/added files), then verify **interactively in the browser against production** — local dev has no `DATABASE_URL` configured, so meaningful interactive testing (does the modal/filter/etc. actually populate with real data?) needs the deployed site, not local.
+
+### Operational notes for future sessions
+
+- **This environment auto-commits and auto-pushes working-tree changes in the background**, using its own generated commit messages that aren't always accurate (e.g. one commit here is titled "Fixed photo size issue with loadtime" but its actual diff is the Gallery removal). Don't be alarmed by commits you don't recognize writing.
+- **No tool in this environment can change Render's dashboard-only settings** (build command, health check path) — `mcp__render__update_web_service` is unavailable here. Where a dashboard change was needed, a code-level workaround was used where possible (e.g. a `postinstall` script instead of changing the build command); where it wasn't possible (health check path), it's flagged above as a manual follow-up for the user.
+- **No tool exposes the Postgres connection string** either (`mcp__render__query_render_postgres` is read-only). Where a migration was needed, it was done via a self-healing bootstrap that runs on the app's own runtime `DATABASE_URL` (`src/lib/migrate.js`) rather than requiring the connection string out-of-band.
+
+---
+
 ## 0. Executive summary
 
 The site's design and content direction are genuinely good — the brand, dark theme, and page layouts are polished and cohesive. But the app is currently **live and broken in production**, carries **three overlapping frontend/backend stacks** in one repo, and has **one urgent security leak**.
@@ -160,7 +201,7 @@ Options (pick one):
 1. **Every data page is an error state in production** (§4.2). Nothing else in this section matters until that's fixed.
 2. **Cold start = 25–30 s blank Render interstitial** (§5.1). To a league member this reads as "site is down."
 3. **Article pages aren't shareable/SEO-visible.** `/news?slug=...` is one static HTML shell; every article shares the same `<title>` and there are no per-article OpenGraph/Twitter tags, so Discord/social embeds (the primary distribution channel for a league!) show generic previews. Fix in Phase 2: real routes (`/news/[slug]`) with SSR `<svelte:head>` metadata per article; 301 the old query-param URLs.
-4. **Gallery is placeholder boxes** (`static/gallery.html` renders labeled placeholder cells, no real images). Either populate it from real content or remove it from the nav until ready — a permanently-"coming soon" page erodes trust in the whole site.
+4. ✅ **Resolved — see Status section.** *Was:* Gallery is placeholder boxes (`static/gallery.html` renders labeled placeholder cells, no real images). Either populate it from real content or remove it from the nav until ready — a permanently-"coming soon" page erodes trust in the whole site. *Now:* removed entirely rather than populated (an Instagram auto-sync was considered and declined — see Status section).
 5. **Unknown routes fall through to SvelteKit's unstyled default error page** — add a branded `+error.svelte` (404/500) once pages are ported.
 6. **Admin panel friction:** the token lives in a JS variable (`static/admin.html:309`), so a page refresh silently logs you out mid-data-entry. The backend already sets an HttpOnly cookie (`src/routes/api/admin/verify/+server.js:54`) — switch admin fetches to cookie auth (`credentials: 'same-origin'`, drop the `x-admin-token` header) and the problem disappears. Longer term (Phase 3): admin match entry is one long form; for game-night bulk entry add "save & add another" that preserves date/event fields.
 7. **No favicon fallback:** `/favicon.ico` 404s in logs (only `favicon.svg` exists); some tools/browsers still request `.ico`. Add one or a redirect.
@@ -202,14 +243,16 @@ Options (pick one):
 
 Recommended order (risk-ascending, value-descending):
 
-1. **`/` (home)** — port from `static/index.html`; SSR stats + recent matches (the dead `src/routes/+page.server.js` already does exactly this — finish and reuse it); keep the spotlight rotator as a client component. Delete `static/index.html`.
-2. **`/roster` and `/stats`** — same: flesh out the existing dead Svelte pages to visual parity with `static/roster.html`/`static/stats.html`, then delete the static twins.
-3. **Shared chrome** — one `+layout.svelte` with `Header`/`Footer` components replacing per-page nav/footer markup; port `nav.js` behavior into the Header component; delete `static/nav.js` when the last static page is gone.
+1. ✅ **DONE** — **`/` (home)** — ported from `static/index.html`; static/index.html deleted.
+2. ✅ **DONE** — **`/roster` and `/stats`** — ported to visual/functional parity with the old static pages; static twins deleted.
+3. ✅ **DONE** — **Shared chrome** — `+layout.svelte` with `Header`/`Footer` components replacing per-page nav/footer markup; `nav.js` is still loaded dynamically for the mobile hamburger toggle (not deleted — still used by the 8 remaining static pages).
 4. **`/feed` + `/news/[slug]`** — move article content out of `static/news-data.js` into the `posts` table (schema + `/api/posts` already exist; write a small seed script mapping the 5 real articles). Real per-article routes with `<svelte:head>` OG/Twitter tags; 301 redirect `/news?slug=x` → `/news/x`.
 5. **`/owl`, `/matchups`, `/meta`, `/player`, `/match-detail`** — port; `/player?id=` → `/players/[id]`, `/match-detail?id=` → `/matches/[id]` (keep query-param redirects).
-6. **`/gallery`** — port only if real images exist; otherwise remove from nav.
+6. ❌ **REMOVED, not ported** — Gallery (`/gallery`) was placeholder content with low expected user interest; the user asked for it to pull real content from Instagram instead, decided against the Meta Developer setup that would require, and had it cut entirely. No `/gallery` route, static file, or nav link remain anywhere. Do not re-add without checking with the user first.
 7. **`/admin`** — port last (biggest page, 668 lines). Switch to cookie auth (`credentials: 'same-origin'`, remove `x-admin-token` path from `src/lib/auth.js#extractAdminToken` once done). Add army-name validation against the `armies` table on match/player writes. Add "save & add another".
 8. **Cleanup:** delete every remaining `static/*.html` + `static/news-data.js`; add branded `+error.svelte`; remove `'unsafe-inline'` for scripts from the CSP in `src/hooks.server.js` (now possible — no more inline scripts).
+
+See "Porting pattern established" in the Status section at the top of this document for the concrete recipe used for items 1–3, including a hydration-timing gotcha that cost real debugging time and will very likely recur on items 4, 5, and 7 if not accounted for up front.
 
 **Acceptance for the phase:** `static/` contains only true assets (css until it's componentized, images, favicon, owl-mark); every route SSRs meaningful HTML (verify with `curl | grep`); Lighthouse (mobile) ≥ 90 performance / ≥ 95 SEO on `/`, `/roster`, `/news/[slug]`; article links unfurl correctly in Discord.
 

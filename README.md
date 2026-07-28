@@ -104,10 +104,12 @@ that duplicate the nav/footer per file and fetch data client-side with no
 SSR or per-page SEO metadata.
 
 See [`documentation/APP_REVIEW_AND_ROADMAP.md`](documentation/APP_REVIEW_AND_ROADMAP.md)
-for the full review and a phased plan to port the remaining static pages
-into SvelteKit routes, along with performance and UX recommendations. (That
-doc predates the gallery removal and the Home/Roster/Stats port — treat its
-route list and page count as historical.)
+for the full review, current progress against it, and a phased plan for the
+remaining static pages — its **Status** section at the top is kept current
+and is the best place to reorient a new session on this project. The rest of
+that document is the original point-in-time review (July 17, 2026) and
+should be read as historical narrative, not current state, except where the
+Status section says otherwise.
 
 `data/*.json` is seed data only, consumed by the first-boot migration and by
 [`scripts/migrate-to-pg.js`](scripts/migrate-to-pg.js). Nothing reads or
