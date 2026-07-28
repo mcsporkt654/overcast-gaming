@@ -1,3 +1,11 @@
+// Wait for the 'load' event (fires after SvelteKit's own hydration script has
+// run) rather than executing at defer-time — this script is declared in
+// <svelte:head>, which places it before the body's hydration entry script in
+// document order, so without this it mutates the DOM first and Svelte's
+// hydration then reverts those mutations as a "mismatch" against the SSR'd
+// placeholder markup.
+window.addEventListener('load', function () {
+
 // Load stats bar
 fetch('/api/stats')
   .then(r => r.json())
@@ -109,7 +117,7 @@ function newsHref(slug) {
   return `/news?slug=${encodeURIComponent(slug)}`;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+(() => {
   const spotlightItems = Array.isArray(window.OVERCAST_NEWS_ITEMS)
     ? [...window.OVERCAST_NEWS_ITEMS].sort((a, b) => new Date(b.date) - new Date(a.date))
     : [];
@@ -211,4 +219,6 @@ document.addEventListener('DOMContentLoaded', () => {
       startSpotlightRotation();
     });
   }
-});
+})();
+
+}); // window 'load'

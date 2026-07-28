@@ -1,3 +1,10 @@
+// Wait for 'load' (fires after SvelteKit's hydration script runs) rather
+// than executing at defer-time — this script is declared in <svelte:head>,
+// which places it before the body's hydration entry script in document
+// order, so without this it mutates the DOM first and Svelte's hydration
+// then reverts those mutations as a "mismatch" against the SSR'd placeholder.
+window.addEventListener('load', function () {
+
 let activePlayerAnalytics = null;
 let activePlayerArmy = '';
 let activePlayerSubfaction = '';
@@ -547,3 +554,5 @@ fetchJsonFallback(playerListSources())
     error.textContent = 'Could not load roster data.';
     grid.appendChild(error);
   });
+
+}); // window 'load'
