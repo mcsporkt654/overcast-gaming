@@ -73,9 +73,10 @@ export function clearAdminCookie() {
 
 /**
  * Extract the admin token from a SvelteKit RequestEvent.
- * Checks the HttpOnly cookie first, then falls back to the
- * legacy X-Admin-Token header so the existing admin.html keeps working
- * until it is ported to a Svelte page.
+ * Checks the HttpOnly cookie first, then falls back to the legacy
+ * X-Admin-Token header. The admin UI is cookie-only now that it's a real
+ * Svelte route; the header path remains for non-browser callers
+ * (scripts/api-integration-test.cjs).
  *
  * @param {import('@sveltejs/kit').RequestEvent} event
  */

@@ -4,14 +4,22 @@ import schemaSql from '../../schema.sql?raw';
 import armiesData from '../../data/armies.json';
 import missionsData from '../../data/missions.json';
 import eventsData from '../../data/events.json';
-import playersData from '../../data/players.json';
-import matchesData from '../../data/matches.json';
 import postsData from '../../data/posts.json';
 
 let migrationPromise = null;
 
+// The 5 fake players the app used to seed itself with (and the matches that
+// referenced them). Real players get a timestamp-based slug (`player-<Date.now()>`),
+// so these five literals can never collide with a genuine roster entry.
+const SEED_PLAYER_SLUGS = ['player-1', 'player-2', 'player-3', 'player-4', 'player-5'];
+
+/**
+ * Reference + content seeds only. The roster (players) and match history are
+ * deliberately NOT seeded — those are entered through the admin console, so a
+ * fresh database starts with an empty roster rather than placeholder people.
+ */
 async function seed() {
-  console.log('[migrate] schema missing — applying schema.sql and seeding from data/*.json');
+  console.log('[migrate] schema missing — applying schema.sql and seeding reference data');
 
   await query(schemaSql);
 
@@ -42,64 +50,6 @@ async function seed() {
     );
   }
 
-  const playerSlugToId = {};
-  for (const p of playersData) {
-    const result = await query(
-      `INSERT INTO players (slug, name, photo, armies, socials)
-       VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
-       RETURNING id`,
-      [p.id, p.name, p.photo ?? '', p.armies ?? [], JSON.stringify(p.socials ?? {})]
-    );
-    playerSlugToId[p.id] = result.rows[0].id;
-  }
-
-  for (const m of matchesData) {
-    const numericPlayerId = playerSlugToId[m.playerId];
-    if (!numericPlayerId) continue;
-    await query(
-      `INSERT INTO matches (
-         id, match_date, player_id, player_name,
-         army_used, army_subfaction, army_points, player_units,
-         opponent_name, opponent_army, opponent_subfaction, opponent_points, opponent_units,
-         mission_id, mission_name, event_id, event_name,
-         primary_score_player, primary_score_opponent,
-         secondary_score_player, secondary_score_opponent,
-         destruction_score_player, destruction_score_opponent,
-         result, points_diff, battle_notes
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
-       ON CONFLICT (id) DO NOTHING`,
-      [
-        m.id,
-        m.date,
-        numericPlayerId,
-        m.playerName ?? '',
-        m.armyUsed,
-        m.armySubfaction ?? '',
-        m.armyPoints ?? null,
-        JSON.stringify(m.playerUnits ?? []),
-        m.opponentName,
-        m.opponentArmy,
-        m.opponentSubfaction ?? '',
-        m.opponentPoints ?? null,
-        JSON.stringify(m.opponentUnits ?? []),
-        m.missionId || null,
-        m.missionName ?? '',
-        m.eventId || null,
-        m.eventName ?? '',
-        m.primaryScorePlayer ?? null,
-        m.primaryScoreOpponent ?? null,
-        m.secondaryScorePlayer ?? null,
-        m.secondaryScoreOpponent ?? null,
-        m.destructionScorePlayer ?? null,
-        m.destructionScoreOpponent ?? null,
-        m.result,
-        m.pointsDiff ?? null,
-        m.battleNotes ?? ''
-      ]
-    );
-  }
-
   for (const p of postsData) {
     const slug = p.slug ?? p.id;
     await query(
@@ -127,11 +77,60 @@ async function seed() {
 }
 
 /**
- * Idempotent, self-healing bootstrap: applies schema.sql and seeds from
- * data/*.json the first time a table is missing, then no-ops on every
- * subsequent call for the life of the process. Runs on the app's own
- * runtime DATABASE_URL, so it needs no external tooling or connection
- * string to be shared out-of-band.
+ * Run a named migration step exactly once per database, tracked in
+ * `schema_migrations`. Unlike `seed()` (which only fires on a brand-new
+ * database), these run against databases that already have tables.
+ *
+ * @param {string} name
+ * @param {() => Promise<void>} fn
+ */
+async function runOnce(name, fn) {
+  await query(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      name        TEXT        PRIMARY KEY,
+      applied_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  const { rowCount } = await query(
+    `INSERT INTO schema_migrations (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`,
+    [name]
+  );
+  if (!rowCount) return; // already applied
+
+  try {
+    await fn();
+    console.log(`[migrate] applied ${name}`);
+  } catch (error) {
+    // Don't leave a claimed-but-failed step behind — let the next boot retry it.
+    await query(`DELETE FROM schema_migrations WHERE name = $1`, [name]).catch(() => {});
+    throw error;
+  }
+}
+
+/**
+ * Delete the placeholder roster (and its matches) that earlier versions of this
+ * bootstrap inserted, so the league can build a real roster from an empty slate.
+ * Matches go first — `matches.player_id` is ON DELETE RESTRICT.
+ */
+async function purgeSeedRoster() {
+  const { rowCount: matchCount } = await query(
+    `DELETE FROM matches
+      WHERE player_id IN (SELECT id FROM players WHERE slug = ANY($1))`,
+    [SEED_PLAYER_SLUGS]
+  );
+  const { rowCount: playerCount } = await query(`DELETE FROM players WHERE slug = ANY($1)`, [
+    SEED_PLAYER_SLUGS
+  ]);
+  console.log(`[migrate] purged seed roster: ${playerCount} players, ${matchCount} matches`);
+}
+
+/**
+ * Idempotent, self-healing bootstrap: applies schema.sql and seeds reference
+ * data the first time a table is missing, then runs any pending one-off
+ * migrations, then no-ops for the life of the process. Runs on the app's own
+ * runtime DATABASE_URL, so it needs no external tooling or connection string
+ * to be shared out-of-band.
  */
 export function ensureMigrated() {
   if (!migrationPromise) {
@@ -140,6 +139,7 @@ export function ensureMigrated() {
       if (!rows[0]?.exists) {
         await seed();
       }
+      await runOnce('2026-07-27-purge-seed-roster', purgeSeedRoster);
     })().catch((err) => {
       migrationPromise = null; // allow retry on the next request instead of caching a permanent failure
       throw err;

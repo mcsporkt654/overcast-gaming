@@ -1,5 +1,5 @@
 import { query, withDb } from '$lib/db.js';
-import { verifyAdminToken, extractAdminToken, signAdminToken, buildAdminCookie } from '$lib/auth.js';
+import { normalizeGoogleDrivePhotoUrl } from '$lib/photoUrl.js';
 import {
   normalizeString,
   normalizeHttpUrl,
@@ -74,7 +74,7 @@ export const POST = withDb(async ({ request, cookies, locals }) => {
     });
   }
 
-  const cleanPhoto = normalizeHttpUrl(photo);
+  const cleanPhoto = normalizeHttpUrl(normalizeGoogleDrivePhotoUrl(photo));
   const slug = 'player-' + Date.now();
 
   const { rows } = await query(

@@ -7,7 +7,7 @@ admin panel for entering players/matches/events.
 ## Stack
 
 - **App server:** SvelteKit ([`@sveltejs/adapter-node`](https://svelte.dev/docs/kit/adapter-node)) — serves `/api/*`, the admin auth flow, and the Home/Roster/Stats routes
-- **Frontend:** mid-migration. Home (`/`), Roster (`/roster`), and Stats (`/stats`) are real SvelteKit routes using shared [`Header`](src/lib/components/Header.svelte)/[`Footer`](src/lib/components/Footer.svelte) components. The remaining 8 pages are still hand-written HTML in [`static/`](static/) that duplicate the nav/footer and fetch data client-side — see "Known architecture debt" below
+- **Frontend:** mid-migration. Home (`/`), Roster (`/roster`), and Stats (`/stats`) are real SvelteKit routes using shared [`Header`](src/lib/components/Header.svelte)/[`Footer`](src/lib/components/Footer.svelte) components. The remaining 7 pages are still hand-written HTML in [`static/`](static/) that duplicate the nav/footer and fetch data client-side — see "Known architecture debt" below
 - **Database:** PostgreSQL (schema in [`schema.sql`](schema.sql))
 - **Auth:** admin password → signed JWT, stored as an HttpOnly cookie ([`src/lib/auth.js`](src/lib/auth.js))
 - **Hosting:** [Render](https://render.com) — one web service + one managed Postgres instance
@@ -51,7 +51,7 @@ npm test         # smoke test + API integration test (scripts/*.js)
 | `/matchups` | static HTML | Faction-vs-faction matchup matrix |
 | `/meta` | static HTML | Meta trends over time |
 | `/owl` | static HTML | League standings |
-| `/admin` | static HTML | Admin panel for entering players/matches/events |
+| `/admin` | SvelteKit route | Admin console — cookie-gated hub with `/admin/roster` (add players, live photo preview) and `/admin/match` (record results) sub-pages |
 
 There is no `/gallery` — the feature was removed (low user interest, and a
 real Instagram auto-sync would require setting up a Meta Developer app).
@@ -98,8 +98,8 @@ for the original Render setup walkthrough (web service + managed Postgres).
 This app is mid-migration from an older Express + flat-JSON prototype to
 SvelteKit + Postgres. The database and API layers have fully moved over.
 On the frontend, Home/Roster/Stats are now real SvelteKit routes (see
-above); the remaining 8 pages (`feed`, `news`, `matchups`, `meta`, `owl`,
-`admin`, `player`, `match-detail`) are still hand-written HTML in `static/`
+above); the remaining 7 pages (`feed`, `news`, `matchups`, `meta`, `owl`,
+`player`, `match-detail`) are still hand-written HTML in `static/`
 that duplicate the nav/footer per file and fetch data client-side with no
 SSR or per-page SEO metadata.
 

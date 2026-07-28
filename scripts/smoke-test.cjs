@@ -55,7 +55,6 @@ const staticHtmlFiles = [
   'static/feed.html',
   'static/news.html',
   'static/owl.html',
-  'static/admin.html',
   'static/matchups.html',
   'static/meta.html',
   'static/player.html',
@@ -67,13 +66,18 @@ assertExists('src/lib/db.js');
 assertExists('static/style.css');
 assertExists('static/nav.js');
 assertExists('static/news-data.js');
-assertExists('data/players.json');
-assertExists('data/matches.json');
 assertExists('data/posts.json');
+assertExists('data/armies.json');
+assertExists('data/missions.json');
 
-assertValidJSON('data/players.json');
-assertValidJSON('data/matches.json');
 assertValidJSON('data/posts.json');
+assertValidJSON('data/armies.json');
+assertValidJSON('data/missions.json');
+
+// The roster and match history are entered through the admin console — they are
+// deliberately no longer seeded from flat files.
+assertMissing('data/players.json');
+assertMissing('data/matches.json');
 
 staticHtmlFiles.forEach(file => assertContains(file, '<script src="nav.js" defer></script>'));
 assertContains('static/feed.html', '<script src="news-data.js" defer></script>');
@@ -90,10 +94,16 @@ assertMissing('static/index.html');
 assertMissing('static/roster.html');
 assertMissing('static/stats.html');
 assertMissing('static/gallery.html');
+assertMissing('static/admin.html');
 
 assertExists('src/routes/+page.svelte');
 assertExists('src/routes/roster/+page.svelte');
 assertExists('src/routes/stats/+page.svelte');
+assertExists('src/routes/admin/+layout.svelte');
+assertExists('src/routes/admin/+layout.server.js');
+assertExists('src/routes/admin/+page.svelte');
+assertExists('src/routes/admin/roster/+page.svelte');
+assertExists('src/routes/admin/match/+page.svelte');
 assertExists('src/lib/components/Header.svelte');
 assertExists('src/lib/components/Footer.svelte');
 assertExists('static/home-page.js');
