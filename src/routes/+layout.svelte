@@ -6,6 +6,7 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import Header from '$lib/components/Header.svelte';
+  import Footer from '$lib/components/Footer.svelte';
 
   onMount(() => {
     // Dynamically load nav.js once, letting it run its own DOMContentLoaded logic
@@ -27,6 +28,8 @@
 {/if}
 
 <slot />
+
+<Footer />
 
 <style>
   .service-banner {

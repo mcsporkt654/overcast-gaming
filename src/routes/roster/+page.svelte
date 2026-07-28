@@ -1,40 +1,37 @@
 <script>
   /** @type {import('./$types').PageData} */
   export let data;
-
-  const { players } = data;
 </script>
 
 <svelte:head>
   <title>Roster — Overcast Wargaming League</title>
+  <script src="/roster-page.js" defer></script>
 </svelte:head>
 
-<main class="page-main">
-  <h1>Commander Roster</h1>
+<!-- Page Header -->
+<div style="background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 2.5rem var(--gutter) 2rem;">
+  <div style="max-width:1200px; margin:0 auto;">
+    <p style="font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.4rem;">Portland, Oregon</p>
+    <h1 style="font-size:2rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-primary);">
+      The <span style="color:var(--accent)">Roster</span>
+    </h1>
+    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:0.4rem;">The commanders of Overcast Wargaming League and the factions they command.</p>
+  </div>
+</div>
 
-  {#if players.length}
-    <div class="roster-grid">
-      {#each players as p}
-        <a class="player-card" href="/player?id={p.id}">
-          {#if p.photo}
-            <img src={p.photo} alt="{p.name} avatar" class="player-photo" />
-          {:else}
-            <div class="player-photo player-photo--placeholder"></div>
-          {/if}
-          <div class="player-card-info">
-            <span class="player-name">{p.name}</span>
-            <span class="player-armies">{p.armies.join(', ')}</span>
-            {#if p.total >= 1}
-              <span class="player-record">{p.wins}W – {p.losses}L – {p.draws}D</span>
-              {#if p.winRate !== null}
-                <span class="player-winrate">{p.winRate}% WR</span>
-              {/if}
-            {/if}
-          </div>
-        </a>
-      {/each}
+<!-- Roster Grid -->
+<section class="section">
+  <div id="roster-grid" class="roster-grid">
+    <div class="loader">Summoning warriors...</div>
+  </div>
+</section>
+
+<div id="player-modal" class="player-modal" hidden aria-hidden="true">
+  <div class="player-modal-backdrop" data-close-player-modal></div>
+  <div class="player-modal-panel" role="dialog" aria-modal="true" aria-labelledby="player-modal-title">
+    <button class="player-modal-close" type="button" data-close-player-modal aria-label="Close player details">×</button>
+    <div id="player-modal-body">
+      <div class="loader">Selecting commander...</div>
     </div>
-  {:else}
-    <p class="no-data">No commanders on the roster yet.</p>
-  {/if}
-</main>
+  </div>
+</div>

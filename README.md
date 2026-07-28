@@ -6,8 +6,8 @@ admin panel for entering players/matches/events.
 
 ## Stack
 
-- **App server:** SvelteKit ([`@sveltejs/adapter-node`](https://svelte.dev/docs/kit/adapter-node)) — serves `/api/*` and the admin auth flow
-- **Frontend:** static HTML/CSS/JS in [`static/`](static/) (13 hand-written pages fetching from `/api/*` client-side; not yet ported into Svelte routes — see "Known architecture debt" below)
+- **App server:** SvelteKit ([`@sveltejs/adapter-node`](https://svelte.dev/docs/kit/adapter-node)) — serves `/api/*`, the admin auth flow, and the Home/Roster/Stats routes
+- **Frontend:** mid-migration. Home (`/`), Roster (`/roster`), and Stats (`/stats`) are real SvelteKit routes using shared [`Header`](src/lib/components/Header.svelte)/[`Footer`](src/lib/components/Footer.svelte) components. The remaining 8 pages are still hand-written HTML in [`static/`](static/) that duplicate the nav/footer and fetch data client-side — see "Known architecture debt" below
 - **Database:** PostgreSQL (schema in [`schema.sql`](schema.sql))
 - **Auth:** admin password → signed JWT, stored as an HttpOnly cookie ([`src/lib/auth.js`](src/lib/auth.js))
 - **Hosting:** [Render](https://render.com) — one web service + one managed Postgres instance
@@ -41,18 +41,31 @@ npm test         # smoke test + API integration test (scripts/*.js)
 
 ## Routes
 
-| Route | Purpose |
-| --- | --- |
-| `/` | Home + recent matches + stat tiles + rotating dispatch spotlight |
-| `/feed` | Community listing with category filters, card/timeline view |
-| `/news?slug=...` | Community article detail view |
-| `/roster` | Player roster |
-| `/stats` | Leaderboards and match stat views |
-| `/matchups` | Faction-vs-faction matchup matrix |
-| `/meta` | Meta trends over time |
-| `/gallery` | Community media gallery |
-| `/owl` | League standings |
-| `/admin` | Admin panel for entering players/matches/events |
+| Route | Implementation | Purpose |
+| --- | --- | --- |
+| `/` | SvelteKit route | Home + recent matches + stat tiles + rotating dispatch spotlight |
+| `/roster` | SvelteKit route | Player roster + per-player analytics modal |
+| `/stats` | SvelteKit route | Leaderboards, army win rates, filterable match log |
+| `/feed` | static HTML | Community listing with category filters, card/timeline view |
+| `/news?slug=...` | static HTML | Community article detail view |
+| `/matchups` | static HTML | Faction-vs-faction matchup matrix |
+| `/meta` | static HTML | Meta trends over time |
+| `/owl` | static HTML | League standings |
+| `/admin` | static HTML | Admin panel for entering players/matches/events |
+
+There is no `/gallery` — the feature was removed (low user interest, and a
+real Instagram auto-sync would require setting up a Meta Developer app).
+
+The three SvelteKit routes still lean on the same working vanilla-JS
+interactivity the static pages used (roster's player modal, stats' filters,
+home's spotlight rotator) — that logic was extracted verbatim into
+`static/{home,roster,stats}-page.js` and is loaded via a `<script src>` tag
+from each page's `<svelte:head>`, rather than being rewritten as reactive
+Svelte state. The port's actual scope was: kill route-shadowing (deleting the
+static file is what activates the Svelte route, since adapter-node's static
+file serving takes priority), share one Header/Footer instead of duplicating
+nav/footer markup per file, and enable real per-page `<title>`/meta. It was
+not a rewrite of already-working interactive behavior.
 
 All data-backed routes call `/api/*` (see [`src/routes/api/`](src/routes/api/)),
 which reads/writes Postgres via [`src/lib/db.js`](src/lib/db.js).
@@ -83,16 +96,18 @@ for the original Render setup walkthrough (web service + managed Postgres).
 ## Known architecture debt
 
 This app is mid-migration from an older Express + flat-JSON prototype to
-SvelteKit + Postgres. The database and API layers have fully moved over, but
-the **frontend has not**: the 13 pages in `static/` are hand-written HTML
-that duplicate the nav/footer on every page and fetch data client-side
-(no SSR, no per-page SEO metadata). Three SvelteKit routes already exist
-(`src/routes/+page.svelte`, `roster/`, `stats/`) but are currently shadowed
-by the static files of the same name and are not live.
+SvelteKit + Postgres. The database and API layers have fully moved over.
+On the frontend, Home/Roster/Stats are now real SvelteKit routes (see
+above); the remaining 8 pages (`feed`, `news`, `matchups`, `meta`, `owl`,
+`admin`, `player`, `match-detail`) are still hand-written HTML in `static/`
+that duplicate the nav/footer per file and fetch data client-side with no
+SSR or per-page SEO metadata.
 
 See [`documentation/APP_REVIEW_AND_ROADMAP.md`](documentation/APP_REVIEW_AND_ROADMAP.md)
 for the full review and a phased plan to port the remaining static pages
-into SvelteKit routes, along with performance and UX recommendations.
+into SvelteKit routes, along with performance and UX recommendations. (That
+doc predates the gallery removal and the Home/Roster/Stats port — treat its
+route list and page count as historical.)
 
 `data/*.json` is seed data only, consumed by the first-boot migration and by
 [`scripts/migrate-to-pg.js`](scripts/migrate-to-pg.js). Nothing reads or

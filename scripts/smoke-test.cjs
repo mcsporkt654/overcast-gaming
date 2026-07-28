@@ -21,6 +21,15 @@ function assertExists(relPath) {
   ok(`Found ${relPath}`);
 }
 
+function assertMissing(relPath) {
+  const fullPath = path.join(root, relPath);
+  if (fs.existsSync(fullPath)) {
+    fail(`${relPath} should not exist (ported to a Svelte route / removed feature)`);
+    return;
+  }
+  ok(`Confirmed absent: ${relPath}`);
+}
+
 function assertValidJSON(relPath) {
   const fullPath = path.join(root, relPath);
   try {
@@ -41,15 +50,16 @@ function assertContains(relPath, needle) {
   ok(`${relPath} contains expected content`);
 }
 
-const htmlFiles = [
-  'static/index.html',
+// Pages still served as static HTML (not yet ported to SvelteKit routes)
+const staticHtmlFiles = [
   'static/feed.html',
   'static/news.html',
-  'static/gallery.html',
   'static/owl.html',
-  'static/roster.html',
-  'static/stats.html',
-  'static/admin.html'
+  'static/admin.html',
+  'static/matchups.html',
+  'static/meta.html',
+  'static/player.html',
+  'static/match-detail.html'
 ];
 
 assertExists('src/hooks.server.js');
@@ -65,10 +75,35 @@ assertValidJSON('data/players.json');
 assertValidJSON('data/matches.json');
 assertValidJSON('data/posts.json');
 
-htmlFiles.forEach(file => assertContains(file, '<script src="nav.js" defer></script>'));
+staticHtmlFiles.forEach(file => assertContains(file, '<script src="nav.js" defer></script>'));
 assertContains('static/feed.html', '<script src="news-data.js" defer></script>');
 assertContains('static/news.html', '<script src="news-data.js" defer></script>');
-assertContains('static/index.html', '<script src="news-data.js" defer></script>');
+
+staticHtmlFiles.forEach(file => {
+  if (fs.readFileSync(path.join(root, file), 'utf8').includes('href="/gallery"')) {
+    fail(`${file} still links to the removed /gallery page`);
+  }
+});
+
+// Home / Roster / Stats are now SvelteKit routes, not static HTML
+assertMissing('static/index.html');
+assertMissing('static/roster.html');
+assertMissing('static/stats.html');
+assertMissing('static/gallery.html');
+
+assertExists('src/routes/+page.svelte');
+assertExists('src/routes/roster/+page.svelte');
+assertExists('src/routes/stats/+page.svelte');
+assertExists('src/lib/components/Header.svelte');
+assertExists('src/lib/components/Footer.svelte');
+assertExists('static/home-page.js');
+assertExists('static/roster-page.js');
+assertExists('static/stats-page.js');
+
+assertContains('src/lib/components/Header.svelte', 'Home');
+if (fs.readFileSync(path.join(root, 'src/lib/components/Header.svelte'), 'utf8').includes('Gallery')) {
+  fail('Header.svelte still references the removed Gallery nav item');
+}
 
 if (process.exitCode) {
   console.error('Smoke test failed.');
