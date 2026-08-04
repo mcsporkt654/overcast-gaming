@@ -1,22 +1,8 @@
-<svelte:head>
-  <link rel="stylesheet" href="/style.css" />
-</svelte:head>
-
 <script>
-  import { onMount } from 'svelte';
+  import '$lib/styles/overcast.css';
   import { page } from '$app/stores';
   import Header from '$lib/components/Header.svelte';
   import Footer from '$lib/components/Footer.svelte';
-
-  onMount(() => {
-    // Dynamically load nav.js once, letting it run its own DOMContentLoaded logic
-    if (!document.querySelector('script[src="/nav.js"]')) {
-      const s = document.createElement('script');
-      s.src = '/nav.js';
-      s.defer = true;
-      document.head.appendChild(s);
-    }
-  });
 </script>
 
 <Header />
@@ -30,15 +16,3 @@
 <slot />
 
 <Footer />
-
-<style>
-  .service-banner {
-    z-index: 1000;
-    padding: 0.65rem 1rem;
-    background: #fff5cc;
-    border-bottom: 1px solid #f3d173;
-    color: #3d2f00;
-    font-size: 0.95rem;
-    text-align: center;
-  }
-</style>

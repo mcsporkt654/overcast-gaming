@@ -1,37 +1,100 @@
 <script>
+  import { record } from '$lib/format.js';
+
   /** @type {import('./$types').PageData} */
   export let data;
+
+  let selectedFaction = 'all';
+
+  $: players = data.players ?? [];
+
+  // One filter option per faction actually present in the roster.
+  $: factions = [...new Set(players.flatMap((p) => p.armies ?? []))].sort();
+
+  $: visiblePlayers =
+    selectedFaction === 'all'
+      ? players
+      : players.filter((p) => (p.armies ?? []).includes(selectedFaction));
+
+  $: lede =
+    players.length === 0
+      ? 'The roster is being built. Commanders will appear here as they join the league.'
+      : `${players.length} ${players.length === 1 ? 'commander' : 'commanders'}, ` +
+        `${factions.length} ${factions.length === 1 ? 'faction' : 'factions'}, one league. ` +
+        'Every player logged in the OWL, ranked by Season 3 victory points.';
 </script>
 
 <svelte:head>
-  <title>Roster — Overcast Wargaming League</title>
-  <script src="/roster-page.js" defer></script>
+  <title>Command Roster — Overcast Wargaming League</title>
+  <meta
+    name="description"
+    content="The commanders of the Overcast Wargaming League and the factions they command."
+  />
 </svelte:head>
 
-<!-- Page Header -->
-<div style="background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 2.5rem var(--gutter) 2rem;">
-  <div style="max-width:1200px; margin:0 auto;">
-    <p style="font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.4rem;">Portland, Oregon</p>
-    <h1 style="font-size:2rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-primary);">
-      The <span style="color:var(--accent)">Roster</span>
-    </h1>
-    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:0.4rem;">The commanders of Overcast Wargaming League and the factions they command.</p>
-  </div>
-</div>
-
-<!-- Roster Grid -->
-<section class="section">
-  <div id="roster-grid" class="roster-grid">
-    <div class="loader">Summoning warriors...</div>
-  </div>
+<section class="page-header page">
+  <div class="eyebrow">Order of Battle</div>
+  <h1>Command Roster</h1>
+  <p class="lede">{lede}</p>
 </section>
 
-<div id="player-modal" class="player-modal" hidden aria-hidden="true">
-  <div class="player-modal-backdrop" data-close-player-modal></div>
-  <div class="player-modal-panel" role="dialog" aria-modal="true" aria-labelledby="player-modal-title">
-    <button class="player-modal-close" type="button" data-close-player-modal aria-label="Close player details">×</button>
-    <div id="player-modal-body">
-      <div class="loader">Selecting commander...</div>
+<section class="section page">
+  {#if factions.length > 1}
+    <div class="filter-row">
+      <div class="field" style="margin:0">
+        <span class="field-label" id="faction-label">Filter by faction</span>
+        <div class="seg" role="radiogroup" aria-labelledby="faction-label">
+          <label class="seg-opt">
+            <input type="radio" name="faction" value="all" bind:group={selectedFaction} />All
+          </label>
+          {#each factions as faction}
+            <label class="seg-opt">
+              <input type="radio" name="faction" value={faction} bind:group={selectedFaction} />
+              {faction}
+            </label>
+          {/each}
+        </div>
+      </div>
     </div>
-  </div>
-</div>
+  {/if}
+
+  {#if visiblePlayers.length}
+    <div class="roster-grid">
+      {#each visiblePlayers as player (player.id)}
+        <article class="player-card">
+          {#if player.photo}
+            <img class="pc-photo" src={player.photo} alt={player.name} loading="lazy" />
+          {:else}
+            <div class="ph"><span>Player&nbsp;Photo</span></div>
+          {/if}
+          <div class="pc-body">
+            <div class="pc-name">{player.name}</div>
+            <div class="pc-meta">
+              <span>{(player.armies ?? []).join(', ') || 'No army logged'}</span>
+              <span>{record(player.wins, player.losses, player.draws)}</span>
+            </div>
+            <div class="pc-meta">
+              <span class="pc-vp">{player.totalVp}<em>VP</em></span>
+              <a class="btn btn-ghost pc-profile" href="/players/{player.id}">Profile →</a>
+            </div>
+          </div>
+        </article>
+      {/each}
+    </div>
+  {:else if players.length}
+    <p class="empty-row">No commanders field {selectedFaction} yet.</p>
+  {:else}
+    <p class="empty-row">No commanders on the roster yet.</p>
+  {/if}
+</section>
+
+<style>
+  .field-label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.6;
+  }
+</style>

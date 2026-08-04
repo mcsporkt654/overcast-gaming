@@ -51,21 +51,15 @@ function assertContains(relPath, needle) {
 }
 
 // Pages still served as static HTML (not yet ported to SvelteKit routes)
-const staticHtmlFiles = [
-  'static/feed.html',
-  'static/news.html',
-  'static/owl.html',
-  'static/matchups.html',
-  'static/meta.html',
-  'static/player.html',
-  'static/match-detail.html'
-];
+const staticHtmlFiles = ['static/matchups.html', 'static/meta.html'];
 
 assertExists('src/hooks.server.js');
 assertExists('src/lib/db.js');
+// style.css and nav.js exist only for the two remaining static pages above;
+// SvelteKit routes are styled by src/lib/styles/overcast.css.
 assertExists('static/style.css');
 assertExists('static/nav.js');
-assertExists('static/news-data.js');
+assertExists('src/lib/styles/overcast.css');
 assertExists('data/posts.json');
 assertExists('data/armies.json');
 assertExists('data/missions.json');
@@ -80,8 +74,11 @@ assertMissing('data/players.json');
 assertMissing('data/matches.json');
 
 staticHtmlFiles.forEach(file => assertContains(file, '<script src="nav.js" defer></script>'));
-assertContains('static/feed.html', '<script src="news-data.js" defer></script>');
-assertContains('static/news.html', '<script src="news-data.js" defer></script>');
+
+// The real dispatches moved out of static/news-data.js and into the database
+// seed, so /community and /news/[slug] can render them server-side.
+assertMissing('static/news-data.js');
+assertContains('data/posts.json', 'owl-round-4-final-round');
 
 staticHtmlFiles.forEach(file => {
   if (fs.readFileSync(path.join(root, file), 'utf8').includes('href="/gallery"')) {
@@ -96,6 +93,14 @@ assertMissing('static/stats.html');
 assertMissing('static/gallery.html');
 assertMissing('static/admin.html');
 
+// Ported in the Modernist × Nocturne redesign — deleting each static twin is
+// what activates the SvelteKit route at the same path.
+assertMissing('static/feed.html');
+assertMissing('static/news.html');
+assertMissing('static/owl.html');
+assertMissing('static/player.html');
+assertMissing('static/match-detail.html');
+
 assertExists('src/routes/+page.svelte');
 assertExists('src/routes/roster/+page.svelte');
 assertExists('src/routes/stats/+page.svelte');
@@ -106,9 +111,28 @@ assertExists('src/routes/admin/roster/+page.svelte');
 assertExists('src/routes/admin/match/+page.svelte');
 assertExists('src/lib/components/Header.svelte');
 assertExists('src/lib/components/Footer.svelte');
-assertExists('static/home-page.js');
-assertExists('static/roster-page.js');
-assertExists('static/stats-page.js');
+assertExists('src/routes/community/+page.svelte');
+assertExists('src/routes/news/[slug]/+page.svelte');
+assertExists('src/routes/players/[id]/+page.svelte');
+assertExists('src/routes/matches/[id]/+page.svelte');
+assertExists('src/routes/+error.svelte');
+
+// Redirects keeping the retired URLs alive
+assertExists('src/routes/owl/+server.js');
+assertExists('src/routes/feed/+server.js');
+assertExists('src/routes/news/+server.js');
+assertExists('src/routes/player/+server.js');
+assertExists('src/routes/match-detail/+server.js');
+
+// The pages render server-side from load data now; the extracted vanilla-JS
+// renderers they replaced are gone.
+assertMissing('static/home-page.js');
+assertMissing('static/roster-page.js');
+assertMissing('static/stats-page.js');
+
+// Dev-only design-verification harness must not ship.
+assertMissing('src/routes/__preview');
+assertMissing('static/__frame');
 
 assertContains('src/lib/components/Header.svelte', 'Home');
 if (fs.readFileSync(path.join(root, 'src/lib/components/Header.svelte'), 'utf8').includes('Gallery')) {

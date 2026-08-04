@@ -51,6 +51,18 @@
   }
 </script>
 
+<svelte:head>
+  <!--
+    The public pages moved to the Modernist × Nocturne system in
+    src/lib/styles/overcast.css; the admin console still uses the older
+    style.css component classes (.login-card, .admin-panel, .form-group,
+    .alert). Loading it here — after the bundled stylesheet — keeps the admin
+    forms styled without pulling the legacy rules onto every public route.
+    Drop this link once the console is restyled.
+  -->
+  <link rel="stylesheet" href="/style.css" />
+</svelte:head>
+
 {#if !data.admin}
   <div class="login-screen">
     <div class="login-card">

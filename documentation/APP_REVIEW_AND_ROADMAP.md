@@ -6,7 +6,70 @@
 
 ---
 
-## Status (updated 2026-07-27 — read this first)
+## Status (updated 2026-08-03 — read this first)
+
+### Site redesign: "Modernist × Nocturne" (2026-08-03)
+
+A design handoff from Claude Design (`Overcast Gaming Redesigns.zip` — Home, Roster, Stats,
+Community, plus a design-system stylesheet and the final owl mascot) was implemented. This also
+completed Phase 2 items 4 and 5 below, because restyling those pages meant porting them.
+
+**What the design is:** Modernist's flat 2px-grid layout system on Nocturne's Void + Arc Cyan
+palette. Radius 0 everywhere, 2px dividers, condensed uppercase Archivo headings, `#26E3FE` accent,
+witchlight `#D0DA27` used sparingly (eyebrow rules, the #1 standings row).
+
+- **`src/lib/styles/overcast.css` is the design system**, imported once from
+  `src/routes/+layout.svelte` — so it covers every SvelteKit route. `static/style.css` was *not*
+  rewritten: `matchups.html` and `meta.html` still link it directly, and the admin console still
+  uses its component classes (`.login-card`, `.admin-panel`, `.form-group`, `.alert`), so
+  `admin/+layout.svelte` loads it in its own `<svelte:head>`. Result on `/admin*`: new chrome, old
+  form styling. **Gotcha, still true and now doubly so:** `style.css` styles the bare `nav` and
+  `footer` elements, so the shared header's link list is a `<div role="navigation">`, not a `<nav>`
+  — otherwise the admin pages repaint it. Drop the `style.css` link once the console is restyled.
+- **The pages render server-side now.** `/`, `/roster` and `/stats` were shells whose real
+  rendering happened in `static/{home,roster,stats}-page.js` — vanilla scripts wrapped in
+  `window.addEventListener('load')` to dodge the hydration race described further down. All three
+  scripts are **deleted**; the pages render from their `+page.server.js` load data. **The
+  `hydration_mismatch` warning is gone** (verified: zero console messages on every route), which
+  confirms those extracted scripts were the cause after all.
+- **Routes consolidated as the design's nav specifies.** "The OWL" and "Stats" are two anchors on
+  one page (`/stats#standings`, `/stats#matches`). New routes: `/community`, `/news/[slug]`,
+  `/players/[id]`, `/matches/[id]`, plus a branded `+error.svelte`. 301 redirects keep the old URLs
+  alive (`+server.js` files, not `+page.server.js` — a pure redirect needs no component):
+  `/owl` → `/stats#standings`, `/feed` → `/community`, `/news?slug=x` → `/news/x`,
+  `/player?id=x` → `/players/x`, `/match-detail?id=x` → `/matches/x`. Admin left the public nav
+  (still reachable at `/admin`).
+- **VP is derived, not stored.** The design ranks standings by Total VP / Avg VP; the schema has no
+  such column. `src/lib/vp.js` sums `primary + secondary + destruction` per side, and
+  `/api/stats` gained a `standings` array doing the same in SQL (`leaderboard` and `armyWinRates`
+  are untouched — `matchups.html`, `meta.html` and the smoke test read them). This also fills the
+  "Pts Diff" column, which rendered `—` on every row before: `points_diff` is optional on the admin
+  form and is in practice never filled, while the score fields are. Standings have **no
+  minimum-games filter**, unlike `leaderboard`'s `HAVING COUNT >= 3`, which would show an empty
+  table at the current roster size.
+- **The real dispatches moved into Postgres.** They only existed in `static/news-data.js`
+  (client-side), while the DB held 4 truncated placeholders (`post-1`…`post-4`). All five are now
+  in `data/posts.json` with categories, images, bodies, highlights, and a
+  `runOnce('2026-08-03-import-real-posts')` step upserts them and deletes the placeholders on the
+  next boot. `static/news-data.js` is deleted.
+- **Deliberate deviations from the reference frames** (both are collisions in the handoff CSS, not
+  design decisions): the frames use the `padding: X 0` shorthand on `.section` and `.page-header`,
+  which zeroes the `.page` gutter and pushes text flush to the viewport edge below 1228px — this
+  build uses `padding-block` so the gutter survives. And the third stat cell ("Top Army Fielded")
+  drops from 64px to 40px, because real army names run longer than the mock's "Space Marines".
+  Everything else was matched to the frames' computed values (verified by rendering the frame HTML
+  and this build side by side at 1280 — hero, ticker, stats band, and owl panel geometry match to
+  the pixel).
+- **The design is drawn for 26 players and 348 battles; production has 1 player and 1 match.**
+  Empty and single-row states are built deliberately: no section is dropped or reordered, and the
+  ticker renders as a static strip instead of a marquee below 5 results.
+
+**Still open after this:** `static/matchups.html` and `static/meta.html` (old look, own hand-written
+nav) and the admin console. See Phase 2 items 5 and 7.
+
+---
+
+## Status (updated 2026-07-27)
 
 **Phase 0 (security + get production working) and Phase 1 (repo hygiene) are complete**, plus a first slice of Phase 2. Everything below the Status section describes the *original* review from July 17 — treat any claim of a currently-broken/insecure state as historical unless it's echoed here.
 
@@ -262,8 +325,8 @@ Recommended order (risk-ascending, value-descending):
 1. ✅ **DONE** — **`/` (home)** — ported from `static/index.html`; static/index.html deleted.
 2. ✅ **DONE** — **`/roster` and `/stats`** — ported to visual/functional parity with the old static pages; static twins deleted.
 3. ✅ **DONE** — **Shared chrome** — `+layout.svelte` with `Header`/`Footer` components replacing per-page nav/footer markup; `nav.js` is still loaded dynamically for the mobile hamburger toggle (not deleted — still used by the 8 remaining static pages).
-4. **`/feed` + `/news/[slug]`** — move article content out of `static/news-data.js` into the `posts` table (schema + `/api/posts` already exist; write a small seed script mapping the 5 real articles). Real per-article routes with `<svelte:head>` OG/Twitter tags; 301 redirect `/news?slug=x` → `/news/x`.
-5. **`/owl`, `/matchups`, `/meta`, `/player`, `/match-detail`** — port; `/player?id=` → `/players/[id]`, `/match-detail?id=` → `/matches/[id]` (keep query-param redirects).
+4. ✅ **DONE** (2026-08-03 redesign) — **`/community` + `/news/[slug]`** — the 5 real articles moved from `static/news-data.js` into `data/posts.json` and are imported into `posts` by a `runOnce` migration. Per-article routes with OG/Twitter tags; `/feed` and `/news?slug=x` 301 to the new URLs.
+5. **Partly done** (2026-08-03 redesign) — `/owl`, `/player`, `/match-detail` are ported (`/owl` 301s into `/stats#standings`; the other two became `/players/[id]` and `/matches/[id]` with query-param redirects). **`/matchups` and `/meta` remain static HTML** on the old stylesheet — they're no longer in the nav, but the Stats page links them.
 6. ❌ **REMOVED, not ported** — Gallery (`/gallery`) was placeholder content with low expected user interest; the user asked for it to pull real content from Instagram instead, decided against the Meta Developer setup that would require, and had it cut entirely. No `/gallery` route, static file, or nav link remain anywhere. Do not re-add without checking with the user first.
 7. **`/admin`** — port last (biggest page, 668 lines). Switch to cookie auth (`credentials: 'same-origin'`, remove `x-admin-token` path from `src/lib/auth.js#extractAdminToken` once done). Add army-name validation against the `armies` table on match/player writes. Add "save & add another".
 8. **Cleanup:** delete every remaining `static/*.html` + `static/news-data.js`; add branded `+error.svelte`; remove `'unsafe-inline'` for scripts from the CSP in `src/hooks.server.js` (now possible — no more inline scripts).

@@ -2,7 +2,14 @@ import { query, withDb } from '$lib/db.js';
 import { jsonResponse } from '$lib/validation.js';
 
 export const GET = withDb(async () => {
-  const [playersResult, matchesResult, armyCountResult, leaderResult, armyResult] = await Promise.all([
+  const [
+    playersResult,
+    matchesResult,
+    armyCountResult,
+    leaderResult,
+    armyResult,
+    standingsResult
+  ] = await Promise.all([
     query(`SELECT COUNT(*) AS total FROM players`),
     query(`SELECT COUNT(*) AS total FROM matches`),
     query(`
@@ -35,6 +42,46 @@ export const GET = withDb(async () => {
       FROM matches
       GROUP BY army_used
       ORDER BY win_rate DESC, total DESC
+    `),
+    // League standings. VP is derived — the schema has no VP column, so it's
+    // the sum of a match's primary/secondary/destruction scores. Unlike
+    // `leaderboard` above there is deliberately no minimum-games filter: the
+    // roster is small enough that a 3-game floor renders an empty table.
+    query(`
+      WITH match_vp AS (
+        SELECT
+          player_id,
+          army_used,
+          result,
+          COALESCE(primary_score_player, 0)
+            + COALESCE(secondary_score_player, 0)
+            + COALESCE(destruction_score_player, 0) AS vp
+        FROM matches
+      ),
+      top_army AS (
+        SELECT DISTINCT ON (player_id) player_id, army_used
+        FROM match_vp
+        GROUP BY player_id, army_used
+        ORDER BY player_id, COUNT(*) DESC, army_used
+      )
+      SELECT
+        p.slug AS id, p.name,
+        p.armies[1]                                     AS roster_army,
+        ta.army_used                                    AS played_army,
+        COUNT(mv.player_id)                             AS games,
+        COUNT(mv.player_id) FILTER (WHERE mv.result = 'W') AS wins,
+        COUNT(mv.player_id) FILTER (WHERE mv.result = 'L') AS losses,
+        COUNT(mv.player_id) FILTER (WHERE mv.result = 'D') AS draws,
+        COALESCE(SUM(mv.vp), 0)                         AS total_vp,
+        CASE WHEN COUNT(mv.player_id) > 0
+          THEN ROUND(COALESCE(SUM(mv.vp), 0)::numeric / COUNT(mv.player_id), 1)
+          ELSE NULL
+        END AS avg_vp
+      FROM players p
+      LEFT JOIN match_vp mv ON mv.player_id = p.id
+      LEFT JOIN top_army ta ON ta.player_id = p.id
+      GROUP BY p.id, ta.army_used
+      ORDER BY total_vp DESC, wins DESC, p.name
     `)
   ]);
 
@@ -59,5 +106,27 @@ export const GET = withDb(async () => {
     winRate: Number(r.win_rate)
   }));
 
-  return jsonResponse({ totalPlayers, totalGames, mostPlayedArmy, leaderboard, armyWinRates });
+  const standings = standingsResult.rows.map((r, i) => ({
+    rank: i + 1,
+    id: r.id,
+    name: r.name,
+    // The army they actually field most; falls back to their first roster army
+    // for players who haven't logged a match yet.
+    army: r.played_army || r.roster_army || '',
+    wins: Number(r.wins),
+    losses: Number(r.losses),
+    draws: Number(r.draws),
+    games: Number(r.games),
+    totalVp: Number(r.total_vp),
+    avgVp: r.avg_vp !== null ? Number(r.avg_vp) : null
+  }));
+
+  return jsonResponse({
+    totalPlayers,
+    totalGames,
+    mostPlayedArmy,
+    leaderboard,
+    armyWinRates,
+    standings
+  });
 });

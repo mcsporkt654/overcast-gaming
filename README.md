@@ -6,8 +6,9 @@ admin panel for entering players/matches/events.
 
 ## Stack
 
-- **App server:** SvelteKit ([`@sveltejs/adapter-node`](https://svelte.dev/docs/kit/adapter-node)) — serves `/api/*`, the admin auth flow, and the Home/Roster/Stats routes
-- **Frontend:** mid-migration. Home (`/`), Roster (`/roster`), and Stats (`/stats`) are real SvelteKit routes using shared [`Header`](src/lib/components/Header.svelte)/[`Footer`](src/lib/components/Footer.svelte) components. The remaining 7 pages are still hand-written HTML in [`static/`](static/) that duplicate the nav/footer and fetch data client-side — see "Known architecture debt" below
+- **App server:** SvelteKit ([`@sveltejs/adapter-node`](https://svelte.dev/docs/kit/adapter-node)) — serves `/api/*`, the admin auth flow, and every public page
+- **Frontend:** SvelteKit routes rendering server-side from their `load` data, with shared [`Header`](src/lib/components/Header.svelte)/[`Footer`](src/lib/components/Footer.svelte) components. Two pages (`/matchups`, `/meta`) are still hand-written HTML in [`static/`](static/) — see "Known architecture debt" below
+- **Design system:** [`src/lib/styles/overcast.css`](src/lib/styles/overcast.css) ("Modernist × Nocturne" — flat 2px grid, Void + Arc Cyan, no rounded corners), imported once from the root layout. `static/style.css` is the *old* system, kept only for the two remaining static pages and the admin console
 - **Database:** PostgreSQL (schema in [`schema.sql`](schema.sql))
 - **Auth:** admin password → signed JWT, stored as an HttpOnly cookie ([`src/lib/auth.js`](src/lib/auth.js))
 - **Hosting:** [Render](https://render.com) — one web service + one managed Postgres instance
@@ -43,29 +44,29 @@ npm test         # smoke test + API integration test (scripts/*.js)
 
 | Route | Implementation | Purpose |
 | --- | --- | --- |
-| `/` | SvelteKit route | Home + recent matches + stat tiles + rotating dispatch spotlight |
-| `/roster` | SvelteKit route | Player roster + per-player analytics modal |
-| `/stats` | SvelteKit route | Leaderboards, army win rates, filterable match log |
-| `/feed` | static HTML | Community listing with category filters, card/timeline view |
-| `/news?slug=...` | static HTML | Community article detail view |
+| `/` | SvelteKit route | Hero, results ticker, stat band, live standings, recent battles, news, partners, merch |
+| `/roster` | SvelteKit route | Player cards with faction filter |
+| `/stats` | SvelteKit route | Standings (`#standings`) + filterable match log (`#matches`) + faction breakdown |
+| `/community` | SvelteKit route | Dispatch feed, read from the `posts` table |
+| `/news/[slug]` | SvelteKit route | Dispatch detail, with per-post OG/Twitter tags |
+| `/players/[id]` | SvelteKit route | Commander profile: record, faction/subfaction splits, battle history |
+| `/matches/[id]` | SvelteKit route | Battle record: objective breakdown, key units, notes |
 | `/matchups` | static HTML | Faction-vs-faction matchup matrix |
 | `/meta` | static HTML | Meta trends over time |
-| `/owl` | static HTML | League standings |
 | `/admin` | SvelteKit route | Admin console — cookie-gated hub with `/admin/roster` (add players, live photo preview) and `/admin/match` (record results) sub-pages |
+
+Retired URLs 301 to their replacements (see `src/routes/*/+server.js`):
+`/owl` → `/stats#standings`, `/feed` → `/community`, `/news?slug=x` → `/news/x`,
+`/player?id=x` → `/players/x`, `/match-detail?id=x` → `/matches/x`.
 
 There is no `/gallery` — the feature was removed (low user interest, and a
 real Instagram auto-sync would require setting up a Meta Developer app).
 
-The three SvelteKit routes still lean on the same working vanilla-JS
-interactivity the static pages used (roster's player modal, stats' filters,
-home's spotlight rotator) — that logic was extracted verbatim into
-`static/{home,roster,stats}-page.js` and is loaded via a `<script src>` tag
-from each page's `<svelte:head>`, rather than being rewritten as reactive
-Svelte state. The port's actual scope was: kill route-shadowing (deleting the
-static file is what activates the Svelte route, since adapter-node's static
-file serving takes priority), share one Header/Footer instead of duplicating
-nav/footer markup per file, and enable real per-page `<title>`/meta. It was
-not a rewrite of already-working interactive behavior.
+**Victory points are derived, not stored.** The schema has no VP column, so
+[`src/lib/vp.js`](src/lib/vp.js) (and the `standings` query in
+[`/api/stats`](src/routes/api/stats/+server.js)) sums each side's
+primary + secondary + destruction scores. That's what ranks the standings and
+fills the "Pts Diff" column.
 
 All data-backed routes call `/api/*` (see [`src/routes/api/`](src/routes/api/)),
 which reads/writes Postgres via [`src/lib/db.js`](src/lib/db.js).
@@ -96,12 +97,17 @@ for the original Render setup walkthrough (web service + managed Postgres).
 ## Known architecture debt
 
 This app is mid-migration from an older Express + flat-JSON prototype to
-SvelteKit + Postgres. The database and API layers have fully moved over.
-On the frontend, Home/Roster/Stats are now real SvelteKit routes (see
-above); the remaining 7 pages (`feed`, `news`, `matchups`, `meta`, `owl`,
-`player`, `match-detail`) are still hand-written HTML in `static/`
-that duplicate the nav/footer per file and fetch data client-side with no
-SSR or per-page SEO metadata.
+SvelteKit + Postgres. The database and API layers have fully moved over, and
+so has every public page except two: `matchups` and `meta` are still
+hand-written HTML in `static/`, with their own copy of the nav/footer, their
+own client-side fetching, no SSR or per-page SEO metadata, and the *old*
+stylesheet — so they look like the previous design.
+
+The admin console is a SvelteKit route but still uses `static/style.css`
+component classes, which `src/routes/admin/+layout.svelte` loads for that
+subtree only. **Because `style.css` styles the bare `nav` and `footer`
+elements, any `<nav>` inside a page inherits it** — that's why the shared
+header's link list and the admin tab strip are both `<div role="navigation">`.
 
 See [`documentation/APP_REVIEW_AND_ROADMAP.md`](documentation/APP_REVIEW_AND_ROADMAP.md)
 for the full review, current progress against it, and a phased plan for the

@@ -1,195 +1,287 @@
 <script>
+  import { reveal, countUp } from '$lib/actions/inView.js';
+  import { matchVp, formatDiff } from '$lib/vp.js';
+  import { shortDate, mediumDate, record, rankLabel } from '$lib/format.js';
+
   /** @type {import('./$types').PageData} */
   export let data;
+
+  const MERCH_URL = 'https://arma.gg/collections/overcast';
+
+  $: stats = data.stats;
+  $: standings = (stats?.standings ?? []).slice(0, 6);
+  $: leaderVp = standings[0]?.totalVp ?? 0;
+  $: factionCount = stats?.armyWinRates?.length ?? 0;
+  $: recentMatches = (data.recentMatches ?? []).slice(0, 5);
+  $: posts = data.posts ?? [];
+  $: featured = posts[0] ?? null;
+  $: secondary = posts.slice(1, 3);
+
+  // Ticker results, newest first. Below five entries the marquee loop is more
+  // gap than content, so the strip sits still instead.
+  $: tickerItems = (data.recentMatches ?? []).slice(0, 5).map((m) => {
+    const { diff } = matchVp(m);
+    const outcome = m.result === 'W' ? 'WIN' : m.result === 'L' ? 'LOSS' : 'DRAW';
+    const delta = diff === null ? '' : ` ${formatDiff(diff)}`;
+    return `${m.playerName} · ${m.armyUsed} — ${outcome}${delta}`;
+  });
+  $: tickerScrolls = tickerItems.length >= 5;
+
+  /** Bar width relative to the league leader. */
+  function barWidth(totalVp) {
+    if (!leaderVp) return '0%';
+    return `${Math.max(6, Math.round((totalVp / leaderVp) * 100))}%`;
+  }
 </script>
 
 <svelte:head>
   <title>Overcast Wargaming League — Warhammer 40K League | Portland, OR</title>
-  <meta name="description" content="Overcast Wargaming League is a Warhammer 40K competitive gaming group based in Portland, Oregon. Track roster, match stats, and league standings." />
-  <script src="/news-data.js" defer></script>
-  <script src="/home-page.js" defer></script>
+  <meta
+    name="description"
+    content="Overcast Wargaming League is a Warhammer 40K competitive gaming group based in Portland, Oregon. Track roster, match stats, and league standings."
+  />
 </svelte:head>
 
 <!-- Hero -->
 <section class="hero">
-  <p class="hero-eyebrow">Est. Portland, Oregon &mdash; In the Grimdark of the Far Future</p>
-  <h1><span>Overcast</span> Wargaming League</h1>
-  <p class="hero-tagline">For the Glory of the Battle. For the Honor of the Faction.</p>
-  <p class="hero-location">⚔ Portland, Oregon &bull; Warhammer 40,000 Competitive League</p>
-  <div class="hero-divider"></div>
-  <div class="hero-actions">
-    <a href="/roster" class="btn btn-primary">⚔ View Roster</a>
-    <a href="/stats" class="btn btn-outline">📊 Match Stats</a>
-    <a href="/owl" class="btn btn-outline">🏆 The OWL</a>
+  <div class="page hero-inner">
+    <div class="hero-copy">
+      <div class="eyebrow">Portland, Oregon / Warhammer 40,000 League</div>
+      <h1>Overcast<br />Wargaming<br /><em>League</em></h1>
+      <p class="lede">
+        For the glory of the battle. For the honor of the faction. A competitive Warhammer 40K
+        league — roster, battles, and the standings of the OWL.
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="/roster">View Roster</a>
+        <a class="btn btn-secondary" href="/stats#matches">Match Stats</a>
+        <a class="btn btn-secondary" href="/stats#standings">The OWL</a>
+      </div>
+      <div class="social">
+        <a href="https://discord.gg/zKSgE9AwEa" target="_blank" rel="noopener">Discord</a>
+        <span>·</span>
+        <a href="https://www.instagram.com/overcastwargaming/" target="_blank" rel="noopener">Instagram</a>
+        <span>·</span>
+        <a href="https://www.youtube.com/@overcastwargaming" target="_blank" rel="noopener">YouTube</a>
+      </div>
+    </div>
+    <aside class="owl-block">
+      <img src="/owl.png" alt="Overcast — witch-owl mascot" width="680" height="680" />
+    </aside>
   </div>
 
-  <!-- Social Links -->
-  <div class="social-strip">
-    <a href="https://discord.gg/zKSgE9AwEa" target="_blank" rel="noopener" class="social-chip social-chip-discord">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03z"/></svg>
-      Discord
-    </a>
-    <a href="https://www.instagram.com/overcastwargaming/" target="_blank" rel="noopener" class="social-chip social-chip-instagram">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-      Instagram
-    </a>
-    <a href="https://www.youtube.com/@overcastwargaming" target="_blank" rel="noopener" class="social-chip social-chip-youtube">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M23.495 6.205a3.007 3.007 0 00-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 00.527 6.205a31.247 31.247 0 00-.522 5.805 31.247 31.247 0 00.522 5.783 3.007 3.007 0 002.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 002.088-2.088 31.247 31.247 0 00.5-5.783 31.247 31.247 0 00-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
-      YouTube
-    </a>
+  <!-- Results ticker -->
+  {#if tickerItems.length}
+    <div class="ticker">
+      {#if tickerScrolls}
+        <!-- Content is duplicated so the translateX(-50%) loop point is seamless. -->
+        <div class="ticker-track">
+          {#each [...tickerItems, ...tickerItems] as item}
+            <span>{item}</span>
+          {/each}
+        </div>
+      {:else}
+        <div class="ticker-static">
+          {#each tickerItems as item}
+            <span>{item}</span>
+          {/each}
+        </div>
+      {/if}
+    </div>
+  {/if}
+</section>
+
+<!-- Stats band -->
+<section class="stats-band">
+  <div class="page">
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-num" use:countUp={stats?.totalPlayers ?? 0}>{stats?.totalPlayers ?? 0}</div>
+        <div class="stat-label">Active Players</div>
+        <div class="stat-sub">
+          {factionCount === 1 ? 'across 1 faction' : `across ${factionCount} factions`}
+        </div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" use:countUp={stats?.totalGames ?? 0}>{stats?.totalGames ?? 0}</div>
+        <div class="stat-label">Battles Logged</div>
+        <div class="stat-sub">Season 3 to date</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num stat-text">{stats?.mostPlayedArmy || '—'}</div>
+        <div class="stat-label">Top Army Fielded</div>
+        <div class="stat-sub">most-played faction</div>
+      </div>
+    </div>
   </div>
 </section>
 
-<!-- Stats Bar (dynamic) -->
-<section class="stats-bar">
-  <div class="stats-bar-inner" id="stats-bar">
-    <div class="stat-item">
-      <span class="stat-value" id="stat-players">—</span>
-      <span class="stat-label">Active Players</span>
+<!-- Live standings -->
+<section class="section page">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">The OWL · Season 3</div>
+      <h2>Live League Standings</h2>
     </div>
-    <div class="stat-item">
-      <span class="stat-value" id="stat-games">—</span>
-      <span class="stat-label">Games Played</span>
-    </div>
-    <div class="stat-item">
-      <span class="stat-value" id="stat-army" style="font-size:1.2rem; padding-top:0.3rem;">—</span>
-      <span class="stat-label">Top Army Played</span>
-    </div>
+    <a class="btn btn-ghost" href="/stats#standings">Full standings →</a>
   </div>
+
+  {#if standings.length}
+    <div class="lb">
+      {#each standings as row (row.id)}
+        <a
+          class="lb-row"
+          class:is-leader={row.rank === 1}
+          href="/players/{row.id}"
+          use:reveal
+        >
+          <div class="lb-rank">{rankLabel(row.rank)}</div>
+          <div class="lb-name">
+            {row.name}<span class="lb-army">{row.army || 'No army logged'}</span>
+          </div>
+          <div class="lb-bar">
+            <span class="lb-fill" style="--w:{barWidth(row.totalVp)}"></span>
+          </div>
+          <div class="lb-wl">{record(row.wins, row.losses, row.draws)}</div>
+          <div class="lb-vp">{row.totalVp}<em>VP</em></div>
+        </a>
+      {/each}
+    </div>
+  {:else}
+    <p class="empty-row">No standings yet — the first logged battle starts the season.</p>
+  {/if}
 </section>
 
-<!-- Recent Matches Preview -->
-<section class="section">
-  <div class="section-header">
-    <h2>Recent Battles</h2>
-    <span class="section-line"></span>
-    <a href="/stats" class="btn btn-outline" style="font-size:0.72rem; padding: 0.4rem 1rem;">All Stats →</a>
+<!-- Recent battles -->
+<section class="section page">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">Battlefield Log</div>
+      <h2>Recent Battles</h2>
+    </div>
+    <a class="btn btn-ghost" href="/stats#matches">All stats →</a>
   </div>
-  <div class="table-wrapper">
-    <table id="recent-table">
+
+  <div class="table-scroll">
+    <table class="table">
+      <caption class="visually-hidden">The five most recent battles in the league</caption>
       <thead>
         <tr>
           <th>Date</th>
           <th>Player</th>
           <th>Army</th>
-          <th>vs. Opponent</th>
+          <th>Opponent</th>
           <th>Opp. Army</th>
           <th>Result</th>
-          <th>Pts Diff</th>
+          <th style="text-align:right">Pts Diff</th>
         </tr>
       </thead>
-      <tbody id="recent-tbody">
-        <tr><td colspan="7" class="loader">Loading battle records...</td></tr>
+      <tbody>
+        {#each recentMatches as match (match.id)}
+          {@const vp = matchVp(match)}
+          <tr>
+            <td><a href="/matches/{match.id}">{shortDate(match.date)}</a></td>
+            <td>{match.playerName}</td>
+            <td class="tmut">{match.armyUsed}</td>
+            <td>{match.opponentName}</td>
+            <td class="tmut">{match.opponentArmy}</td>
+            <td>
+              {#if match.result === 'W'}
+                <span class="tag tag-accent">WIN</span>
+              {:else if match.result === 'L'}
+                <span class="tag tag-outline">LOSS</span>
+              {:else}
+                <span class="tag tag-neutral">DRAW</span>
+              {/if}
+            </td>
+            <td class="tnum" class:pos={vp.diff > 0} class:neg={vp.diff !== null && vp.diff <= 0}>
+              {formatDiff(vp.diff)}
+            </td>
+          </tr>
+        {:else}
+          <tr>
+            <td colspan="7" class="empty-row">No battles recorded yet.</td>
+          </tr>
+        {/each}
       </tbody>
     </table>
   </div>
 </section>
 
-<!-- Community News Feed -->
-<section class="section home-news" style="padding-top:0;" id="community-news">
-  <div class="section-header">
-    <h2>Community News Feed</h2>
-    <span class="section-line"></span>
-    <a href="/feed" class="btn btn-outline" style="font-size:0.72rem; padding: 0.4rem 1rem;">All Posts →</a>
-  </div>
-
-  <div class="home-news-banner">
-    <div class="home-news-banner-kicker">High Command Bulletin</div>
-    <p>Dispatches from league command, battlefields, and local events in the Portland sector.</p>
-  </div>
-
-  <div class="home-spotlight" id="home-spotlight" aria-live="polite">
-    <div class="home-spotlight-media-wrap">
-      <img class="home-spotlight-media" id="spotlight-image" src="" alt="Featured dispatch image" />
+<!-- Community feed -->
+<section class="section page">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">High Command Bulletin</div>
+      <h2>Community News Feed</h2>
     </div>
-    <div class="home-spotlight-content">
-      <div class="home-spotlight-meta">
-        <span class="home-news-tag" id="spotlight-category">Dispatch</span>
-        <time id="spotlight-date" datetime="2026-05-08">May 8, 2026</time>
-      </div>
-      <h3 id="spotlight-title">Loading featured dispatch...</h3>
-      <p id="spotlight-excerpt">Stand by for the latest update from Overcast command.</p>
-      <div class="home-spotlight-actions">
-        <a href="/feed" class="home-news-read" id="spotlight-link">Open Dispatch →</a>
-        <div class="home-spotlight-controls">
-          <button type="button" class="home-spotlight-btn" id="spotlight-prev" aria-label="Previous spotlight">Previous</button>
-          <button type="button" class="home-spotlight-btn" id="spotlight-next" aria-label="Next spotlight">Next</button>
+    <a class="btn btn-ghost" href="/community">All posts →</a>
+  </div>
+
+  {#if featured}
+    <div class="news-grid">
+      <article class="feat">
+        {#if featured.image}
+          <img class="feat-media" src={featured.image} alt="" loading="lazy" />
+        {:else}
+          <div class="ph"><span>Featured&nbsp;Dispatch</span></div>
+        {/if}
+        <div class="feat-body">
+          <div class="card-kicker">{featured.category} · {mediumDate(featured.date)}</div>
+          <h3>{featured.title}</h3>
+          <p>{featured.excerpt}</p>
+          <a class="btn btn-primary" href="/news/{featured.slug}">Open Dispatch →</a>
         </div>
+      </article>
+
+      <div class="news-col">
+        {#each secondary as post (post.slug)}
+          <article class="card">
+            <div class="card-kicker">{post.category} · {mediumDate(post.date)}</div>
+            <h4 class="card-title">{post.title}</h4>
+            <p class="card-body">{post.excerpt}</p>
+            <div class="card-meta">
+              <a class="btn btn-ghost" href="/news/{post.slug}">Read dispatch →</a>
+            </div>
+          </article>
+        {/each}
       </div>
     </div>
-  </div>
-
-  <div class="home-news-grid">
-    <article class="home-news-card home-news-card-featured">
-      <div class="home-news-meta">
-        <span class="home-news-tag">Announcements</span>
-        <time datetime="2026-02-19">Feb 19, 2026</time>
-      </div>
-      <h3>Owl Round 4! Final Round</h3>
-      <p>Hammering Community, we are on the final round! What a season full of laughs, loves lost, fiends and friends made, and some serious dice rolling! Let's take a look at our standings going into Week 4!</p>
-      <a href="/news?slug=owl-round-4-final-round" class="home-news-read">Read Full Dispatch →</a>
-    </article>
-
-    <article class="home-news-card">
-      <div class="home-news-meta">
-        <span class="home-news-tag">The OWL</span>
-        <time datetime="2026-01-22">Jan 22, 2026</time>
-      </div>
-      <h3>Round 2 of the OWL!</h3>
-      <p>Well folks, Round 1 was ELECTRIC, with everyone playing their asses off and leaving everything on the Board. Let's see how the rankings shape up after one round of rolling.</p>
-      <a href="/news?slug=round-2-of-the-owl" class="home-news-read">View Round 2 Matchups →</a>
-    </article>
-
-    <article class="home-news-card">
-      <div class="home-news-meta">
-        <span class="home-news-tag">The OWL</span>
-        <time datetime="2026-01-04">Jan 4, 2026</time>
-      </div>
-      <h3>OWL Season 3 Begins! Week 1 Matchups</h3>
-      <p>Welcome back to another gravity-altering season of the OWL! This season, with its new format, promises to light up the galaxy as some real heavy hitters go blow for blow in round one.</p>
-      <a href="/news?slug=owl-season-3-begins-week-1-matchups" class="home-news-read">View Week 1 Matchups →</a>
-    </article>
-
-    <article class="home-news-card">
-      <div class="home-news-meta">
-        <span class="home-news-tag">Announcements</span>
-        <time datetime="2025-10-17">Oct 17, 2025</time>
-      </div>
-      <h3>Critcon 2025 Player Pack</h3>
-      <p>Crit Con 25 player pack.</p>
-      <a href="/news?slug=critcon-2025-player-pack" class="home-news-read">View Player Pack →</a>
-    </article>
-  </div>
+  {:else}
+    <p class="empty-row">No dispatches published yet.</p>
+  {/if}
 </section>
 
-<!-- Partners Section -->
-<section class="section" style="padding-top:0;">
-  <div class="section-header">
-    <h2>Partners</h2>
-    <span class="section-line"></span>
+<!-- Partners -->
+<section class="section page">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">Allies</div>
+      <h2>Partners</h2>
+    </div>
   </div>
-  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
-    <div style="background:var(--bg-card); border:1px dashed var(--border); border-radius:var(--radius); padding:2rem 1.5rem; text-align:center; opacity:0.6;">
-      <div style="font-size:2rem; margin-bottom:0.5rem; color:var(--text-muted);">🤝</div>
-      <div style="font-family:var(--font-gothic); font-size:0.75rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--text-muted);">Partner Slot</div>
-    </div>
-    <div style="background:var(--bg-card); border:1px dashed var(--border); border-radius:var(--radius); padding:2rem 1.5rem; text-align:center; opacity:0.6;">
-      <div style="font-size:2rem; margin-bottom:0.5rem; color:var(--text-muted);">🤝</div>
-      <div style="font-family:var(--font-gothic); font-size:0.75rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--text-muted);">Partner Slot</div>
-    </div>
-    <div style="background:linear-gradient(135deg, var(--bg-card), rgba(78,205,196,0.04)); border:1px solid var(--border-glow); border-radius:var(--radius); padding:2rem 1.5rem; text-align:center;">
-      <div style="font-size:1.4rem; margin-bottom:0.5rem;">✉</div>
-      <div style="font-family:var(--font-gothic); font-size:0.75rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent); margin-bottom:0.4rem;">Become a Partner</div>
-      <div style="font-size:0.78rem; color:var(--text-muted);">Reach out on <a href="https://discord.gg/zKSgE9AwEa" target="_blank" style="color:var(--accent);">Discord</a></div>
+  <div class="prt-grid">
+    <div class="prt"><span>◇</span><b>Partner Slot</b></div>
+    <div class="prt"><span>◇</span><b>Partner Slot</b></div>
+    <div class="prt prt-cta">
+      <b>Become a Partner</b>
+      <a class="btn btn-ghost" href="https://discord.gg/zKSgE9AwEa" target="_blank" rel="noopener">
+        Reach out on Discord →
+      </a>
     </div>
   </div>
 </section>
 
-<!-- Merch Banner -->
-<div class="merch-banner">
-  <h3>⚙ Gear Up, Commander</h3>
-  <p>Rep your faction. Overcast Wargaming League merch — shirts, dice bags, accessories.</p>
-  <a href="https://arma.gg/collections/overcast" class="btn btn-primary" target="_blank" rel="noopener">
-    🛒 Visit the Merch Store
-  </a>
-</div>
+<!-- Merch band -->
+<section class="merch-band">
+  <div class="page merch">
+    <div>
+      <div class="card-kicker">Gear Up, Commander</div>
+      <h3>Rep your faction.</h3>
+      <p>Overcast merch — shirts, dice bags, tokens and accessories.</p>
+    </div>
+    <a class="btn btn-primary" href={MERCH_URL} target="_blank" rel="noopener">
+      Visit the Merch Store →
+    </a>
+  </div>
+</section>

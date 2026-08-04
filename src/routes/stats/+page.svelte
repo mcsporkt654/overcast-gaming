@@ -1,79 +1,234 @@
 <script>
+  import { matchVp, formatDiff } from '$lib/vp.js';
+  import { shortDate, record, rankLabel } from '$lib/format.js';
+
   /** @type {import('./$types').PageData} */
   export let data;
+
+  let playerFilter = '';
+  let armyFilter = '';
+  let resultFilter = '';
+
+  $: stats = data.stats;
+  $: standings = stats?.standings ?? [];
+  $: factionStats = stats?.armyWinRates ?? [];
+  $: matches = data.matches ?? [];
+  $: armies = [...new Set(matches.map((m) => m.armyUsed))].sort();
+
+  $: filteredMatches = matches.filter((m) => {
+    const needle = playerFilter.trim().toLowerCase();
+    if (
+      needle &&
+      !m.playerName.toLowerCase().includes(needle) &&
+      !m.opponentName.toLowerCase().includes(needle)
+    ) {
+      return false;
+    }
+    if (armyFilter && m.armyUsed !== armyFilter) return false;
+    if (resultFilter && m.result !== resultFilter) return false;
+    return true;
+  });
 </script>
 
 <svelte:head>
-  <title>Match Stats — Overcast Wargaming League</title>
-  <script src="/stats-page.js" defer></script>
+  <title>Standings &amp; Match Log — Overcast Wargaming League</title>
+  <meta
+    name="description"
+    content="Full Season 3 standings, the complete battle log, and a faction-by-faction breakdown for the Overcast Wargaming League."
+  />
 </svelte:head>
 
-<!-- Page Header -->
-<div style="background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 2.5rem var(--gutter) 2rem;">
-  <div style="max-width:1200px; margin:0 auto;">
-    <p style="font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.4rem;">The Annals of War</p>
-    <h1 style="font-size:2rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-primary);">
-      Match <span style="color:var(--accent)">Statistics</span>
-    </h1>
-    <p style="color:var(--text-muted); font-size:0.9rem; margin-top:0.4rem;">Complete battle records, faction performance, and league standings.</p>
-  </div>
-</div>
+<section class="page-header page">
+  <div class="eyebrow">The OWL · Season 3</div>
+  <h1>Standings &amp; Match Log</h1>
+  <p class="lede">
+    Full Season 3 standings, the complete battle log, and a faction-by-faction breakdown of who's
+    winning the war.
+  </p>
+</section>
 
-<section class="section">
-
-  <div style="display:flex; gap:0.65rem; flex-wrap:wrap; margin-bottom:1.4rem;">
-    <a href="/matchups" class="btn btn-outline" style="font-size:0.7rem;">Matchup Matrix</a>
-    <a href="/meta" class="btn btn-outline" style="font-size:0.7rem;">Meta Trends</a>
-  </div>
-
-  <!-- Summary: Leaderboard + Army Win Rates -->
-  <div class="summary-grid" id="summary-grid">
-    <div class="summary-card" id="leaderboard-card">
-      <h3>Leaderboard</h3>
-      <div id="leaderboard-list"><div class="loader">Loading...</div></div>
-    </div>
-    <div class="summary-card" id="army-card">
-      <h3>Faction Win Rates</h3>
-      <div id="army-list"><div class="loader">Loading...</div></div>
+<!-- Standings -->
+<section class="section page">
+  <span class="anchor-jump" id="standings"></span>
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">Live Rankings</div>
+      <h2>Full Standings</h2>
     </div>
   </div>
 
-  <!-- Filter Bar -->
-  <div class="filter-bar">
-    <input type="text" id="filter-player" placeholder="🔍 Filter by player name..." />
-    <select id="filter-army">
-      <option value="">All Factions</option>
-    </select>
-    <select id="filter-result">
-      <option value="">All Results</option>
-      <option value="W">Wins</option>
-      <option value="L">Losses</option>
-      <option value="D">Draws</option>
-    </select>
-  </div>
-
-  <!-- Match Table -->
-  <div class="section-header" style="margin-bottom:1rem">
-    <h2>Battle Log</h2>
-    <span class="section-line"></span>
-    <span id="match-count" style="font-size:0.75rem; color:var(--text-muted); white-space:nowrap"></span>
-  </div>
-  <div class="table-wrapper">
-    <table id="match-table">
+  <div class="table-scroll">
+    <table class="table">
+      <caption class="visually-hidden">League standings ranked by total victory points</caption>
       <thead>
         <tr>
-          <th>Date</th>
+          <th>Rank</th>
           <th>Player</th>
-          <th>Army Used</th>
-          <th>vs. Opponent</th>
-          <th>Opp. Army</th>
-          <th>Result</th>
-          <th>Pts Diff</th>
+          <th>Army</th>
+          <th>W–L</th>
+          <th>GP</th>
+          <th>Avg VP</th>
+          <th style="text-align:right">Total VP</th>
         </tr>
       </thead>
-      <tbody id="match-tbody">
-        <tr><td colspan="7" class="loader">Loading battle records...</td></tr>
+      <tbody>
+        {#each standings as row (row.id)}
+          <tr>
+            <td class="tnum" style={row.rank === 1 ? 'color:var(--spark)' : ''}>
+              {rankLabel(row.rank)}
+            </td>
+            <td><a href="/players/{row.id}">{row.name}</a></td>
+            <td class="tmut">{row.army || '—'}</td>
+            <td>{record(row.wins, row.losses, row.draws)}</td>
+            <td class="tnum">{row.games}</td>
+            <td class="tnum" class:pos={row.avgVp !== null}>{row.avgVp ?? '—'}</td>
+            <td class="tnum">{row.totalVp}</td>
+          </tr>
+        {:else}
+          <tr>
+            <td colspan="7" class="empty-row">
+              No standings yet — the first logged battle starts the season.
+            </td>
+          </tr>
+        {/each}
       </tbody>
     </table>
   </div>
 </section>
+
+<!-- Match log -->
+<section class="section page">
+  <span class="anchor-jump" id="matches"></span>
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">Battlefield Log</div>
+      <h2>Match History</h2>
+    </div>
+    <span class="match-count">
+      {filteredMatches.length} {filteredMatches.length === 1 ? 'match' : 'matches'}
+    </span>
+  </div>
+
+  {#if matches.length}
+    <div class="filter-row">
+      <div class="field">
+        <label for="filter-player">Filter by player</label>
+        <input
+          class="input"
+          id="filter-player"
+          type="text"
+          placeholder="Player or opponent name"
+          bind:value={playerFilter}
+        />
+      </div>
+      <div class="field">
+        <label for="filter-army">Faction</label>
+        <select class="input" id="filter-army" bind:value={armyFilter}>
+          <option value="">All factions</option>
+          {#each armies as army}
+            <option value={army}>{army}</option>
+          {/each}
+        </select>
+      </div>
+      <div class="field">
+        <label for="filter-result">Result</label>
+        <select class="input" id="filter-result" bind:value={resultFilter}>
+          <option value="">All results</option>
+          <option value="W">Wins</option>
+          <option value="L">Losses</option>
+          <option value="D">Draws</option>
+        </select>
+      </div>
+    </div>
+  {/if}
+
+  <div class="table-scroll">
+    <table class="table">
+      <caption class="visually-hidden">Complete match history</caption>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Player</th>
+          <th>Army</th>
+          <th>Opponent</th>
+          <th>Opp. Army</th>
+          <th>Result</th>
+          <th style="text-align:right">Pts Diff</th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each filteredMatches as match (match.id)}
+          {@const vp = matchVp(match)}
+          <tr>
+            <td><a href="/matches/{match.id}">{shortDate(match.date)}</a></td>
+            <td><a href="/players/{match.playerId}">{match.playerName}</a></td>
+            <td class="tmut">{match.armyUsed}</td>
+            <td>{match.opponentName}</td>
+            <td class="tmut">{match.opponentArmy}</td>
+            <td>
+              {#if match.result === 'W'}
+                <span class="tag tag-accent">WIN</span>
+              {:else if match.result === 'L'}
+                <span class="tag tag-outline">LOSS</span>
+              {:else}
+                <span class="tag tag-neutral">DRAW</span>
+              {/if}
+            </td>
+            <td class="tnum" class:pos={vp.diff > 0} class:neg={vp.diff !== null && vp.diff <= 0}>
+              {formatDiff(vp.diff)}
+            </td>
+          </tr>
+        {:else}
+          <tr>
+            <td colspan="7" class="empty-row">
+              {matches.length ? 'No matches found for the selected filters.' : 'No battles recorded yet.'}
+            </td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Faction breakdown -->
+<section class="section page">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow">Order of Battle</div>
+      <h2>Faction Breakdown</h2>
+    </div>
+    <div class="deep-links">
+      <a class="btn btn-ghost" href="/matchups">Matchup matrix →</a>
+      <a class="btn btn-ghost" href="/meta">Meta trends →</a>
+    </div>
+  </div>
+
+  {#if factionStats.length}
+    <div class="faction-grid">
+      {#each factionStats as faction (faction.army)}
+        <div class="faction-row">
+          <b>{faction.army}</b>
+          <span>{faction.total} {faction.total === 1 ? 'battle' : 'battles'} · {faction.winRate}%</span>
+        </div>
+      {/each}
+    </div>
+  {:else}
+    <p class="empty-row">No faction data yet.</p>
+  {/if}
+</section>
+
+<style>
+  .match-count {
+    font-size: 13px;
+    color: color-mix(in srgb, var(--color-text) 55%, transparent);
+    white-space: nowrap;
+  }
+  .filter-row .field {
+    flex: 1 1 200px;
+  }
+  .deep-links {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+</style>

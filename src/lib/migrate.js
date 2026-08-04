@@ -13,6 +13,11 @@ let migrationPromise = null;
 // so these five literals can never collide with a genuine roster entry.
 const SEED_PLAYER_SLUGS = ['player-1', 'player-2', 'player-3', 'player-4', 'player-5'];
 
+// The four truncated placeholder dispatches earlier versions seeded (one body
+// paragraph, no image, no category). Replaced by the league's real articles —
+// see `importRealPosts` below.
+const PLACEHOLDER_POST_SLUGS = ['post-1', 'post-2', 'post-3', 'post-4'];
+
 /**
  * Reference + content seeds only. The roster (players) and match history are
  * deliberately NOT seeded — those are entered through the admin console, so a
@@ -50,12 +55,23 @@ async function seed() {
     );
   }
 
+  await upsertPosts('ON CONFLICT (id) DO NOTHING');
+
+  console.log('[migrate] done.');
+}
+
+/**
+ * Writes `data/posts.json` into `posts`.
+ *
+ * @param {string} conflictClause how to handle a row that already exists
+ */
+async function upsertPosts(conflictClause) {
   for (const p of postsData) {
     const slug = p.slug ?? p.id;
     await query(
       `INSERT INTO posts (id, slug, title, category, post_date, author, read_time, image, excerpt, body, highlights, gallery)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-       ON CONFLICT (id) DO NOTHING`,
+       ${conflictClause}`,
       [
         p.id,
         slug,
@@ -72,8 +88,34 @@ async function seed() {
       ]
     );
   }
+}
 
-  console.log('[migrate] done.');
+/**
+ * Replaces the placeholder dispatches with the league's real articles.
+ *
+ * The real posts used to live only in `static/news-data.js`, rendered
+ * client-side; `/community` and `/news/[slug]` now read them from Postgres,
+ * so they moved into `data/posts.json`. Existing databases were seeded with
+ * four truncated placeholders under slugs `post-1`…`post-4`, which this
+ * removes.
+ */
+async function importRealPosts() {
+  await upsertPosts(`ON CONFLICT (slug) DO UPDATE SET
+       title = EXCLUDED.title,
+       category = EXCLUDED.category,
+       post_date = EXCLUDED.post_date,
+       author = EXCLUDED.author,
+       read_time = EXCLUDED.read_time,
+       image = EXCLUDED.image,
+       excerpt = EXCLUDED.excerpt,
+       body = EXCLUDED.body,
+       highlights = EXCLUDED.highlights,
+       gallery = EXCLUDED.gallery`);
+
+  const { rowCount } = await query(`DELETE FROM posts WHERE slug = ANY($1)`, [
+    PLACEHOLDER_POST_SLUGS
+  ]);
+  console.log(`[migrate] imported ${postsData.length} real posts, removed ${rowCount} placeholders`);
 }
 
 /**
@@ -140,6 +182,7 @@ export function ensureMigrated() {
         await seed();
       }
       await runOnce('2026-07-27-purge-seed-roster', purgeSeedRoster);
+      await runOnce('2026-08-03-import-real-posts', importRealPosts);
     })().catch((err) => {
       migrationPromise = null; // allow retry on the next request instead of caching a permanent failure
       throw err;
