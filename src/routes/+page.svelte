@@ -55,7 +55,7 @@
       <div class="hero-cta">
         <a class="btn btn-primary" href="/roster">View Roster</a>
         <a class="btn btn-secondary" href="/stats#matches">Match Stats</a>
-        <a class="btn btn-secondary" href="/stats#standings">The OWL</a>
+        <a class="btn btn-secondary" href="/owl">The OWL</a>
       </div>
       <div class="social">
         <a href="https://discord.gg/zKSgE9AwEa" target="_blank" rel="noopener">Discord</a>
@@ -105,7 +105,7 @@
       <div class="stat">
         <div class="stat-num" use:countUp={stats?.totalGames ?? 0}>{stats?.totalGames ?? 0}</div>
         <div class="stat-label">Battles Logged</div>
-        <div class="stat-sub">Season 3 to date</div>
+        <div class="stat-sub">Current season to date</div>
       </div>
       <div class="stat">
         <div class="stat-num stat-text">{stats?.mostPlayedArmy || '—'}</div>
@@ -120,10 +120,10 @@
 <section class="section page">
   <div class="section-head">
     <div>
-      <div class="eyebrow">The OWL · Season 3</div>
+      <div class="eyebrow">The OWL · Current Season</div>
       <h2>Live League Standings</h2>
     </div>
-    <a class="btn btn-ghost" href="/stats#standings">Full standings →</a>
+    <a class="btn btn-ghost" href="/owl">Full standings →</a>
   </div>
 
   {#if standings.length}

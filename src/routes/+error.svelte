@@ -19,6 +19,6 @@
   <div class="back-links">
     <a class="btn btn-primary" href="/">Back to base</a>
     <a class="btn btn-secondary" href="/roster">Roster</a>
-    <a class="btn btn-secondary" href="/stats#standings">The OWL</a>
+    <a class="btn btn-secondary" href="/owl">The OWL</a>
   </div>
 </section>

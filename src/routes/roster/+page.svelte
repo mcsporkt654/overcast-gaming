@@ -21,7 +21,7 @@
       ? 'The roster is being built. Commanders will appear here as they join the league.'
       : `${players.length} ${players.length === 1 ? 'commander' : 'commanders'}, ` +
         `${factions.length} ${factions.length === 1 ? 'faction' : 'factions'}, one league. ` +
-        'Every player logged in the OWL, ranked by Season 3 victory points.';
+        'Every player logged in the OWL, ranked by current-season victory points.';
 </script>
 
 <svelte:head>

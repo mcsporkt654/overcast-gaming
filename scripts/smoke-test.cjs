@@ -118,7 +118,8 @@ assertExists('src/routes/matches/[id]/+page.svelte');
 assertExists('src/routes/+error.svelte');
 
 // Redirects keeping the retired URLs alive
-assertExists('src/routes/owl/+server.js');
+assertExists('src/routes/owl/+page.server.js');
+assertExists('src/routes/owl/+page.svelte');
 assertExists('src/routes/feed/+server.js');
 assertExists('src/routes/news/+server.js');
 assertExists('src/routes/player/+server.js');

@@ -5,23 +5,17 @@
     { href: '/', label: 'Home' },
     { href: '/community', label: 'Community' },
     { href: '/roster', label: 'Roster' },
-    { href: '/stats#standings', label: 'The OWL' },
-    { href: '/stats#matches', label: 'Stats' }
+    { href: '/owl', label: 'The OWL' },
+    { href: '/stats', label: 'Stats' }
   ];
 
   let menuOpen = false;
 
-  /**
-   * `The OWL` and `Stats` are two anchors on one route, so the active link is
-   * decided by the hash when there is one, and by the path otherwise.
-   */
   function isActive(url, href) {
-    const [path, hash] = href.split('#');
+    const [path] = href.split('#');
     if (path === '/') return url.pathname === '/';
     if (url.pathname !== path && !url.pathname.startsWith(`${path}/`)) return false;
-    if (!hash) return true;
-    // Default the bare /stats URL to the standings anchor, matching the nav order.
-    return url.hash ? url.hash === `#${hash}` : hash === 'standings';
+    return true;
   }
 </script>
 

@@ -46,7 +46,7 @@
     </p>
     <div class="back-links">
       <a class="btn btn-secondary" href="/roster">Back to roster</a>
-      <a class="btn btn-secondary" href="/stats#standings">Full standings</a>
+      <a class="btn btn-secondary" href="/owl">Full standings</a>
       {#each socialLinks as [network, url]}
         <a class="btn btn-ghost" href={url} target="_blank" rel="noopener">{network} →</a>
       {/each}
