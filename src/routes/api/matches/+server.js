@@ -8,15 +8,51 @@ import {
   jsonResponse
 } from '$lib/validation.js';
 
-export const GET = withDb(async () => {
+function normalizeOptionalId(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const parsed = Number.parseInt(String(value), 10);
+  return Number.isNaN(parsed) || parsed <= 0 ? null : parsed;
+}
+
+export const GET = withDb(async ({ url }) => {
+  const includeExhibition = url.searchParams.get('includeExhibition') === '1';
+  const seasonId = normalizeOptionalId(url.searchParams.get('seasonId'));
+  const divisionId = normalizeOptionalId(url.searchParams.get('divisionId'));
+
+  const where = [];
+  const params = [];
+
+  if (!includeExhibition) {
+    where.push(`m.match_type = 'league'`);
+  }
+  if (seasonId) {
+    params.push(seasonId);
+    where.push(`m.season_id = $${params.length}`);
+  }
+  if (divisionId) {
+    params.push(divisionId);
+    where.push(`m.division_id = $${params.length}`);
+  }
+
+  const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
   const { rows } = await query(`
     SELECT
       m.*,
-      p.slug AS player_slug
+      p.slug AS player_slug,
+      s.season_year,
+      d.name AS division_name,
+      pd.name AS player_detachment_name,
+      od.name AS opponent_detachment_name
     FROM matches m
     JOIN players p ON p.id = m.player_id
+    LEFT JOIN seasons s ON s.id = m.season_id
+    LEFT JOIN divisions d ON d.id = m.division_id
+    LEFT JOIN detachments pd ON pd.id = m.player_detachment_id
+    LEFT JOIN detachments od ON od.id = m.opponent_detachment_id
+    ${whereClause}
     ORDER BY m.match_date DESC
-  `);
+  `, params);
 
   return jsonResponse(rows.map(rowToMatch));
 });
@@ -31,6 +67,8 @@ export const POST = withDb(async ({ request, locals }) => {
     date, playerId, armyUsed, armySubfaction, armyPoints, playerUnits,
     opponentName, opponentArmy, opponentSubfaction, opponentPoints, opponentUnits,
     missionId, eventId,
+    seasonId, divisionId, matchType, ruleset,
+    playerDetachmentId, opponentDetachmentId,
     primaryScorePlayer, primaryScoreOpponent,
     secondaryScorePlayer, secondaryScoreOpponent,
     destructionScorePlayer, destructionScoreOpponent,
@@ -41,6 +79,17 @@ export const POST = withDb(async ({ request, locals }) => {
     return errorResponse('date, playerId, armyUsed, opponentName, opponentArmy, and result are required.');
   }
   if (!isIsoDate(date)) return errorResponse('date must be YYYY-MM-DD.');
+
+  const normalizedMatchType = normalizeString(matchType || 'league', 20).toLowerCase();
+  if (!['league', 'exhibition'].includes(normalizedMatchType)) {
+    return errorResponse('matchType must be league or exhibition.');
+  }
+
+  const normalizedSeasonId = normalizeOptionalId(seasonId);
+  const normalizedDivisionId = normalizeOptionalId(divisionId);
+  if (normalizedMatchType === 'league' && (!normalizedSeasonId || !normalizedDivisionId)) {
+    return errorResponse('seasonId and divisionId are required for league matches.');
+  }
 
   const normalizedResult = String(result).toUpperCase();
   if (!['W', 'L', 'D'].includes(normalizedResult)) {
@@ -69,10 +118,12 @@ export const POST = withDb(async ({ request, locals }) => {
   // Resolve optional mission / event
   const cleanMissionId = normalizeString(missionId, 80);
   let missionName = '';
+  let missionPack = '';
   if (cleanMissionId) {
-    const { rows: mRows } = await query(`SELECT name FROM missions WHERE id = $1`, [cleanMissionId]);
+    const { rows: mRows } = await query(`SELECT name, mission_pack FROM missions WHERE id = $1`, [cleanMissionId]);
     if (!mRows.length) return errorResponse('missionId does not match any known mission.');
     missionName = mRows[0].name;
+    missionPack = mRows[0].mission_pack || '';
   }
 
   const cleanEventId = normalizeString(eventId, 80);
@@ -83,20 +134,51 @@ export const POST = withDb(async ({ request, locals }) => {
     eventName = eRows[0].name;
   }
 
+  let seasonYear = null;
+  if (normalizedSeasonId) {
+    const { rows: sRows } = await query(`SELECT season_year FROM seasons WHERE id = $1`, [normalizedSeasonId]);
+    if (!sRows.length) return errorResponse('seasonId does not match any known season.');
+    seasonYear = Number(sRows[0].season_year);
+  }
+
+  let divisionName = '';
+  if (normalizedDivisionId) {
+    const { rows: dRows } = await query(`SELECT season_id, name FROM divisions WHERE id = $1`, [normalizedDivisionId]);
+    if (!dRows.length) return errorResponse('divisionId does not match any known division.');
+    divisionName = dRows[0].name;
+    if (normalizedSeasonId && Number(dRows[0].season_id) !== normalizedSeasonId) {
+      return errorResponse('divisionId does not belong to seasonId.');
+    }
+  }
+
+  const normalizedPlayerDetachmentId = normalizeOptionalId(playerDetachmentId);
+  const normalizedOpponentDetachmentId = normalizeOptionalId(opponentDetachmentId);
+
+  if (normalizedPlayerDetachmentId) {
+    const { rows: detRows } = await query(`SELECT id FROM detachments WHERE id = $1`, [normalizedPlayerDetachmentId]);
+    if (!detRows.length) return errorResponse('playerDetachmentId does not match any known detachment.');
+  }
+  if (normalizedOpponentDetachmentId) {
+    const { rows: detRows } = await query(`SELECT id FROM detachments WHERE id = $1`, [normalizedOpponentDetachmentId]);
+    if (!detRows.length) return errorResponse('opponentDetachmentId does not match any known detachment.');
+  }
+
   const newId = 'match-' + Date.now();
   const { rows } = await query(
     `INSERT INTO matches (
        id, match_date, player_id, player_name,
        army_used, army_subfaction, army_points, player_units,
        opponent_name, opponent_army, opponent_subfaction, opponent_points, opponent_units,
-       mission_id, mission_name, event_id, event_name,
+       mission_id, mission_name, mission_pack, event_id, event_name,
+       season_id, division_id, match_type, ruleset,
+       player_detachment_id, opponent_detachment_id,
        primary_score_player, primary_score_opponent,
        secondary_score_player, secondary_score_opponent,
        destruction_score_player, destruction_score_opponent,
        result, points_diff, battle_notes
      ) VALUES (
-       $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,
-       $18,$19,$20,$21,$22,$23,$24,$25,$26
+       $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,
+       $19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32
      )
      RETURNING *`,
     [
@@ -105,8 +187,14 @@ export const POST = withDb(async ({ request, locals }) => {
       JSON.stringify(normalizeUnits(playerUnits)),
       cleanOpponentName, cleanOpponentArmy, normalizeString(opponentSubfaction, 80),
       normalizeOptionalInteger(opponentPoints), JSON.stringify(normalizeUnits(opponentUnits)),
-      cleanMissionId || null, missionName,
+      cleanMissionId || null, missionName, missionPack,
       cleanEventId || null, eventName,
+      normalizedSeasonId,
+      normalizedDivisionId,
+      normalizedMatchType,
+      normalizeString(ruleset || 'WH40K', 40) || 'WH40K',
+      normalizedPlayerDetachmentId,
+      normalizedOpponentDetachmentId,
       normalizeOptionalInteger(primaryScorePlayer), normalizeOptionalInteger(primaryScoreOpponent),
       normalizeOptionalInteger(secondaryScorePlayer), normalizeOptionalInteger(secondaryScoreOpponent),
       normalizeOptionalInteger(destructionScorePlayer), normalizeOptionalInteger(destructionScoreOpponent),
@@ -115,7 +203,12 @@ export const POST = withDb(async ({ request, locals }) => {
   );
 
   // Attach player slug so the response shape matches the old API
-  const row = { ...rows[0], player_slug: playerId };
+  const row = {
+    ...rows[0],
+    player_slug: playerId,
+    season_year: seasonYear,
+    division_name: divisionName
+  };
   return jsonResponse({ success: true, match: rowToMatch(row) }, 201);
 });
 
@@ -139,8 +232,19 @@ function rowToMatch(row) {
     opponentUnits: row.opponent_units ?? [],
     missionId: row.mission_id ?? '',
     missionName: row.mission_name ?? '',
+    missionPack: row.mission_pack ?? '',
     eventId: row.event_id ?? '',
     eventName: row.event_name ?? '',
+    seasonId: row.season_id ?? null,
+    seasonYear: row.season_year ?? null,
+    divisionId: row.division_id ?? null,
+    divisionName: row.division_name ?? '',
+    matchType: row.match_type ?? 'league',
+    ruleset: row.ruleset ?? 'WH40K',
+    playerDetachmentId: row.player_detachment_id ?? null,
+    opponentDetachmentId: row.opponent_detachment_id ?? null,
+    playerDetachmentName: row.player_detachment_name ?? '',
+    opponentDetachmentName: row.opponent_detachment_name ?? '',
     primaryScorePlayer: row.primary_score_player,
     primaryScoreOpponent: row.primary_score_opponent,
     secondaryScorePlayer: row.secondary_score_player,

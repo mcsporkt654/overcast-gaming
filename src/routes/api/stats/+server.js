@@ -1,7 +1,31 @@
 import { query, withDb } from '$lib/db.js';
 import { jsonResponse } from '$lib/validation.js';
 
-export const GET = withDb(async () => {
+function normalizeOptionalId(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const parsed = Number.parseInt(String(value), 10);
+  return Number.isNaN(parsed) || parsed <= 0 ? null : parsed;
+}
+
+export const GET = withDb(async ({ url }) => {
+  const includeExhibition = url.searchParams.get('includeExhibition') === '1';
+  const seasonId = normalizeOptionalId(url.searchParams.get('seasonId'));
+  const divisionId = normalizeOptionalId(url.searchParams.get('divisionId'));
+
+  const whereM = [];
+  const params = [];
+  if (!includeExhibition) whereM.push(`m.match_type = 'league'`);
+  if (seasonId) {
+    params.push(seasonId);
+    whereM.push(`m.season_id = $${params.length}`);
+  }
+  if (divisionId) {
+    params.push(divisionId);
+    whereM.push(`m.division_id = $${params.length}`);
+  }
+  const whereMClause = whereM.length ? `WHERE ${whereM.join(' AND ')}` : '';
+  const wherePlainClause = whereMClause.replaceAll('m.', '');
+
   const [
     playersResult,
     matchesResult,
@@ -11,14 +35,15 @@ export const GET = withDb(async () => {
     standingsResult
   ] = await Promise.all([
     query(`SELECT COUNT(*) AS total FROM players`),
-    query(`SELECT COUNT(*) AS total FROM matches`),
+    query(`SELECT COUNT(*) AS total FROM matches ${wherePlainClause}`, params),
     query(`
       SELECT army_used, COUNT(*) AS cnt
       FROM matches
+      ${wherePlainClause}
       GROUP BY army_used
       ORDER BY cnt DESC
       LIMIT 1
-    `),
+    `, params),
     query(`
       SELECT
         p.slug AS id, p.name,
@@ -29,10 +54,11 @@ export const GET = withDb(async () => {
         ROUND(COUNT(m.id) FILTER (WHERE m.result = 'W') * 100.0 / COUNT(m.id)) AS win_rate
       FROM players p
       JOIN matches m ON m.player_id = p.id
+      ${whereMClause}
       GROUP BY p.id
       HAVING COUNT(m.id) >= 3
       ORDER BY win_rate DESC, wins DESC
-    `),
+    `, params),
     query(`
       SELECT
         army_used AS army,
@@ -40,9 +66,10 @@ export const GET = withDb(async () => {
         COUNT(*) FILTER (WHERE result = 'W') AS wins,
         ROUND(COUNT(*) FILTER (WHERE result = 'W') * 100.0 / COUNT(*)) AS win_rate
       FROM matches
+      ${wherePlainClause}
       GROUP BY army_used
       ORDER BY win_rate DESC, total DESC
-    `),
+    `, params),
     // League standings. VP is derived — the schema has no VP column, so it's
     // the sum of a match's primary/secondary/destruction scores. Unlike
     // `leaderboard` above there is deliberately no minimum-games filter: the
@@ -57,6 +84,7 @@ export const GET = withDb(async () => {
             + COALESCE(secondary_score_player, 0)
             + COALESCE(destruction_score_player, 0) AS vp
         FROM matches
+        ${wherePlainClause}
       ),
       top_army AS (
         SELECT DISTINCT ON (player_id) player_id, army_used
@@ -82,7 +110,7 @@ export const GET = withDb(async () => {
       LEFT JOIN top_army ta ON ta.player_id = p.id
       GROUP BY p.id, ta.army_used
       ORDER BY total_vp DESC, wins DESC, p.name
-    `)
+    `, params)
   ]);
 
   const totalPlayers = Number(playersResult.rows[0].total);

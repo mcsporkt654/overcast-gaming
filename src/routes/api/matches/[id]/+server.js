@@ -3,9 +3,19 @@ import { errorResponse, jsonResponse } from '$lib/validation.js';
 
 export const GET = withDb(async ({ params }) => {
   const { rows } = await query(
-    `SELECT m.*, p.slug AS player_slug
+    `SELECT
+      m.*,
+      p.slug AS player_slug,
+      s.season_year,
+      d.name AS division_name,
+      pd.name AS player_detachment_name,
+      od.name AS opponent_detachment_name
      FROM matches m
      JOIN players p ON p.id = m.player_id
+     LEFT JOIN seasons s ON s.id = m.season_id
+     LEFT JOIN divisions d ON d.id = m.division_id
+     LEFT JOIN detachments pd ON pd.id = m.player_detachment_id
+     LEFT JOIN detachments od ON od.id = m.opponent_detachment_id
      WHERE m.id = $1`,
     [params.id]
   );
@@ -31,8 +41,19 @@ export const GET = withDb(async ({ params }) => {
     opponentUnits: row.opponent_units ?? [],
     missionId: row.mission_id ?? '',
     missionName: row.mission_name ?? '',
+    missionPack: row.mission_pack ?? '',
     eventId: row.event_id ?? '',
     eventName: row.event_name ?? '',
+    seasonId: row.season_id ?? null,
+    seasonYear: row.season_year ?? null,
+    divisionId: row.division_id ?? null,
+    divisionName: row.division_name ?? '',
+    matchType: row.match_type ?? 'league',
+    ruleset: row.ruleset ?? 'WH40K',
+    playerDetachmentId: row.player_detachment_id ?? null,
+    opponentDetachmentId: row.opponent_detachment_id ?? null,
+    playerDetachmentName: row.player_detachment_name ?? '',
+    opponentDetachmentName: row.opponent_detachment_name ?? '',
     primaryScorePlayer: row.primary_score_player,
     primaryScoreOpponent: row.primary_score_opponent,
     secondaryScorePlayer: row.secondary_score_player,

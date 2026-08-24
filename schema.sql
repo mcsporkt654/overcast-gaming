@@ -41,6 +41,31 @@ CREATE TABLE IF NOT EXISTS events (
   created_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
+-- ─── Seasons / Divisions ─────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS seasons (
+  id           SERIAL        PRIMARY KEY,
+  season_year  INTEGER       UNIQUE NOT NULL,
+  label        TEXT          NOT NULL DEFAULT '',
+  created_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS divisions (
+  id          SERIAL        PRIMARY KEY,
+  season_id   INTEGER       NOT NULL REFERENCES seasons(id) ON DELETE CASCADE,
+  name        TEXT          NOT NULL CHECK (name IN ('Premier', 'Stump')),
+  created_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+  UNIQUE (season_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS detachments (
+  id          SERIAL        PRIMARY KEY,
+  army_name   TEXT          NOT NULL,
+  name        TEXT          NOT NULL,
+  ruleset     TEXT          NOT NULL DEFAULT 'WH40K',
+  created_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+  UNIQUE (army_name, name, ruleset)
+);
+
 -- ─── Matches ─────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS matches (
   id                          TEXT          PRIMARY KEY,   -- e.g. "match-1234567890"
@@ -58,8 +83,16 @@ CREATE TABLE IF NOT EXISTS matches (
   opponent_units              JSONB         NOT NULL DEFAULT '[]',
   mission_id                  TEXT          REFERENCES missions(id) ON DELETE SET NULL,
   mission_name                TEXT          NOT NULL DEFAULT '',
+  mission_pack                TEXT          NOT NULL DEFAULT '',
   event_id                    TEXT          REFERENCES events(id) ON DELETE SET NULL,
   event_name                  TEXT          NOT NULL DEFAULT '',
+  season_id                   INTEGER       REFERENCES seasons(id) ON DELETE SET NULL,
+  division_id                 INTEGER       REFERENCES divisions(id) ON DELETE SET NULL,
+  match_type                  TEXT          NOT NULL DEFAULT 'league'
+                                          CHECK (match_type IN ('league', 'exhibition')),
+  ruleset                     TEXT          NOT NULL DEFAULT 'WH40K',
+  player_detachment_id        INTEGER       REFERENCES detachments(id) ON DELETE SET NULL,
+  opponent_detachment_id      INTEGER       REFERENCES detachments(id) ON DELETE SET NULL,
   primary_score_player        INTEGER,
   primary_score_opponent      INTEGER,
   secondary_score_player      INTEGER,
@@ -75,6 +108,9 @@ CREATE TABLE IF NOT EXISTS matches (
 CREATE INDEX IF NOT EXISTS matches_player_id_idx   ON matches (player_id);
 CREATE INDEX IF NOT EXISTS matches_match_date_idx  ON matches (match_date DESC);
 CREATE INDEX IF NOT EXISTS matches_army_used_idx   ON matches (army_used);
+CREATE INDEX IF NOT EXISTS matches_season_id_idx   ON matches (season_id);
+CREATE INDEX IF NOT EXISTS matches_division_id_idx ON matches (division_id);
+CREATE INDEX IF NOT EXISTS matches_match_type_idx  ON matches (match_type);
 
 -- ─── Posts (community dispatches) ────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS posts (

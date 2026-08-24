@@ -3,9 +3,12 @@
   import {
     armyNames,
     loadArmies,
+    loadDetachments,
+    loadDivisions,
     loadEvents,
     loadMissions,
     loadPlayers,
+    loadSeasons,
     splitList,
     subfactionsFor
   } from '$lib/adminReference.js';
@@ -21,6 +24,14 @@
   let events = [];
   /** @type {{ id: string, name: string }[]} */
   let players = [];
+  /** @type {{ id: number, seasonYear: number, label: string }[]} */
+  let seasons = [];
+  /** @type {{ id: number, seasonId: number, seasonYear: number, name: string }[]} */
+  let divisions = [];
+  /** @type {{ id: number, armyName: string, name: string, ruleset: string }[]} */
+  let playerDetachments = [];
+  /** @type {{ id: number, armyName: string, name: string, ruleset: string }[]} */
+  let opponentDetachments = [];
   let referenceLoaded = false;
 
   let date = today();
@@ -38,6 +49,12 @@
   let opponentPoints = '';
   let missionId = '';
   let eventId = '';
+  let seasonId = '';
+  let divisionId = '';
+  let matchType = 'league';
+  let ruleset = 'WH40K';
+  let playerDetachmentId = '';
+  let opponentDetachmentId = '';
   let primaryScorePlayer = '';
   let primaryScoreOpponent = '';
   let secondaryScorePlayer = '';
@@ -51,8 +68,16 @@
   let pointsDiff = '';
 
   let submitting = false;
+  let creatingSeason = false;
+  let showSeasonForm = false;
+  let newSeasonYear = String(new Date().getFullYear());
+  let newSeasonLabel = '';
   let alertKind = /** @type {'' | 'success' | 'error'} */ ('');
   let alertText = '';
+
+  let previousSeasonId = '';
+  let previousPlayerArmy = '';
+  let previousOpponentArmy = '';
 
   $: availableArmies = armyNames(armies);
   $: playerSubfactions = subfactionsFor(armies, armyUsed);
@@ -61,15 +86,83 @@
   $: if (armyUsed !== undefined) armySubfaction = '';
   $: if (opponentArmy !== undefined) opponentSubfaction = '';
 
+  $: resolvedPlayerArmy = resolve(armyUsed, armyUsedCustom);
+  $: resolvedOpponentArmy = resolve(opponentArmy, opponentArmyCustom);
+
+  $: if (referenceLoaded && seasonId !== previousSeasonId) {
+    previousSeasonId = seasonId;
+    divisionId = '';
+    void refreshDivisions();
+  }
+
+  $: if (referenceLoaded && resolvedPlayerArmy !== previousPlayerArmy) {
+    previousPlayerArmy = resolvedPlayerArmy;
+    playerDetachmentId = '';
+    void refreshPlayerDetachments();
+  }
+
+  $: if (referenceLoaded && resolvedOpponentArmy !== previousOpponentArmy) {
+    previousOpponentArmy = resolvedOpponentArmy;
+    opponentDetachmentId = '';
+    void refreshOpponentDetachments();
+  }
+
   onMount(async () => {
-    [armies, missions, events, players] = await Promise.all([
+    [armies, missions, events, players, seasons] = await Promise.all([
       loadArmies(),
       loadMissions(),
       loadEvents(),
-      loadPlayers()
+      loadPlayers(),
+      loadSeasons()
     ]);
+    if (seasons.length) {
+      seasonId = String(seasons[0].id);
+      await refreshDivisions();
+    }
     referenceLoaded = true;
   });
+
+  async function refreshDivisions() {
+    divisions = await loadDivisions(seasonId || null);
+  }
+
+  async function refreshPlayerDetachments() {
+    playerDetachments = resolvedPlayerArmy ? await loadDetachments(resolvedPlayerArmy, ruleset) : [];
+  }
+
+  async function refreshOpponentDetachments() {
+    opponentDetachments = resolvedOpponentArmy ? await loadDetachments(resolvedOpponentArmy, ruleset) : [];
+  }
+
+  async function createSeason() {
+    if (creatingSeason) return;
+    creatingSeason = true;
+    alertKind = '';
+    alertText = '';
+    try {
+      const res = await fetch('/api/seasons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          seasonYear: Number.parseInt(newSeasonYear, 10),
+          label: newSeasonLabel.trim()
+        })
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body.success) throw new Error(body.error || 'Failed to create season.');
+
+      seasons = await loadSeasons();
+      seasonId = String(body.season.id);
+      await refreshDivisions();
+      showSeasonForm = false;
+      newSeasonLabel = '';
+    } catch (err) {
+      alertKind = 'error';
+      alertText = '✗ Error: ' + (err instanceof Error ? err.message : String(err));
+    } finally {
+      creatingSeason = false;
+    }
+  }
 
   /** @param {string} selected @param {string} custom */
   function resolve(selected, custom) {
@@ -92,6 +185,11 @@
     opponentPoints = '';
     missionId = '';
     eventId = '';
+    divisionId = '';
+    matchType = 'league';
+    ruleset = 'WH40K';
+    playerDetachmentId = '';
+    opponentDetachmentId = '';
     primaryScorePlayer = '';
     primaryScoreOpponent = '';
     secondaryScorePlayer = '';
@@ -125,6 +223,12 @@
       opponentUnits: splitList(opponentUnits),
       missionId,
       eventId,
+      seasonId: seasonId || null,
+      divisionId: divisionId || null,
+      matchType,
+      ruleset,
+      playerDetachmentId: playerDetachmentId || null,
+      opponentDetachmentId: opponentDetachmentId || null,
       primaryScorePlayer,
       primaryScoreOpponent,
       secondaryScorePlayer,
@@ -200,6 +304,56 @@
         </div>
 
         <div class="form-group">
+          <label for="match-season">Season</label>
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <select id="match-season" bind:value={seasonId} required>
+              <option value="">— Select Season —</option>
+              {#each seasons as season}
+                <option value={String(season.id)}>{season.seasonYear}</option>
+              {/each}
+            </select>
+            <button type="button" class="btn btn-secondary" on:click={() => (showSeasonForm = !showSeasonForm)}>
+              + Add Season
+            </button>
+          </div>
+        </div>
+
+        {#if showSeasonForm}
+          <div class="form-group" style="border:1px solid var(--border); border-radius:10px; padding:0.8rem;">
+            <label for="new-season-year">New Season Year</label>
+            <input id="new-season-year" type="number" bind:value={newSeasonYear} min="2000" max="2200" />
+            <label for="new-season-label" style="margin-top:0.6rem; display:block;">Label <span style="color:var(--text-muted)">(optional)</span></label>
+            <input id="new-season-label" type="text" bind:value={newSeasonLabel} placeholder="e.g. Season 2028" />
+            <button type="button" class="btn btn-primary" style="margin-top:0.6rem;" disabled={creatingSeason} on:click={createSeason}>
+              {creatingSeason ? 'Creating...' : 'Create Season'}
+            </button>
+          </div>
+        {/if}
+
+        <div class="form-group">
+          <label for="match-division">Division</label>
+          <select id="match-division" bind:value={divisionId} required={matchType === 'league'}>
+            <option value="">— Select Division —</option>
+            {#each divisions as division}
+              <option value={String(division.id)}>{division.name}</option>
+            {/each}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="match-type">Match Type</label>
+          <select id="match-type" bind:value={matchType}>
+            <option value="league">League</option>
+            <option value="exhibition">Exhibition</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="match-ruleset">Ruleset</label>
+          <input id="match-ruleset" type="text" bind:value={ruleset} placeholder="WH40K" required />
+        </div>
+
+        <div class="form-group">
           <label for="match-army">Army Used</label>
           <select id="match-army" bind:value={armyUsed} required>
             <option value="">— Select Army —</option>
@@ -236,6 +390,16 @@
         <div class="form-group">
           <label for="match-army-points">Player Army Points <span style="color:var(--text-muted)">(optional)</span></label>
           <input type="number" id="match-army-points" placeholder="e.g. 2000" bind:value={armyPoints} />
+        </div>
+
+        <div class="form-group">
+          <label for="match-player-detachment">Player Detachment <span style="color:var(--text-muted)">(optional)</span></label>
+          <select id="match-player-detachment" bind:value={playerDetachmentId}>
+            <option value="">— Select Detachment —</option>
+            {#each playerDetachments as det}
+              <option value={String(det.id)}>{det.name}</option>
+            {/each}
+          </select>
         </div>
 
         <div class="form-group">
@@ -280,6 +444,16 @@
         <div class="form-group">
           <label for="match-opp-points">Opponent Army Points <span style="color:var(--text-muted)">(optional)</span></label>
           <input type="number" id="match-opp-points" placeholder="e.g. 2000" bind:value={opponentPoints} />
+        </div>
+
+        <div class="form-group">
+          <label for="match-opponent-detachment">Opponent Detachment <span style="color:var(--text-muted)">(optional)</span></label>
+          <select id="match-opponent-detachment" bind:value={opponentDetachmentId}>
+            <option value="">— Select Detachment —</option>
+            {#each opponentDetachments as det}
+              <option value={String(det.id)}>{det.name}</option>
+            {/each}
+          </select>
         </div>
 
         <div class="form-group">

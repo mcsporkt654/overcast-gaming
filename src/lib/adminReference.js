@@ -52,6 +52,27 @@ export function loadPlayers() {
   return fetchList('/api/players');
 }
 
+/** @returns {Promise<{ id: number, seasonYear: number, label: string }[]>} */
+export function loadSeasons() {
+  return fetchList('/api/seasons');
+}
+
+/** @param {number|string|null} seasonId */
+export function loadDivisions(seasonId) {
+  const parsed = Number.parseInt(String(seasonId || ''), 10);
+  const query = Number.isNaN(parsed) ? '' : `?seasonId=${parsed}`;
+  return fetchList(`/api/divisions${query}`);
+}
+
+/** @param {string} armyName @param {string} [ruleset] */
+export function loadDetachments(armyName, ruleset = 'WH40K') {
+  const params = new URLSearchParams();
+  if (armyName) params.set('army', armyName);
+  if (ruleset) params.set('ruleset', ruleset);
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return fetchList(`/api/detachments${suffix}`);
+}
+
 /** @param {{ name: string }[]} armies */
 export function armyNames(armies) {
   return armies.length ? armies.map((a) => a.name) : FALLBACK_ARMIES;

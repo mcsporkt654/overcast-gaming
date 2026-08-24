@@ -1,4 +1,5 @@
 <script>
+  import { goto } from '$app/navigation';
   import { matchVp, formatDiff } from '$lib/vp.js';
   import { shortDate, record, rankLabel } from '$lib/format.js';
 
@@ -8,12 +9,37 @@
   let playerFilter = '';
   let armyFilter = '';
   let resultFilter = '';
+  let selectedSeasonId = '';
+  let selectedDivisionId = '';
+  let includeExhibition = false;
 
   $: stats = data.stats;
   $: standings = stats?.standings ?? [];
   $: factionStats = stats?.armyWinRates ?? [];
   $: matches = data.matches ?? [];
+  $: seasons = data.seasons ?? [];
+  $: divisions = data.divisions ?? [];
   $: armies = [...new Set(matches.map((m) => m.armyUsed))].sort();
+
+  $: if (data?.filters) {
+    selectedSeasonId = data.filters.seasonId || '';
+    selectedDivisionId = data.filters.divisionId || '';
+    includeExhibition = !!data.filters.includeExhibition;
+  }
+
+  async function applyServerFilters() {
+    const params = new URLSearchParams();
+    if (selectedSeasonId) params.set('seasonId', selectedSeasonId);
+    if (selectedDivisionId) params.set('divisionId', selectedDivisionId);
+    if (includeExhibition) params.set('includeExhibition', '1');
+
+    const query = params.toString();
+    await goto(query ? `/stats?${query}` : '/stats', {
+      replaceState: true,
+      noScroll: true,
+      keepFocus: true
+    });
+  }
 
   $: filteredMatches = matches.filter((m) => {
     const needle = playerFilter.trim().toLowerCase();
@@ -39,12 +65,42 @@
 </svelte:head>
 
 <section class="page-header page">
-  <div class="eyebrow">The OWL · Season 3</div>
+  <div class="eyebrow">The OWL · Seasonal Standings</div>
   <h1>Standings &amp; Match Log</h1>
   <p class="lede">
-    Full Season 3 standings, the complete battle log, and a faction-by-faction breakdown of who's
-    winning the war.
+    Seasonal standings, the complete battle log, and a faction-by-faction breakdown of who's
+    winning the war right now.
   </p>
+
+  <div class="filter-row" style="margin-top:1rem;">
+    <div class="field">
+      <label for="filter-season">Season</label>
+      <select class="input" id="filter-season" bind:value={selectedSeasonId} on:change={applyServerFilters}>
+        <option value="">All seasons</option>
+        {#each seasons as season}
+          <option value={String(season.id)}>{season.seasonYear}</option>
+        {/each}
+      </select>
+    </div>
+    <div class="field">
+      <label for="filter-division">Division</label>
+      <select class="input" id="filter-division" bind:value={selectedDivisionId} on:change={applyServerFilters}>
+        <option value="">All divisions</option>
+        {#each divisions as division}
+          <option value={String(division.id)}>{division.name}</option>
+        {/each}
+      </select>
+    </div>
+    <div class="field">
+      <label for="filter-exhibition">Include exhibition</label>
+      <input
+        id="filter-exhibition"
+        type="checkbox"
+        bind:checked={includeExhibition}
+        on:change={applyServerFilters}
+      />
+    </div>
+  </div>
 </section>
 
 <!-- Standings -->
@@ -148,6 +204,9 @@
       <thead>
         <tr>
           <th>Date</th>
+          <th>Season</th>
+          <th>Division</th>
+          <th>Type</th>
           <th>Player</th>
           <th>Army</th>
           <th>Opponent</th>
@@ -161,6 +220,9 @@
           {@const vp = matchVp(match)}
           <tr>
             <td><a href="/matches/{match.id}">{shortDate(match.date)}</a></td>
+            <td class="tmut">{match.seasonYear ?? '—'}</td>
+            <td class="tmut">{match.divisionName || '—'}</td>
+            <td class="tmut">{match.matchType === 'exhibition' ? 'Exhibition' : 'League'}</td>
             <td><a href="/players/{match.playerId}">{match.playerName}</a></td>
             <td class="tmut">{match.armyUsed}</td>
             <td>{match.opponentName}</td>
@@ -180,7 +242,7 @@
           </tr>
         {:else}
           <tr>
-            <td colspan="7" class="empty-row">
+            <td colspan="10" class="empty-row">
               {matches.length ? 'No matches found for the selected filters.' : 'No battles recorded yet.'}
             </td>
           </tr>

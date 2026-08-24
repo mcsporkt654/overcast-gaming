@@ -56,6 +56,12 @@
         ? ` · ${match.eventName}`
         : ''}
     </p>
+    <p class="lede">
+      {match.seasonYear ? `Season ${match.seasonYear}` : 'No season'}
+      {match.divisionName ? ` · ${match.divisionName}` : ''}
+      {' · '}{match.matchType === 'exhibition' ? 'Exhibition' : 'League'}
+      {' · '}{match.ruleset || 'WH40K'}
+    </p>
     <div class="back-links">
       <a class="btn btn-secondary" href="/stats#matches">Back to match log</a>
       <a class="btn btn-secondary" href="/players/{match.playerId}">{match.playerName}'s profile</a>
@@ -83,6 +89,9 @@
         <h3>{match.playerName}</h3>
         <div class="detail-line"><span>Faction</span><b>{match.armyUsed || '—'}</b></div>
         <div class="detail-line"><span>Subfaction</span><b>{match.armySubfaction || '—'}</b></div>
+        <div class="detail-line">
+          <span>Detachment</span><b>{match.playerDetachmentName || '—'}</b>
+        </div>
         <div class="detail-line"><span>Army points</span><b>{score(match.armyPoints)}</b></div>
         <h3 class="unit-heading">Key units</h3>
         <ul class="unit-list">
@@ -99,6 +108,9 @@
         <div class="detail-line"><span>Faction</span><b>{match.opponentArmy || '—'}</b></div>
         <div class="detail-line">
           <span>Subfaction</span><b>{match.opponentSubfaction || '—'}</b>
+        </div>
+        <div class="detail-line">
+          <span>Detachment</span><b>{match.opponentDetachmentName || '—'}</b>
         </div>
         <div class="detail-line"><span>Army points</span><b>{score(match.opponentPoints)}</b></div>
         <h3 class="unit-heading">Key units</h3>
