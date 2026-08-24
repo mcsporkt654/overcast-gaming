@@ -1,5 +1,5 @@
 import { query, withDb } from '$lib/db.js';
-import { jsonResponse } from '$lib/validation.js';
+import { jsonResponse, normalizeString } from '$lib/validation.js';
 
 function normalizeOptionalId(value) {
   if (value === undefined || value === null || value === '') return null;
@@ -11,20 +11,32 @@ export const GET = withDb(async ({ url }) => {
   const includeExhibition = url.searchParams.get('includeExhibition') === '1';
   const seasonId = normalizeOptionalId(url.searchParams.get('seasonId'));
   const divisionId = normalizeOptionalId(url.searchParams.get('divisionId'));
+  const divisionName = normalizeString(url.searchParams.get('division') || '', 40);
 
   const whereM = [];
+  const wherePlain = [];
   const params = [];
-  if (!includeExhibition) whereM.push(`m.match_type = 'league'`);
+  if (!includeExhibition) {
+    whereM.push(`m.match_type = 'league'`);
+    wherePlain.push(`match_type = 'league'`);
+  }
   if (seasonId) {
     params.push(seasonId);
     whereM.push(`m.season_id = $${params.length}`);
+    wherePlain.push(`season_id = $${params.length}`);
   }
   if (divisionId) {
     params.push(divisionId);
     whereM.push(`m.division_id = $${params.length}`);
+    wherePlain.push(`division_id = $${params.length}`);
+  }
+  if (!divisionId && divisionName) {
+    params.push(divisionName);
+    whereM.push(`EXISTS (SELECT 1 FROM divisions d WHERE d.id = m.division_id AND d.name = $${params.length})`);
+    wherePlain.push(`EXISTS (SELECT 1 FROM divisions d WHERE d.id = division_id AND d.name = $${params.length})`);
   }
   const whereMClause = whereM.length ? `WHERE ${whereM.join(' AND ')}` : '';
-  const wherePlainClause = whereMClause.replaceAll('m.', '');
+  const wherePlainClause = wherePlain.length ? `WHERE ${wherePlain.join(' AND ')}` : '';
 
   const [
     playersResult,

@@ -3,11 +3,13 @@ export async function load({ fetch, url }) {
   const includeExhibition = url.searchParams.get('includeExhibition') === '1';
   const seasonId = url.searchParams.get('seasonId') || '';
   const divisionId = url.searchParams.get('divisionId') || '';
+  const division = url.searchParams.get('division') || '';
 
   const params = new URLSearchParams();
   if (includeExhibition) params.set('includeExhibition', '1');
   if (seasonId) params.set('seasonId', seasonId);
   if (divisionId) params.set('divisionId', divisionId);
+  if (division) params.set('division', division);
   const query = params.toString() ? `?${params.toString()}` : '';
 
   const [statsRes, matchesRes] = await Promise.all([
@@ -35,7 +37,8 @@ export async function load({ fetch, url }) {
     filters: {
       includeExhibition,
       seasonId,
-      divisionId
+      divisionId,
+      division
     }
   };
 }

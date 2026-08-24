@@ -10,7 +10,7 @@
   let armyFilter = '';
   let resultFilter = '';
   let selectedSeasonId = '';
-  let selectedDivisionId = '';
+  let selectedDivision = '';
   let includeExhibition = false;
 
   $: stats = data.stats;
@@ -21,16 +21,35 @@
   $: divisions = data.divisions ?? [];
   $: armies = [...new Set(matches.map((m) => m.armyUsed))].sort();
 
+  $: seasonScopedDivisions = selectedSeasonId
+    ? divisions
+    : Array.from(new Map(divisions.map((d) => [d.name, d])).values());
+
   $: if (data?.filters) {
     selectedSeasonId = data.filters.seasonId || '';
-    selectedDivisionId = data.filters.divisionId || '';
+    if (selectedSeasonId) {
+      selectedDivision = data.filters.divisionId || '';
+    } else {
+      selectedDivision = data.filters.division || '';
+    }
     includeExhibition = !!data.filters.includeExhibition;
+  }
+
+  function onSeasonChange() {
+    selectedDivision = '';
+    applyServerFilters();
   }
 
   async function applyServerFilters() {
     const params = new URLSearchParams();
     if (selectedSeasonId) params.set('seasonId', selectedSeasonId);
-    if (selectedDivisionId) params.set('divisionId', selectedDivisionId);
+    if (selectedDivision) {
+      if (selectedSeasonId) {
+        params.set('divisionId', selectedDivision);
+      } else {
+        params.set('division', selectedDivision);
+      }
+    }
     if (includeExhibition) params.set('includeExhibition', '1');
 
     const query = params.toString();
@@ -72,10 +91,10 @@
     winning the war right now.
   </p>
 
-  <div class="filter-row" style="margin-top:1rem;">
+  <div class="filter-row server-filters" style="margin-top:1rem;">
     <div class="field">
       <label for="filter-season">Season</label>
-      <select class="input" id="filter-season" bind:value={selectedSeasonId} on:change={applyServerFilters}>
+      <select class="input filter-input" id="filter-season" bind:value={selectedSeasonId} on:change={onSeasonChange}>
         <option value="">All seasons</option>
         {#each seasons as season}
           <option value={String(season.id)}>{season.seasonYear}</option>
@@ -84,21 +103,25 @@
     </div>
     <div class="field">
       <label for="filter-division">Division</label>
-      <select class="input" id="filter-division" bind:value={selectedDivisionId} on:change={applyServerFilters}>
+      <select class="input filter-input" id="filter-division" bind:value={selectedDivision} on:change={applyServerFilters}>
         <option value="">All divisions</option>
-        {#each divisions as division}
-          <option value={String(division.id)}>{division.name}</option>
+        {#each seasonScopedDivisions as division}
+          <option value={selectedSeasonId ? String(division.id) : division.name}>{division.name}</option>
         {/each}
       </select>
     </div>
-    <div class="field">
+    <div class="field toggle-field">
       <label for="filter-exhibition">Include exhibition</label>
-      <input
-        id="filter-exhibition"
-        type="checkbox"
-        bind:checked={includeExhibition}
-        on:change={applyServerFilters}
-      />
+      <label class="switch" for="filter-exhibition">
+        <input
+          id="filter-exhibition"
+          type="checkbox"
+          bind:checked={includeExhibition}
+          on:change={applyServerFilters}
+        />
+        <span class="slider" aria-hidden="true"></span>
+        <span class="switch-label">Show exhibition matches</span>
+      </label>
     </div>
   </div>
 </section>
@@ -280,14 +303,90 @@
 </section>
 
 <style>
+  .server-filters {
+    padding: var(--space-3);
+    border: 1px solid var(--color-divider);
+    background: color-mix(in srgb, var(--color-surface) 86%, #000 14%);
+  }
+
   .match-count {
     font-size: 13px;
     color: color-mix(in srgb, var(--color-text) 55%, transparent);
     white-space: nowrap;
   }
+
+  .filter-input {
+    min-height: 40px;
+    border-width: 2px;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 90%, #000 10%), var(--color-surface));
+  }
+
   .filter-row .field {
     flex: 1 1 200px;
   }
+
+  .toggle-field {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    padding: 0 2px;
+    cursor: pointer;
+  }
+
+  .switch input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    width: 40px;
+    height: 22px;
+    border: 2px solid var(--color-divider);
+    background: var(--color-surface);
+    position: relative;
+    transition: border-color 0.2s ease;
+  }
+
+  .slider::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    top: 2px;
+    left: 2px;
+    background: color-mix(in srgb, var(--color-text) 75%, transparent);
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+
+  .switch input:checked + .slider {
+    border-color: var(--color-accent);
+  }
+
+  .switch input:checked + .slider::after {
+    transform: translateX(18px);
+    background: var(--color-accent);
+  }
+
+  .switch-label {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--color-text) 78%, transparent);
+  }
+
   .deep-links {
     display: flex;
     gap: var(--space-3);

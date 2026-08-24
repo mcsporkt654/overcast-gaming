@@ -18,6 +18,7 @@ export const GET = withDb(async ({ url }) => {
   const includeExhibition = url.searchParams.get('includeExhibition') === '1';
   const seasonId = normalizeOptionalId(url.searchParams.get('seasonId'));
   const divisionId = normalizeOptionalId(url.searchParams.get('divisionId'));
+  const divisionName = normalizeString(url.searchParams.get('division') || '', 40);
 
   const where = [];
   const params = [];
@@ -32,6 +33,10 @@ export const GET = withDb(async ({ url }) => {
   if (divisionId) {
     params.push(divisionId);
     where.push(`m.division_id = $${params.length}`);
+  }
+  if (!divisionId && divisionName) {
+    params.push(divisionName);
+    where.push(`d.name = $${params.length}`);
   }
 
   const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
