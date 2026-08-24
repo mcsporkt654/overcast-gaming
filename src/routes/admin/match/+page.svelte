@@ -8,6 +8,7 @@
     loadEvents,
     loadMissions,
     loadPlayers,
+    loadSeasonPlayerDivisions,
     loadSeasons,
     splitList,
     subfactionsFor
@@ -32,6 +33,8 @@
   let playerDetachments = [];
   /** @type {{ id: number, armyName: string, name: string, ruleset: string }[]} */
   let opponentDetachments = [];
+  /** @type {{ playerId: number, playerSlug: string, playerName: string, divisionId: number, divisionName: string, source: string }[]} */
+  let seasonAssignments = [];
   let referenceLoaded = false;
 
   let date = today();
@@ -72,10 +75,12 @@
   let showSeasonForm = false;
   let newSeasonYear = String(new Date().getFullYear());
   let newSeasonLabel = '';
+  let newSeasonApplyRollover = true;
   let alertKind = /** @type {'' | 'success' | 'error'} */ ('');
   let alertText = '';
 
   let previousSeasonId = '';
+  let previousPlayerId = '';
   let previousPlayerArmy = '';
   let previousOpponentArmy = '';
 
@@ -92,7 +97,12 @@
   $: if (referenceLoaded && seasonId !== previousSeasonId) {
     previousSeasonId = seasonId;
     divisionId = '';
-    void refreshDivisions();
+    void refreshSeasonScopedReferences();
+  }
+
+  $: if (referenceLoaded && playerId !== previousPlayerId) {
+    previousPlayerId = playerId;
+    if (matchType === 'league') applyAssignedDivision();
   }
 
   $: if (referenceLoaded && resolvedPlayerArmy !== previousPlayerArmy) {
@@ -117,13 +127,27 @@
     ]);
     if (seasons.length) {
       seasonId = String(seasons[0].id);
-      await refreshDivisions();
+      await refreshSeasonScopedReferences();
     }
     referenceLoaded = true;
   });
 
-  async function refreshDivisions() {
-    divisions = await loadDivisions(seasonId || null);
+  function applyAssignedDivision() {
+    if (!seasonAssignments.length || !playerId) return;
+    const assigned = seasonAssignments.find((a) => a.playerSlug === playerId);
+    if (assigned && divisions.some((d) => Number(d.id) === Number(assigned.divisionId))) {
+      divisionId = String(assigned.divisionId);
+    }
+  }
+
+  async function refreshSeasonScopedReferences() {
+    const [nextDivisions, nextAssignments] = await Promise.all([
+      loadDivisions(seasonId || null),
+      loadSeasonPlayerDivisions(seasonId || null)
+    ]);
+    divisions = nextDivisions;
+    seasonAssignments = nextAssignments;
+    if (matchType === 'league') applyAssignedDivision();
   }
 
   async function refreshPlayerDetachments() {
@@ -145,7 +169,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           seasonYear: Number.parseInt(newSeasonYear, 10),
-          label: newSeasonLabel.trim()
+          label: newSeasonLabel.trim(),
+          applyRollover: newSeasonApplyRollover
         })
       });
       const body = await res.json().catch(() => ({}));
@@ -153,9 +178,27 @@
 
       seasons = await loadSeasons();
       seasonId = String(body.season.id);
-      await refreshDivisions();
+      await refreshSeasonScopedReferences();
       showSeasonForm = false;
       newSeasonLabel = '';
+
+      const rollover = body.rollover;
+      if (rollover?.applied) {
+        const promoted = Array.isArray(rollover.promoted) && rollover.promoted.length
+          ? rollover.promoted.join(', ')
+          : 'none';
+        const relegated = Array.isArray(rollover.relegated) && rollover.relegated.length
+          ? rollover.relegated.join(', ')
+          : 'none';
+        alertKind = 'success';
+        alertText = `✓ Season ${body.season.seasonYear} created. Rollover from ${rollover.fromSeasonYear}: promoted ${promoted}; relegated ${relegated}.`;
+      } else if (body.created) {
+        alertKind = 'success';
+        alertText = `✓ Season ${body.season.seasonYear} created.`;
+      } else {
+        alertKind = 'success';
+        alertText = `✓ Season ${body.season.seasonYear} updated.`;
+      }
     } catch (err) {
       alertKind = 'error';
       alertText = '✗ Error: ' + (err instanceof Error ? err.message : String(err));
@@ -324,6 +367,10 @@
             <input id="new-season-year" type="number" bind:value={newSeasonYear} min="2000" max="2200" />
             <label for="new-season-label" style="margin-top:0.6rem; display:block;">Label <span style="color:var(--text-muted)">(optional)</span></label>
             <input id="new-season-label" type="text" bind:value={newSeasonLabel} placeholder="e.g. Season 2028" />
+            <label style="display:flex; align-items:center; gap:0.5rem; margin-top:0.6rem;">
+              <input type="checkbox" bind:checked={newSeasonApplyRollover} />
+              Auto-apply promotion/relegation from prior season
+            </label>
             <button type="button" class="btn btn-primary" style="margin-top:0.6rem;" disabled={creatingSeason} on:click={createSeason}>
               {creatingSeason ? 'Creating...' : 'Create Season'}
             </button>
@@ -338,6 +385,9 @@
               <option value={String(division.id)}>{division.name}</option>
             {/each}
           </select>
+          {#if matchType === 'league' && playerId}
+            <p class="form-hint">Division defaults from season rollover assignments when available.</p>
+          {/if}
         </div>
 
         <div class="form-group">

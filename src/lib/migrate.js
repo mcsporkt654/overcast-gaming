@@ -255,6 +255,19 @@ async function ensureSeasonalSchema() {
     )
   `);
 
+  await query(`
+    CREATE TABLE IF NOT EXISTS season_player_divisions (
+      id           SERIAL PRIMARY KEY,
+      season_id    INTEGER NOT NULL REFERENCES seasons(id) ON DELETE CASCADE,
+      division_id  INTEGER NOT NULL REFERENCES divisions(id) ON DELETE CASCADE,
+      player_id    INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+      source       TEXT NOT NULL DEFAULT 'manual'
+                     CHECK (source IN ('manual', 'rollover', 'seed')),
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (season_id, player_id)
+    )
+  `);
+
   await query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS mission_pack TEXT NOT NULL DEFAULT ''`);
   await query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS season_id INTEGER REFERENCES seasons(id) ON DELETE SET NULL`);
   await query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS division_id INTEGER REFERENCES divisions(id) ON DELETE SET NULL`);
@@ -508,6 +521,20 @@ async function reseedDemoMatches() {
 
     matchNumber += 1;
   }
+
+  await query(`DELETE FROM season_player_divisions`);
+  await query(`
+    INSERT INTO season_player_divisions (season_id, division_id, player_id, source)
+    SELECT DISTINCT m.season_id, m.division_id, m.player_id, 'seed'
+    FROM matches m
+    WHERE m.match_type = 'league'
+      AND m.season_id IS NOT NULL
+      AND m.division_id IS NOT NULL
+    ON CONFLICT (season_id, player_id)
+    DO UPDATE SET
+      division_id = EXCLUDED.division_id,
+      source = EXCLUDED.source
+  `);
 
   console.log(`[migrate] seeded ${matchNumber - 1} demo matches with season and division metadata`);
 }

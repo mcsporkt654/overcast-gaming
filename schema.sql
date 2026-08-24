@@ -66,6 +66,17 @@ CREATE TABLE IF NOT EXISTS detachments (
   UNIQUE (army_name, name, ruleset)
 );
 
+CREATE TABLE IF NOT EXISTS season_player_divisions (
+  id           SERIAL        PRIMARY KEY,
+  season_id    INTEGER       NOT NULL REFERENCES seasons(id) ON DELETE CASCADE,
+  division_id  INTEGER       NOT NULL REFERENCES divisions(id) ON DELETE CASCADE,
+  player_id    INTEGER       NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  source       TEXT          NOT NULL DEFAULT 'manual'
+                               CHECK (source IN ('manual', 'rollover', 'seed')),
+  created_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+  UNIQUE (season_id, player_id)
+);
+
 -- ─── Matches ─────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS matches (
   id                          TEXT          PRIMARY KEY,   -- e.g. "match-1234567890"

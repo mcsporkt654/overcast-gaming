@@ -73,6 +73,13 @@ export function loadDetachments(armyName, ruleset = 'WH40K') {
   return fetchList(`/api/detachments${suffix}`);
 }
 
+/** @param {number|string|null} seasonId */
+export function loadSeasonPlayerDivisions(seasonId) {
+  const parsed = Number.parseInt(String(seasonId || ''), 10);
+  if (Number.isNaN(parsed)) return Promise.resolve([]);
+  return fetchList(`/api/season-player-divisions?seasonId=${parsed}`);
+}
+
 /** @param {{ name: string }[]} armies */
 export function armyNames(armies) {
   return armies.length ? armies.map((a) => a.name) : FALLBACK_ARMIES;
