@@ -1,3 +1,5 @@
+import { matchVp } from './vp.js';
+
 /**
  * Battles are logged as one row per participant, from that player's own
  * perspective. When both sides of a battle are rostered league players and
@@ -43,4 +45,38 @@ function isMirroredBattle(a, b) {
 function isInvertedResult(a, b) {
   if (a === 'D' && b === 'D') return true;
   return (a === 'W' && b === 'L') || (a === 'L' && b === 'W');
+}
+
+/**
+ * A deduped battle only has one row, so "player" and "opponent" no longer
+ * mean "logger" vs "the other side" — this resolves them into a winner and
+ * loser, with each side's own points diff signed to that side (the winner's
+ * is always positive, the loser's always negative).
+ *
+ * @param {Record<string, any>} match
+ */
+export function battleSides(match) {
+  const { diff } = matchVp(match);
+  const magnitude = diff === null ? null : Math.abs(diff);
+
+  if (match.result === 'D') {
+    return {
+      isDraw: true,
+      winnerName: null,
+      loserName: null,
+      winnerArmy: null,
+      playerDiff: 0,
+      opponentDiff: 0
+    };
+  }
+
+  const playerWon = match.result === 'W';
+  return {
+    isDraw: false,
+    winnerName: playerWon ? match.playerName : match.opponentName,
+    loserName: playerWon ? match.opponentName : match.playerName,
+    winnerArmy: playerWon ? match.armyUsed : match.opponentArmy,
+    playerDiff: magnitude === null ? null : playerWon ? magnitude : -magnitude,
+    opponentDiff: magnitude === null ? null : playerWon ? -magnitude : magnitude
+  };
 }

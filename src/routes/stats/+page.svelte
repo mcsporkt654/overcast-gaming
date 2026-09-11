@@ -1,8 +1,8 @@
 <script>
   import { goto } from '$app/navigation';
-  import { resultDiff, formatDiff } from '$lib/vp.js';
+  import { formatDiff } from '$lib/vp.js';
   import { shortDate, record, rankLabel } from '$lib/format.js';
-  import { dedupeBattles } from '$lib/matches.js';
+  import { dedupeBattles, battleSides } from '$lib/matches.js';
 
   /** @type {import('./$types').PageData} */
   export let data;
@@ -235,30 +235,40 @@
           <th>Type</th>
           <th>Player</th>
           <th>Army</th>
+          <th style="text-align:right">Pts</th>
           <th>Opponent</th>
           <th>Opp. Army</th>
-          <th style="text-align:right">Pts Diff</th>
+          <th style="text-align:right">Pts</th>
         </tr>
       </thead>
       <tbody>
         {#each filteredMatches as match (match.id)}
-          {@const diff = resultDiff(match)}
+          {@const sides = battleSides(match)}
           <tr>
             <td><a href="/matches/{match.id}">{shortDate(match.date)}</a></td>
             <td class="tmut">{match.seasonYear ?? '—'}</td>
             <td class="tmut">{match.divisionName || '—'}</td>
             <td class="tmut">{match.matchType === 'exhibition' ? 'Exhibition' : 'League'}</td>
-            <td class:winner={match.result === 'W'}><a href="/players/{match.playerId}">{match.playerName}</a></td>
+            <td>
+              <a href="/players/{match.playerId}">{match.playerName}</a>
+              {#if sides.winnerName === match.playerName}<span class="tag tag-accent tag-win">W</span>{/if}
+            </td>
             <td class="tmut">{match.armyUsed}</td>
-            <td class:winner={match.result === 'L'}>{match.opponentName}</td>
+            <td class="tnum" class:pos={sides.playerDiff > 0} class:neg={sides.playerDiff !== null && sides.playerDiff < 0}>
+              {formatDiff(sides.playerDiff)}
+            </td>
+            <td>
+              {match.opponentName}
+              {#if sides.winnerName === match.opponentName}<span class="tag tag-accent tag-win">W</span>{/if}
+            </td>
             <td class="tmut">{match.opponentArmy}</td>
-            <td class="tnum" class:pos={diff > 0} class:neg={diff !== null && diff < 0}>
-              {formatDiff(diff)}
+            <td class="tnum" class:pos={sides.opponentDiff > 0} class:neg={sides.opponentDiff !== null && sides.opponentDiff < 0}>
+              {formatDiff(sides.opponentDiff)}
             </td>
           </tr>
         {:else}
           <tr>
-            <td colspan="9" class="empty-row">
+            <td colspan="10" class="empty-row">
               {matches.length ? 'No matches found for the selected filters.' : 'No battles recorded yet.'}
             </td>
           </tr>

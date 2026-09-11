@@ -60,20 +60,3 @@ export function formatDiff(diff) {
   if (diff < 0) return `−${Math.abs(diff)}`;
   return '0';
 }
-
-/**
- * Points diff normalized to the match `result`, not to whichever side
- * happens to be recorded as "player" — the winner's margin is always
- * positive, the loser's always negative, regardless of data-entry side.
- *
- * @param {Record<string, unknown>} match a match in `/api/matches` shape
- * @returns {number|null}
- */
-export function resultDiff(match) {
-  const { diff } = matchVp(match);
-  if (diff === null) return null;
-  const magnitude = Math.abs(diff);
-  if (match.result === 'W') return magnitude;
-  if (match.result === 'L') return -magnitude;
-  return 0;
-}

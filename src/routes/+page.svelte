@@ -1,8 +1,8 @@
 <script>
   import { reveal, countUp } from '$lib/actions/inView.js';
-  import { matchVp, resultDiff, formatDiff } from '$lib/vp.js';
+  import { formatDiff } from '$lib/vp.js';
   import { shortDate, mediumDate, record, rankLabel } from '$lib/format.js';
-  import { dedupeBattles } from '$lib/matches.js';
+  import { dedupeBattles, battleSides } from '$lib/matches.js';
 
   /** @type {import('./$types').PageData} */
   export let data;
@@ -19,13 +19,14 @@
   $: featured = posts[0] ?? null;
   $: secondary = posts.slice(1, 3);
 
-  // Ticker results, newest first. Below five entries the marquee loop is more
-  // gap than content, so the strip sits still instead.
+  // Ticker results, newest first — leads with the winner rather than a
+  // per-side WIN/LOSS label, since a deduped battle no longer has one.
   $: tickerItems = dedupedMatches.slice(0, 5).map((m) => {
-    const { diff } = matchVp(m);
-    const outcome = m.result === 'W' ? 'WIN' : m.result === 'L' ? 'LOSS' : 'DRAW';
-    const delta = diff === null ? '' : ` ${formatDiff(diff)}`;
-    return `${m.playerName} · ${m.armyUsed} — ${outcome}${delta}`;
+    const sides = battleSides(m);
+    if (sides.isDraw) return `${m.playerName} vs ${m.opponentName} — DRAW`;
+    const magnitude = sides.playerDiff === null ? null : Math.abs(sides.playerDiff);
+    const margin = magnitude === null ? '' : ` ${formatDiff(magnitude)}`;
+    return `${sides.winnerName} defeats ${sides.loserName} · ${sides.winnerArmy}${margin}`;
   });
   $: tickerScrolls = tickerItems.length >= 5;
 
@@ -172,27 +173,37 @@
           <th>Date</th>
           <th>Player</th>
           <th>Army</th>
+          <th style="text-align:right">Pts</th>
           <th>Opponent</th>
           <th>Opp. Army</th>
-          <th style="text-align:right">Pts Diff</th>
+          <th style="text-align:right">Pts</th>
         </tr>
       </thead>
       <tbody>
         {#each recentMatches as match (match.id)}
-          {@const diff = resultDiff(match)}
+          {@const sides = battleSides(match)}
           <tr>
             <td><a href="/matches/{match.id}">{shortDate(match.date)}</a></td>
-            <td class:winner={match.result === 'W'}>{match.playerName}</td>
+            <td>
+              {match.playerName}
+              {#if sides.winnerName === match.playerName}<span class="tag tag-accent tag-win">W</span>{/if}
+            </td>
             <td class="tmut">{match.armyUsed}</td>
-            <td class:winner={match.result === 'L'}>{match.opponentName}</td>
+            <td class="tnum" class:pos={sides.playerDiff > 0} class:neg={sides.playerDiff !== null && sides.playerDiff < 0}>
+              {formatDiff(sides.playerDiff)}
+            </td>
+            <td>
+              {match.opponentName}
+              {#if sides.winnerName === match.opponentName}<span class="tag tag-accent tag-win">W</span>{/if}
+            </td>
             <td class="tmut">{match.opponentArmy}</td>
-            <td class="tnum" class:pos={diff > 0} class:neg={diff !== null && diff < 0}>
-              {formatDiff(diff)}
+            <td class="tnum" class:pos={sides.opponentDiff > 0} class:neg={sides.opponentDiff !== null && sides.opponentDiff < 0}>
+              {formatDiff(sides.opponentDiff)}
             </td>
           </tr>
         {:else}
           <tr>
-            <td colspan="6" class="empty-row">No battles recorded yet.</td>
+            <td colspan="7" class="empty-row">No battles recorded yet.</td>
           </tr>
         {/each}
       </tbody>
