@@ -1,6 +1,6 @@
 <script>
   import { goto } from '$app/navigation';
-  import { matchVp, formatDiff } from '$lib/vp.js';
+  import { resultDiff, formatDiff } from '$lib/vp.js';
   import { shortDate, record, rankLabel } from '$lib/format.js';
   import { dedupeBattles } from '$lib/matches.js';
 
@@ -237,38 +237,28 @@
           <th>Army</th>
           <th>Opponent</th>
           <th>Opp. Army</th>
-          <th>Result</th>
           <th style="text-align:right">Pts Diff</th>
         </tr>
       </thead>
       <tbody>
         {#each filteredMatches as match (match.id)}
-          {@const vp = matchVp(match)}
+          {@const diff = resultDiff(match)}
           <tr>
             <td><a href="/matches/{match.id}">{shortDate(match.date)}</a></td>
             <td class="tmut">{match.seasonYear ?? '—'}</td>
             <td class="tmut">{match.divisionName || '—'}</td>
             <td class="tmut">{match.matchType === 'exhibition' ? 'Exhibition' : 'League'}</td>
-            <td><a href="/players/{match.playerId}">{match.playerName}</a></td>
+            <td class:winner={match.result === 'W'}><a href="/players/{match.playerId}">{match.playerName}</a></td>
             <td class="tmut">{match.armyUsed}</td>
-            <td>{match.opponentName}</td>
+            <td class:winner={match.result === 'L'}>{match.opponentName}</td>
             <td class="tmut">{match.opponentArmy}</td>
-            <td>
-              {#if match.result === 'W'}
-                <span class="tag tag-accent">WIN</span>
-              {:else if match.result === 'L'}
-                <span class="tag tag-outline">LOSS</span>
-              {:else}
-                <span class="tag tag-neutral">DRAW</span>
-              {/if}
-            </td>
-            <td class="tnum" class:pos={vp.diff > 0} class:neg={vp.diff !== null && vp.diff <= 0}>
-              {formatDiff(vp.diff)}
+            <td class="tnum" class:pos={diff > 0} class:neg={diff !== null && diff < 0}>
+              {formatDiff(diff)}
             </td>
           </tr>
         {:else}
           <tr>
-            <td colspan="10" class="empty-row">
+            <td colspan="9" class="empty-row">
               {matches.length ? 'No matches found for the selected filters.' : 'No battles recorded yet.'}
             </td>
           </tr>

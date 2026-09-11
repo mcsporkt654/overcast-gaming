@@ -1,6 +1,6 @@
 <script>
   import { reveal, countUp } from '$lib/actions/inView.js';
-  import { matchVp, formatDiff } from '$lib/vp.js';
+  import { matchVp, resultDiff, formatDiff } from '$lib/vp.js';
   import { shortDate, mediumDate, record, rankLabel } from '$lib/format.js';
   import { dedupeBattles } from '$lib/matches.js';
 
@@ -174,35 +174,25 @@
           <th>Army</th>
           <th>Opponent</th>
           <th>Opp. Army</th>
-          <th>Result</th>
           <th style="text-align:right">Pts Diff</th>
         </tr>
       </thead>
       <tbody>
         {#each recentMatches as match (match.id)}
-          {@const vp = matchVp(match)}
+          {@const diff = resultDiff(match)}
           <tr>
             <td><a href="/matches/{match.id}">{shortDate(match.date)}</a></td>
-            <td>{match.playerName}</td>
+            <td class:winner={match.result === 'W'}>{match.playerName}</td>
             <td class="tmut">{match.armyUsed}</td>
-            <td>{match.opponentName}</td>
+            <td class:winner={match.result === 'L'}>{match.opponentName}</td>
             <td class="tmut">{match.opponentArmy}</td>
-            <td>
-              {#if match.result === 'W'}
-                <span class="tag tag-accent">WIN</span>
-              {:else if match.result === 'L'}
-                <span class="tag tag-outline">LOSS</span>
-              {:else}
-                <span class="tag tag-neutral">DRAW</span>
-              {/if}
-            </td>
-            <td class="tnum" class:pos={vp.diff > 0} class:neg={vp.diff !== null && vp.diff <= 0}>
-              {formatDiff(vp.diff)}
+            <td class="tnum" class:pos={diff > 0} class:neg={diff !== null && diff < 0}>
+              {formatDiff(diff)}
             </td>
           </tr>
         {:else}
           <tr>
-            <td colspan="7" class="empty-row">No battles recorded yet.</td>
+            <td colspan="6" class="empty-row">No battles recorded yet.</td>
           </tr>
         {/each}
       </tbody>
