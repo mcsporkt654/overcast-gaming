@@ -15,8 +15,9 @@ export async function load({ fetch }) {
 
   return {
     stats,
-    // The homepage teaser needs 5 battles, the ticker 5 results.
-    recentMatches: matches.slice(0, 10),
+    // Over-fetch so client-side dedup (mirrored player/opponent rows for the
+    // same real battle) still leaves 5 battles for the teaser and ticker.
+    recentMatches: matches.slice(0, 20),
     // One featured dispatch beside two stacked cards.
     posts: posts.slice(0, 3),
     apiUnavailable

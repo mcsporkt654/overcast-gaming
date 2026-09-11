@@ -2,6 +2,7 @@
   import { reveal, countUp } from '$lib/actions/inView.js';
   import { matchVp, formatDiff } from '$lib/vp.js';
   import { shortDate, mediumDate, record, rankLabel } from '$lib/format.js';
+  import { dedupeBattles } from '$lib/matches.js';
 
   /** @type {import('./$types').PageData} */
   export let data;
@@ -12,14 +13,15 @@
   $: standings = (stats?.standings ?? []).slice(0, 6);
   $: leaderVp = standings[0]?.totalVp ?? 0;
   $: factionCount = stats?.armyWinRates?.length ?? 0;
-  $: recentMatches = (data.recentMatches ?? []).slice(0, 5);
+  $: dedupedMatches = dedupeBattles(data.recentMatches ?? []);
+  $: recentMatches = dedupedMatches.slice(0, 5);
   $: posts = data.posts ?? [];
   $: featured = posts[0] ?? null;
   $: secondary = posts.slice(1, 3);
 
   // Ticker results, newest first. Below five entries the marquee loop is more
   // gap than content, so the strip sits still instead.
-  $: tickerItems = (data.recentMatches ?? []).slice(0, 5).map((m) => {
+  $: tickerItems = dedupedMatches.slice(0, 5).map((m) => {
     const { diff } = matchVp(m);
     const outcome = m.result === 'W' ? 'WIN' : m.result === 'L' ? 'LOSS' : 'DRAW';
     const delta = diff === null ? '' : ` ${formatDiff(diff)}`;

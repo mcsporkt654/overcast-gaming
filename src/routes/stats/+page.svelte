@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation';
   import { matchVp, formatDiff } from '$lib/vp.js';
   import { shortDate, record, rankLabel } from '$lib/format.js';
+  import { dedupeBattles } from '$lib/matches.js';
 
   /** @type {import('./$types').PageData} */
   export let data;
@@ -16,7 +17,9 @@
   $: stats = data.stats;
   $: standings = stats?.standings ?? [];
   $: factionStats = stats?.armyWinRates ?? [];
-  $: matches = data.matches ?? [];
+  // Battles both sides logged appear as two rows in /api/matches; the shared
+  // match history should only show each real battle once.
+  $: matches = dedupeBattles(data.matches ?? []);
   $: seasons = data.seasons ?? [];
   $: divisions = data.divisions ?? [];
   $: armies = [...new Set(matches.map((m) => m.armyUsed))].sort();
